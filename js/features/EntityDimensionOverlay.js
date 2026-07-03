@@ -9,7 +9,9 @@ class EntityDimensionOverlay {
     const labels = [];
     for (const entity of drawing.getVisibleEntities(layerManager)) {
       if (!EntityDimensionOverlay.TYPES.has(entity.type)) continue;
-      labels.push(...EntityDimensionOverlay.buildLabels(entity, dimensionEngine, drawing.unit));
+      labels.push(...EntityDimensionOverlay.buildLabels(
+        entity, dimensionEngine, drawing.unit, drawing.worldUnit || drawing.unit
+      ));
     }
     return labels;
   }
@@ -18,8 +20,8 @@ class EntityDimensionOverlay {
     return EntityDimensionOverlay.collect(drawing, layerManager, dimensionEngine).length;
   }
 
-  static buildLabels(entity, dimensionEngine, unit = 'mm') {
-    const fmt = (v) => GeometryKernel.formatDistance(v, unit);
+  static buildLabels(entity, dimensionEngine, unit = 'mm', worldUnit = unit) {
+    const fmt = (v) => GeometryKernel.formatDistance(v, unit, 2, worldUnit);
     const bb = entity.getBoundingBox?.();
 
     if (entity.type === 'LINE') {

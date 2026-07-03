@@ -58,8 +58,12 @@ class GeometryKernel {
       ? { x: x2, y: y1 } : { x: x1, y: y2 };
   }
 
-  static formatDistance(dist, unit = 'mm', decimals = 2) {
-    return dist.toFixed(decimals) + ' ' + unit;
+  static formatDistance(dist, displayUnit = 'mm', decimals = 2, worldUnit = null) {
+    const wu = worldUnit || displayUnit;
+    if (typeof UnitEngine !== 'undefined') {
+      return UnitEngine.format(dist, displayUnit, wu, decimals);
+    }
+    return dist.toFixed(decimals) + ' ' + displayUnit;
   }
 
   // ─── Projection ───────────────────────────────────────────

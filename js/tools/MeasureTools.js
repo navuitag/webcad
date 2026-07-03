@@ -79,7 +79,7 @@ class DistanceTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
     } else {
       const dist = GeometryEngine.distance(this.startPoint.x, this.startPoint.y, snap.x, snap.y);
-      this.app.logCommand(`Khoảng cách = ${GeometryEngine.formatDistance(dist)}`);
+      this.app.logCommand(`Khoảng cách = ${this.app.formatDistance(dist)}`);
       this.app.renderer2D.setMeasureLine(null);
       this.app.setTool('select');
     }

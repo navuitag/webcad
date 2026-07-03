@@ -2,12 +2,18 @@
  * LiveMeasureOverlay — hiển thị kích thước khi vẽ / chỉnh sửa
  */
 class LiveMeasureOverlay {
+  static _fmt(app, value) {
+    if (app?.formatDistance) return app.formatDistance(value);
+    const d = app?.drawing;
+    return GeometryEngine.formatDistance(value, d?.unit || 'mm', 2, d?.worldUnit || d?.unit || 'mm');
+  }
+
   static segment(app, x1, y1, x2, y2, label) {
     const dist = GeometryEngine.distance(x1, y1, x2, y2);
     app.renderer2D.setLiveMeasures([{
       kind: 'segment',
       x1, y1, x2, y2,
-      label: label || GeometryEngine.formatDistance(dist)
+      label: label || LiveMeasureOverlay._fmt(app, dist)
     }]);
   }
 
@@ -15,7 +21,7 @@ class LiveMeasureOverlay {
     const r = GeometryEngine.distance(cx, cy, px, py);
     LiveMeasureOverlay.segment(
       app, cx, cy, px, py,
-      `R ${GeometryEngine.formatDistance(r)}`
+      `R ${LiveMeasureOverlay._fmt(app, r)}`
     );
   }
 
@@ -27,8 +33,8 @@ class LiveMeasureOverlay {
     const w = maxX - minX;
     const h = maxY - minY;
     app.renderer2D.setLiveMeasures([
-      { kind: 'segment', x1: minX, y1: minY, x2: maxX, y2: minY, label: GeometryEngine.formatDistance(w) },
-      { kind: 'segment', x1: minX, y1: minY, x2: minX, y2: maxY, label: GeometryEngine.formatDistance(h) }
+      { kind: 'segment', x1: minX, y1: minY, x2: maxX, y2: minY, label: LiveMeasureOverlay._fmt(app, w) },
+      { kind: 'segment', x1: minX, y1: minY, x2: minX, y2: maxY, label: LiveMeasureOverlay._fmt(app, h) }
     ]);
   }
 
@@ -45,14 +51,14 @@ class LiveMeasureOverlay {
     const measures = [{
       kind: 'segment',
       x1: last.x, y1: last.y, x2: cursor.x, y2: cursor.y,
-      label: GeometryEngine.formatDistance(seg)
+      label: LiveMeasureOverlay._fmt(app, seg)
     }];
     if (points.length > 1) {
       measures.push({
         kind: 'label',
         x: cursor.x,
         y: cursor.y,
-        text: `Σ ${GeometryEngine.formatDistance(total)}`,
+        text: `Σ ${LiveMeasureOverlay._fmt(app, total)}`,
         offsetY: -20
       });
     }
@@ -73,13 +79,13 @@ class LiveMeasureOverlay {
         x1: cx, y1: cy,
         x2: cx + Math.cos(startAngle) * r,
         y2: cy + Math.sin(startAngle) * r,
-        label: `R ${GeometryEngine.formatDistance(r)}`
+        label: `R ${LiveMeasureOverlay._fmt(app, r)}`
       },
       {
         kind: 'label',
         x: lx,
         y: ly,
-        text: GeometryEngine.formatDistance(arcLen)
+        text: LiveMeasureOverlay._fmt(app, arcLen)
       }
     ]);
   }

@@ -66,7 +66,10 @@ class TemplateManager {
       }
     }
 
-    if (tpl.unit) app.drawing.unit = tpl.unit;
+    if (tpl.unit) {
+      app.drawing.unit = tpl.unit;
+      app.drawing.worldUnit = tpl.unit;
+    }
     app.cadCore.syncDrawing(app.drawing);
     app._updateLayerPanel();
     app._updateLayoutPanel();

@@ -25,8 +25,18 @@ class ArchDrawEngine {
     };
   }
 
-  static formatArea(area) {
+  static formatArea(area, displayUnit = 'm', worldUnit = 'm') {
+    if (typeof UnitEngine !== 'undefined') {
+      return UnitEngine.formatArea(area, displayUnit, worldUnit);
+    }
     return `${area.toFixed(2)} m²`;
+  }
+
+  static _unitOpts(app) {
+    return {
+      unit: app.drawing.unit,
+      worldUnit: app.drawing.worldUnit || app.drawing.unit
+    };
   }
 
   static wallPolygon(p1, p2, thickness = ArchDrawEngine.DEFAULTS.wallThickness) {
@@ -97,8 +107,9 @@ class ArchDrawEngine {
     return pl;
   }
 
-  static createAreaLabel(layerId, cx, cy, area, prefix = 'S') {
-    const text = `${prefix}= ${ArchDrawEngine.formatArea(area)}`;
+  static createAreaLabel(layerId, cx, cy, area, prefix = 'S', unitOpts = null) {
+    const u = unitOpts || { unit: 'm', worldUnit: 'm' };
+    const text = `${prefix}= ${ArchDrawEngine.formatArea(area, u.unit, u.worldUnit)}`;
     const height = Math.max(0.12, Math.sqrt(Math.max(area, 0.01)) * 0.07);
     const label = new TextEntity(layerId, cx, cy, text, height);
     label.centered = true;
@@ -177,7 +188,7 @@ class ArchDrawEngine {
       fillOpacity: 0.12
     });
     floor.archType = 'room-fill';
-    const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S');
+    const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S', ArchDrawEngine._unitOpts(app));
     return ArchDrawEngine._commit(app, [...walls, floor, label]);
   }
 
@@ -201,7 +212,7 @@ class ArchDrawEngine {
       planRole: 'floor'
     });
     outline.archType = 'open-floor';
-    const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S');
+    const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S', ArchDrawEngine._unitOpts(app));
     return ArchDrawEngine._commit(app, [fill, outline, label]);
   }
 
@@ -225,7 +236,7 @@ class ArchDrawEngine {
       planRole: 'ceiling'
     });
     outline.archType = 'open-ceiling';
-    const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'T');
+    const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'T', ArchDrawEngine._unitOpts(app));
     return ArchDrawEngine._commit(app, [fill, outline, label]);
   }
 
@@ -285,12 +296,14 @@ class ArchDrawEngine {
     return pts;
   }
 
-  static previewAreaMeasures(x1, y1, x2, y2, prefix = 'S') {
+  static previewAreaMeasures(x1, y1, x2, y2, prefix = 'S', unitOpts = null) {
     const b = ArchDrawEngine.bounds(x1, y1, x2, y2);
+    const u = unitOpts || { unit: 'm', worldUnit: 'm' };
+    const fmt = (v) => UnitEngine.format(v, u.unit, u.worldUnit);
     return [
-      { kind: 'segment', x1: b.minX, y1: b.minY, x2: b.maxX, y2: b.minY, label: `${b.w.toFixed(2)} m` },
-      { kind: 'segment', x1: b.minX, y1: b.minY, x2: b.minX, y2: b.maxY, label: `${b.h.toFixed(2)} m` },
-      { kind: 'label', x: b.cx, y: b.cy, text: `${prefix}= ${ArchDrawEngine.formatArea(b.area)}` }
+      { kind: 'segment', x1: b.minX, y1: b.minY, x2: b.maxX, y2: b.minY, label: fmt(b.w) },
+      { kind: 'segment', x1: b.minX, y1: b.minY, x2: b.minX, y2: b.maxY, label: fmt(b.h) },
+      { kind: 'label', x: b.cx, y: b.cy, text: `${prefix}= ${ArchDrawEngine.formatArea(b.area, u.unit, u.worldUnit)}` }
     ];
   }
 }

@@ -759,6 +759,26 @@ class WebCADApp {
     this.requestRender();
   }
 
+  formatDistance(value, decimals = 2) {
+    return UnitEngine.format(
+      value,
+      this.drawing.unit,
+      this.drawing.worldUnit || this.drawing.unit,
+      decimals
+    );
+  }
+
+  setDrawingUnits(displayUnit, worldUnit) {
+    if (!UnitEngine.UNITS[displayUnit]) return;
+    this.drawing.unit = displayUnit;
+    if (worldUnit && UnitEngine.UNITS[worldUnit]) {
+      this.drawing.worldUnit = worldUnit;
+    }
+    this._updateStylesPanel();
+    this.updateStatusBar();
+    this.requestRender();
+  }
+
   zoomExtents() {
     if (this.mode === '3d') {
       if (this.renderer3D?.initialized) {
@@ -1550,7 +1570,7 @@ class WebCADApp {
         break;
       }
       case 'DIMENSION':
-        html += `<div class="prop-row"><label>Distance</label><span>${GeometryEngine.formatDistance(entity.getDistance())}</span></div>`;
+        html += `<div class="prop-row"><label>Distance</label><span>${this.formatDistance(entity.getDistance())}</span></div>`;
         break;
     }
 
@@ -1618,6 +1638,15 @@ class WebCADApp {
         <select id="global-dimstyle">${s.listDimStyles().map(ds =>
           `<option value="${ds.id}" ${ds.id === s.currentDimStyleId ? 'selected' : ''}>${ds.name}</option>`
         ).join('')}</select></div>
+      <div class="prop-row"><label>Đơn vị hiển thị</label>
+        <select id="global-display-unit">${UnitEngine.LIST.map(u =>
+          `<option value="${u}" ${u === this.drawing.unit ? 'selected' : ''}>${UnitEngine.UNITS[u].label}</option>`
+        ).join('')}</select></div>
+      <div class="prop-row"><label>Đơn vị bản vẽ</label>
+        <select id="global-world-unit">${UnitEngine.LIST.map(u =>
+          `<option value="${u}" ${u === (this.drawing.worldUnit || this.drawing.unit) ? 'selected' : ''}>${UnitEngine.UNITS[u].label}</option>`
+        ).join('')}</select></div>
+      <p class="feature-hint" style="margin-top:4px">Đơn vị bản vẽ = 1 đơn vị tọa độ trên canvas (m cho kiến trúc, cm cho mẫu nội thất).</p>
     `;
     document.getElementById('global-linetype')?.addEventListener('change', (e) => {
       s.currentLinetypeId = e.target.value;
@@ -1627,6 +1656,12 @@ class WebCADApp {
     });
     document.getElementById('global-dimstyle')?.addEventListener('change', (e) => {
       s.currentDimStyleId = e.target.value;
+    });
+    document.getElementById('global-display-unit')?.addEventListener('change', (e) => {
+      this.setDrawingUnits(e.target.value, this.drawing.worldUnit || this.drawing.unit);
+    });
+    document.getElementById('global-world-unit')?.addEventListener('change', (e) => {
+      this.setDrawingUnits(this.drawing.unit, e.target.value);
     });
   }
 
@@ -1638,6 +1673,10 @@ class WebCADApp {
       `Layer: ${layer ? layer.name : '0'}`;
     document.getElementById('status-dimensions').textContent =
       `Dim: ${this.drawing.view.showDimensions ? 'ON' : 'OFF'}`;
+    const du = this.drawing.unit || 'mm';
+    const wu = this.drawing.worldUnit || du;
+    const unitEl = document.getElementById('status-unit');
+    if (unitEl) unitEl.textContent = wu === du ? du : `${du}←${wu}`;
     const selCount = this.mode === '3d'
       ? this.selectionManager3D.getSelected().length
       : this.selectionManager.getSelected().length;

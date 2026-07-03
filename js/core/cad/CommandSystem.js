@@ -237,7 +237,12 @@ class CommandSystem {
 
     C.register('MEASURE', (p, core) => {
       const dist = core.entities.measure(p.p1, p.p2);
-      return { success: true, distance: dist, formatted: GeometryKernel.formatDistance(dist) };
+      return {
+        success: true, distance: dist,
+        formatted: GeometryKernel.formatDistance(
+          dist, core.drawing.unit, 2, core.drawing.worldUnit || core.drawing.unit
+        )
+      };
     });
 
     C.register('HATCH', (p, core) => {

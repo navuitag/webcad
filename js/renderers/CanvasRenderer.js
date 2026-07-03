@@ -161,7 +161,9 @@ class CanvasRenderer {
     const p1 = drawing.worldToScreen(x1, y1, this.canvas.width, this.canvas.height);
     const p2 = drawing.worldToScreen(x2, y2, this.canvas.width, this.canvas.height);
     const dist = GeometryEngine.distance(x1, y1, x2, y2);
-    const text = label || GeometryEngine.formatDistance(dist);
+    const text = label || GeometryKernel.formatDistance(
+      dist, drawing.unit, 2, drawing.worldUnit || drawing.unit
+    );
 
     this.ctx.save();
     this.ctx.strokeStyle = '#ffa726';

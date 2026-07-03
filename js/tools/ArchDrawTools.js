@@ -32,7 +32,10 @@ class ArchRectDrawTool extends Tool {
     this.app.renderer2D.setPreview(preview);
     if (this.areaPrefix) {
       this.app.renderer2D.setLiveMeasures(
-        ArchDrawEngine.previewAreaMeasures(this.corner1.x, this.corner1.y, end.x, end.y, this.areaPrefix)
+        ArchDrawEngine.previewAreaMeasures(
+          this.corner1.x, this.corner1.y, end.x, end.y,
+          this.areaPrefix, ArchDrawEngine._unitOpts(this.app)
+        )
       );
     } else {
       LiveMeasureOverlay.rectangle(this.app, this.corner1.x, this.corner1.y, end.x, end.y);

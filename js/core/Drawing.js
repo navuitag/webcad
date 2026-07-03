@@ -3,6 +3,7 @@ class Drawing {
     this.id = this._generateId();
     this.name = 'Untitled';
     this.unit = 'mm';
+    this.worldUnit = 'mm';
     this.scale = 1;
     this.entities = [];
     this.entities3D = [];
@@ -117,6 +118,7 @@ class Drawing {
       id: this.id,
       name: this.name,
       unit: this.unit,
+      worldUnit: this.worldUnit,
       scale: this.scale,
       layers: layerManager.toJSON(),
       entities2D: this.entities.map(e => e.toJSON()),
@@ -135,6 +137,7 @@ class Drawing {
     drawing.id = data.id || drawing.id;
     drawing.name = data.name || 'Untitled';
     drawing.unit = data.unit || 'mm';
+    drawing.worldUnit = data.worldUnit || data.unit || 'mm';
     drawing.scale = data.scale || 1;
     drawing.view = { ...drawing.view, ...(data.view || {}) };
     drawing.metadata = { ...drawing.metadata, ...(data.metadata || {}) };

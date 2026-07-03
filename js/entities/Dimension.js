@@ -30,7 +30,9 @@ class DimensionEntity extends Entity {
     const dimX2 = p2.x + Math.cos(perpAngle) * offsetPx;
 
     const dist = this.getDistance();
-    const text = GeometryEngine.formatDistance(dist);
+    const text = GeometryKernel.formatDistance(
+      dist, drawing.unit, 2, drawing.worldUnit || drawing.unit
+    );
 
     ctx.save();
     ctx.strokeStyle = this.getColor(layerManager);

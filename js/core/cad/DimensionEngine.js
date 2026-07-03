@@ -22,7 +22,10 @@ class DimensionEngine {
   }
 
   format(value) {
-    return GeometryKernel.formatDistance(value, this.core.drawing.unit);
+    return GeometryKernel.formatDistance(
+      value, this.core.drawing.unit, 2,
+      this.core.drawing.worldUnit || this.core.drawing.unit
+    );
   }
 
   autoDimension(entity) {
