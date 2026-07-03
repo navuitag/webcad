@@ -16,7 +16,9 @@ class FeaturesHub {
 
   // Thư viện
   insertTemplate(id, point) { return BlockLibrary.insert(this.app, id, point); }
+  startInsertTemplate(id) { this.app.startInsertTemplate(id); }
   listTemplates(cat) { return BlockLibrary.list(cat); }
+  listTemplateCategories() { return BlockLibrary.categories; }
 
   // Tự động
   autoDimension(all = true) {

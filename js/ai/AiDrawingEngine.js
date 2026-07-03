@@ -24,36 +24,13 @@ class AiDrawingEngine {
       return { success: true, message: `Đã tạo mặt bằng nhà ${w}×${d}m.` };
     }
 
-    // Chèn mẫu: "chen cua 900", "them cau thang", "ong nuoc"
-    m = s.match(/(?:chen|them|dat|ve)\s*(cua\s*doi|cua\s*don|cua|cua di)/);
-    if (m || s.includes('cua di')) {
-      const id = s.includes('doi') ? 'door-double' : 'door-single';
-      BlockLibrary.insert(app, id, { x: 0, y: 0 });
-      return { success: true, message: `Đã chèn ${BlockLibrary.templates[id].name}.` };
-    }
-    if (s.match(/cau\s*thang|stairs/)) {
-      BlockLibrary.insert(app, 'stairs', { x: 0, y: 0 });
-      return { success: true, message: 'Đã chèn cầu thang.' };
-    }
-    if (s.match(/o\s*cam|dien|outlet/)) {
-      BlockLibrary.insert(app, 'outlet', { x: 0, y: 0 });
-      return { success: true, message: 'Đã chèn ổ cắm điện.' };
-    }
-    if (s.match(/cong\s*tac|switch/)) {
-      BlockLibrary.insert(app, 'switch', { x: 0, y: 0 });
-      return { success: true, message: 'Đã chèn công tắc.' };
-    }
-    if (s.match(/ong\s*nuoc|pipe/)) {
-      BlockLibrary.insert(app, 'pipe', { x: 0, y: 0 });
-      return { success: true, message: 'Đã chèn ống nước.' };
-    }
-    if (s.match(/bon\s*cau|toilet/)) {
-      BlockLibrary.insert(app, 'toilet', { x: 0, y: 0 });
-      return { success: true, message: 'Đã chèn bồn cầu.' };
-    }
-    if (s.match(/cua\s*so|window/)) {
-      BlockLibrary.insert(app, 'window', { x: 0, y: 0 });
-      return { success: true, message: 'Đã chèn cửa sổ.' };
+    // Chèn mẫu nội thất / kiến trúc
+    if (s.match(/(?:chen|them|dat|ve)\s+/)) {
+      const id = BlockLibrary.findByKeyword(s);
+      if (id) {
+        BlockLibrary.insert(app, id, { x: 0, y: 0 });
+        return { success: true, message: `Đã chèn ${BlockLibrary.templates[id].name}.` };
+      }
     }
 
     // Tự động dim: "tu dong ghi kich thuoc", "auto dim"
@@ -82,11 +59,12 @@ class AiDrawingEngine {
   static getSuggestions() {
     return [
       'Mặt bằng đất 5×20m 2 phòng ngủ',
-      'Thêm cầu thang',
-      'Chèn cửa đi 900',
+      'Thêm sofa 3 chỗ',
+      'Chèn bàn ăn 120×80',
+      'Thêm giường đôi',
+      'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
-      'Kiểm tra lỗi bản vẽ',
-      'Nhà phố 4×12m'
+      'Kiểm tra lỗi bản vẽ'
     ];
   }
 }

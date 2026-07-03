@@ -139,8 +139,15 @@ class WebCADApp {
       break: new BreakTool(this),
       divide: new DivideTool(this),
       measure: new MeasureTool(this),
-      hatch: new HatchTool(this)
+      hatch: new HatchTool(this),
+      'insert-template': new InsertTemplateTool(this)
     };
+    this._templateCategory = 'all';
+  }
+
+  startInsertTemplate(id) {
+    this.tools['insert-template'].setTemplate(id);
+    this.setTool('insert-template');
   }
 
   _initEvents() {
@@ -1041,22 +1048,7 @@ class WebCADApp {
   }
 
   _initFeaturesPanel() {
-    const grid = document.getElementById('template-library-grid');
-    if (grid && this.features) {
-      grid.innerHTML = '';
-      for (const t of this.features.listTemplates()) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'feature-tile';
-        btn.textContent = t.name;
-        btn.title = t.name;
-        btn.addEventListener('click', () => {
-          this.features.insertTemplate(t.id);
-          this.logCommand(`Đã chèn mẫu: ${t.name}`);
-        });
-        grid.appendChild(btn);
-      }
-    }
+    this._renderTemplateLibrary();
     const sketchInput = document.getElementById('sketch-input');
     if (sketchInput) {
       sketchInput.addEventListener('change', async (e) => {
@@ -1092,6 +1084,42 @@ class WebCADApp {
         }
         this.logCommand(r.message);
       });
+    }
+  }
+
+  _renderTemplateLibrary() {
+    const tabsEl = document.getElementById('template-library-tabs');
+    const grid = document.getElementById('template-library-grid');
+    if (!grid || !this.features) return;
+
+    if (tabsEl) {
+      tabsEl.innerHTML = '';
+      for (const [key, cat] of Object.entries(BlockLibrary.categories)) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'template-tab' + (key === this._templateCategory ? ' active' : '');
+        tab.textContent = `${cat.icon} ${cat.label}`;
+        tab.title = cat.label;
+        tab.addEventListener('click', () => {
+          this._templateCategory = key;
+          this._renderTemplateLibrary();
+        });
+        tabsEl.appendChild(tab);
+      }
+    }
+
+    grid.innerHTML = '';
+    for (const t of this.features.listTemplates(this._templateCategory)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'feature-tile';
+      btn.innerHTML = `<span class="feature-tile-icon">${t.icon || '📦'}</span><span class="feature-tile-name">${t.name}</span>`;
+      btn.title = `${t.name} — click để chèn`;
+      btn.addEventListener('click', () => {
+        this.startInsertTemplate(t.id);
+        this.logCommand(`Chọn vị trí chèn: ${t.name}`);
+      });
+      grid.appendChild(btn);
     }
   }
 
