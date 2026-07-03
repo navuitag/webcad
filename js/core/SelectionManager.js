@@ -52,6 +52,27 @@ class SelectionManager {
     return this.selected.includes(entity);
   }
 
+  selectAll(entities) {
+    this.clearSelection(false);
+    for (const entity of entities) {
+      this.select(entity, true);
+    }
+  }
+
+  /** Chọn entity trong hộp — window = nằm trọn trong, crossing = giao với hộp */
+  selectInBox(entities, minX, minY, maxX, maxY, windowMode = false, additive = false) {
+    if (!additive) this.clearSelection(false);
+    for (const entity of entities) {
+      const bb = entity.getBoundingBox?.();
+      if (!bb) continue;
+      const match = windowMode
+        ? bb.minX >= minX && bb.maxX <= maxX && bb.minY >= minY && bb.maxY <= maxY
+        : bb.minX <= maxX && bb.maxX >= minX && bb.minY <= maxY && bb.maxY >= minY;
+      if (match) this.select(entity, true);
+    }
+    this._notify();
+  }
+
   onChange(callback) {
     this.listeners.push(callback);
   }

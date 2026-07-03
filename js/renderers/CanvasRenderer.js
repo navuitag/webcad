@@ -4,6 +4,8 @@ class CanvasRenderer {
     this.ctx = canvas.getContext('2d');
     this.previewEntity = null;
     this.measureLine = null;
+    this.selectionRect = null;
+    this.selectionWindowMode = false;
   }
 
   resize(width, height) {
@@ -56,7 +58,32 @@ class CanvasRenderer {
       this._drawMeasureLine(drawing, this.measureLine);
     }
 
+    if (this.selectionRect) {
+      this._drawSelectionRect(drawing);
+    }
+
     snapEngine.drawSnapIndicator(this.ctx, drawing, drawing.view, this.canvas.width, this.canvas.height);
+  }
+
+  setSelectionRect(rect, windowMode = false) {
+    this.selectionRect = rect;
+    this.selectionWindowMode = windowMode;
+  }
+
+  _drawSelectionRect(drawing) {
+    const { x1, y1, x2, y2 } = this.selectionRect;
+    const p1 = drawing.worldToScreen(Math.min(x1, x2), Math.min(y1, y2), this.canvas.width, this.canvas.height);
+    const p2 = drawing.worldToScreen(Math.max(x1, x2), Math.max(y1, y2), this.canvas.width, this.canvas.height);
+    const w = p2.x - p1.x;
+    const h = p2.y - p1.y;
+    this.ctx.save();
+    this.ctx.strokeStyle = this.selectionWindowMode ? '#4fc3f7' : '#66bb6a';
+    this.ctx.fillStyle = this.selectionWindowMode ? 'rgba(79, 195, 247, 0.08)' : 'rgba(102, 187, 106, 0.08)';
+    this.ctx.lineWidth = 1;
+    this.ctx.setLineDash([4, 3]);
+    this.ctx.fillRect(p1.x, p1.y, w, h);
+    this.ctx.strokeRect(p1.x, p1.y, w, h);
+    this.ctx.restore();
   }
 
   _drawGrid(drawing) {

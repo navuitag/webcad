@@ -20,6 +20,7 @@ class ThreeRenderer {
     this.viewerMode = false;
     this._loopActive = false;
     this._animId = null;
+    this._selectedIds = new Set();
   }
 
   async init() {
@@ -126,6 +127,7 @@ class ThreeRenderer {
           entity.mesh = mesh;
           entity._meshDirty = false;
           this.meshes.set(entity.id, mesh);
+          this._applyMeshHighlight(mesh, entity.id);
           this.scene.add(mesh);
         }
       } else {
@@ -159,6 +161,23 @@ class ThreeRenderer {
     mesh.scale.set(entity.scale.x, entity.scale.y, entity.scale.z);
     this.materialManager.updateMaterial(mesh.material, entity.material);
     mesh.userData.entityMaterial = { ...entity.material };
+    this._applyMeshHighlight(mesh, entity.id);
+  }
+
+  setSelection(entityIds = []) {
+    this._selectedIds = new Set(entityIds);
+    for (const [id, mesh] of this.meshes) {
+      this._applyMeshHighlight(mesh, id);
+    }
+  }
+
+  _applyMeshHighlight(mesh, entityId) {
+    if (!mesh.material) return;
+    const selected = this._selectedIds.has(entityId);
+    if (mesh.material.emissive) {
+      mesh.material.emissive.setHex(selected ? 0x1565c0 : 0x000000);
+      mesh.material.emissiveIntensity = selected ? 0.45 : 0;
+    }
   }
 
   setCameraMode(mode) {

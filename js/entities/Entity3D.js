@@ -16,6 +16,7 @@ class Entity3D {
     this.params = {};
     this.mesh = null;
     this._meshDirty = true;
+    this.selected = false;
   }
 
   markDirty() {

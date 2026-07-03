@@ -101,10 +101,20 @@ class SelectTool3D extends Tool {
 
   onMouseDown3D(e) {
     const id = this.app.renderer3D.pick(e.clientX, e.clientY);
-    this.app.selectionManager3D = this.app.selectionManager3D || { selected: null };
-    this.app.selectionManager3D.selected = id
-      ? this.app.drawing.entities3D.find(en => en.id === id)
-      : null;
+    const entity = id ? this.app.drawing.entities3D.find(en => en.id === id) : null;
+    const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+
+    if (entity) {
+      if (additive) {
+        this.app.selectionManager3D.toggle(entity);
+      } else if (!this.app.selectionManager3D.isSelected(entity)) {
+        this.app.selectionManager3D.select(entity);
+      }
+    } else if (!additive) {
+      this.app.selectionManager3D.clearSelection();
+    }
+
     this.app.updatePropertiesPanel();
+    this.app.updateStatusBar();
   }
 }

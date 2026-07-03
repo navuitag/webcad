@@ -3,7 +3,7 @@ class WebCADApp {
     this.drawing = new Drawing();
     this.layerManager = new LayerManager();
     this.selectionManager = new SelectionManager();
-    this.selectionManager3D = { selected: null };
+    this.selectionManager3D = new SelectionManager();
     this.history = new HistoryManager();
     this.snapEngine = new SnapEngine();
     this.storage = new StorageEngine();
@@ -267,7 +267,14 @@ class WebCADApp {
 
     this.selectionManager.onChange(() => {
       this.updatePropertiesPanel();
+      this.updateStatusBar();
       this.requestRender();
+    });
+
+    this.selectionManager3D.onChange(() => {
+      this._update3DSelectionHighlight();
+      this.updatePropertiesPanel();
+      this.updateStatusBar();
     });
   }
 
@@ -428,6 +435,7 @@ class WebCADApp {
       this._resize();
       this._update3DPanel();
       if (this.drawing.entities3D.length > 0) this.renderer3D.fitView();
+      this._update3DSelectionHighlight();
     } else {
       this.renderer3D.setLoopActive(false);
     }
@@ -612,6 +620,11 @@ class WebCADApp {
       if (e.key === 's') { e.preventDefault(); this.saveDrawing(); return; }
       if (e.key === 'o') { e.preventDefault(); this.openDrawing(); return; }
       if (e.key === 'p') { e.preventDefault(); ExportEngine.print(this.canvas, this.drawing); return; }
+      if (e.key === 'a') {
+        e.preventDefault();
+        this._selectAll();
+        return;
+      }
       if (e.key === '/' && this._aiShortcutEnabled !== false) {
         e.preventDefault();
         document.getElementById('ai-input')?.focus();
@@ -1172,20 +1185,36 @@ class WebCADApp {
     this.toolInfo.innerHTML = `<p>${text}</p>`;
   }
 
+  _selectAll() {
+    if (this.mode === '3d') {
+      this.selectionManager3D.selectAll(this.drawing.entities3D);
+      return;
+    }
+    this.selectionManager.selectAll(this.drawing.getVisibleEntities(this.layerManager));
+  }
+
+  _update3DSelectionHighlight() {
+    if (!this.renderer3D?.initialized) return;
+    const ids = this.selectionManager3D.getSelected().map(e => e.id);
+    this.renderer3D.setSelection(ids);
+  }
+
   _deleteSelection() {
     if (!this._ready) return false;
 
     if (this.mode === '3d') {
-      const sel = this.selectionManager3D?.selected;
-      if (!sel) return false;
-      this.drawing.removeEntity3D(sel);
-      this.selectionManager3D.selected = null;
-      this.renderer3D?.syncEntities(this.drawing.entities3D);
-      this.collaboration?.broadcastEntityRemoved?.(sel);
+      const selected = this.selectionManager3D.getSelected();
+      if (selected.length === 0) return false;
+      for (const sel of [...selected]) {
+        this.drawing.removeEntity3D(sel);
+        this.collaboration?.broadcastEntityRemoved?.(sel);
+      }
+      this.selectionManager3D.clearSelection();
+      this.renderer3D.syncEntities(this.drawing.entities3D);
       this.updatePropertiesPanel();
       this.updateStatusBar();
       this.requestRender();
-      this.logCommand(`Đã xóa ${sel.type}.`);
+      this.logCommand(`Đã xóa ${selected.length} solid 3D.`);
       return true;
     }
 
@@ -1202,13 +1231,17 @@ class WebCADApp {
 
   updatePropertiesPanel() {
     if (this.mode === '3d') {
-      const entity = this.selectionManager3D?.selected
-        || (this.drawing.entities3D.length > 0 ? this.drawing.entities3D[this.drawing.entities3D.length - 1] : null);
-      if (!entity) {
-        this.propertiesPanel.innerHTML = '<p class="empty-state">Chọn solid 3D hoặc dùng công cụ tạo mới</p>';
+      const selected = this.selectionManager3D.getSelected();
+      if (selected.length === 0) {
+        this.propertiesPanel.innerHTML = '<p class="empty-state">Chọn solid 3D (Shift/Ctrl+click chọn nhiều)</p>';
         return;
       }
-      this.propertiesPanel.innerHTML = `
+      const entity = selected[selected.length - 1];
+      let html = '';
+      if (selected.length > 1) {
+        html += `<div class="prop-row"><label>Chọn</label><span>${selected.length} solid</span></div>`;
+      }
+      html += `
         <div class="prop-row"><label>Loại 3D</label><span>${entity.type}</span></div>
         <div class="prop-row"><label>Tên</label><span>${entity.name}</span></div>
         <div class="prop-row"><label>Màu</label><input type="color" id="mat-color" value="${entity.material.color}"></div>
@@ -1216,17 +1249,33 @@ class WebCADApp {
         <div class="prop-row"><label>Roughness</label><input type="range" id="mat-rough" min="0" max="1" step="0.05" value="${entity.material.roughness ?? 0.6}"></div>
         <div class="prop-row"><label>Opacity</label><input type="range" id="mat-opacity" min="0.1" max="1" step="0.1" value="${entity.material.opacity}"></div>
       `;
+      this.propertiesPanel.innerHTML = html;
       const sync = () => {
-        entity.markDirty();
+        for (const ent of selected) {
+          ent.markDirty();
+        }
         this.renderer3D.syncEntities(this.drawing.entities3D);
+        this._update3DSelectionHighlight();
         this.requestRender();
       };
-      document.getElementById('mat-color')?.addEventListener('input', (e) => { entity.material.color = e.target.value; sync(); });
-      document.getElementById('mat-metal')?.addEventListener('input', (e) => { entity.material.metalness = parseFloat(e.target.value); sync(); });
-      document.getElementById('mat-rough')?.addEventListener('input', (e) => { entity.material.roughness = parseFloat(e.target.value); sync(); });
+      document.getElementById('mat-color')?.addEventListener('input', (e) => {
+        for (const ent of selected) ent.material.color = e.target.value;
+        sync();
+      });
+      document.getElementById('mat-metal')?.addEventListener('input', (e) => {
+        for (const ent of selected) ent.material.metalness = parseFloat(e.target.value);
+        sync();
+      });
+      document.getElementById('mat-rough')?.addEventListener('input', (e) => {
+        for (const ent of selected) ent.material.roughness = parseFloat(e.target.value);
+        sync();
+      });
       document.getElementById('mat-opacity')?.addEventListener('input', (e) => {
-        entity.material.opacity = parseFloat(e.target.value);
-        entity.material.transparent = entity.material.opacity < 1;
+        const v = parseFloat(e.target.value);
+        for (const ent of selected) {
+          ent.material.opacity = v;
+          ent.material.transparent = v < 1;
+        }
         sync();
       });
       return;
@@ -1243,7 +1292,11 @@ class WebCADApp {
     const layer = this.layerManager.getLayer(entity.layerId);
     const color = entity.style.color || layer?.color || '#ffffff';
 
-    let html = `<div class="prop-row"><label>Loại</label><span>${entity.type}</span></div>`;
+    let html = '';
+    if (selected.length > 1) {
+      html += `<div class="prop-row"><label>Chọn</label><span>${selected.length} đối tượng</span></div>`;
+    }
+    html += `<div class="prop-row"><label>Loại</label><span>${entity.type}</span></div>`;
     html += `<div class="prop-row"><label>Layer</label>
       <select id="prop-layer">${this.layerManager.layers.map(l =>
         `<option value="${l.id}" ${l.id === entity.layerId ? 'selected' : ''}>${l.name}</option>`
@@ -1313,7 +1366,11 @@ class WebCADApp {
     document.getElementById('prop-hatch')?.addEventListener('change', (e) => setProp('pattern', e.target.value));
     document.getElementById('prop-text')?.addEventListener('change', (e) => setProp('text', e.target.value));
     document.getElementById('prop-constraint-btn')?.addEventListener('click', () => {
-      this.cadCore.run('ADD_CONSTRAINT', { type: 'FIXED', entityIds: [entity.id], params: {} });
+      this.cadCore.run('ADD_CONSTRAINT', {
+        type: 'FIXED',
+        entityIds: selected.map(e => e.id),
+        params: {}
+      });
       this.logCommand('Constraint FIXED added.');
     });
   }
@@ -1353,8 +1410,12 @@ class WebCADApp {
     const layer = this.layerManager.getCurrentLayer();
     document.getElementById('status-layer').textContent =
       `Layer: ${layer ? layer.name : '0'}`;
+    const selCount = this.mode === '3d'
+      ? this.selectionManager3D.getSelected().length
+      : this.selectionManager.getSelected().length;
+    const total = this.drawing.entities.length + this.drawing.entities3D.length;
     document.getElementById('status-entities').textContent =
-      `Entities: ${this.drawing.entities.length + this.drawing.entities3D.length}`;
+      selCount > 0 ? `Entities: ${total}  ·  Chọn: ${selCount}` : `Entities: ${total}`;
   }
 
   logCommand(text) {
