@@ -24,6 +24,36 @@ class AiDrawingEngine {
       return { success: true, message: `Đã tạo mặt bằng nhà ${w}×${d}m.` };
     }
 
+    // Vẽ nhanh kiến trúc
+    if (s.match(/ve\s*tuong|tuong\s*dep|ke\s*tuong/)) {
+      app.setTool('wall');
+      return { success: true, message: 'Chế độ vẽ tường — click các điểm nối tiếp.' };
+    }
+    if (s.match(/ve\s*phong|khoanh\s*phong|tao\s*phong/)) {
+      app.setTool('room');
+      return { success: true, message: 'Chế độ vẽ phòng — kéo khung, tự ghi diện tích.' };
+    }
+    if (s.match(/cot\s*tron|cot\s*tròn/)) {
+      app.setTool('round-column');
+      return { success: true, message: 'Chế độ vẽ cột tròn.' };
+    }
+    if (s.match(/ve\s*cot|cot\s*vuong/)) {
+      app.setTool('column');
+      return { success: true, message: 'Chế độ vẽ cột vuông.' };
+    }
+    if (s.match(/tuong\s*mo|tuong\s*mở/)) {
+      app.setTool('open-wall');
+      return { success: true, message: 'Chế độ vẽ tường mở.' };
+    }
+    if (s.match(/san\s*mo|san\s*mở|ve\s*san/)) {
+      app.setTool('open-floor');
+      return { success: true, message: 'Chế độ vẽ sàn mở — tự ghi S= diện tích.' };
+    }
+    if (s.match(/tran\s*mo|tran\s*mở|ve\s*tran/)) {
+      app.setTool('open-ceiling');
+      return { success: true, message: 'Chế độ vẽ trần mở — tự ghi T= diện tích.' };
+    }
+
     // Chèn mẫu nội thất / kiến trúc
     if (s.match(/(?:chen|them|dat|ve)\s+/)) {
       const id = BlockLibrary.findByKeyword(s);
@@ -60,7 +90,9 @@ class AiDrawingEngine {
     return [
       'Mặt bằng đất 5×20m 2 phòng ngủ',
       'Thêm sofa 3 chỗ',
-      'Chèn bàn ăn 120×80',
+      'Vẽ phòng',
+      'Vẽ tường',
+      'Vẽ sàn mở',
       'Thêm giường đôi',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',

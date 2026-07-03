@@ -351,8 +351,16 @@
   color: var(--text-secondary);
 }
 
-.feature-tile:hover {
-  border-color: var(--accent);
+.arch-draw-grid {
+  max-height: 120px;
+  margin-bottom: 8px;
+}
+
+.toolbar .tool-group[data-group="arch"] .tool-btn {
+  font-size: 10px;
+  padding: 4px 6px;
+  min-width: auto;
+  width: auto;
 }
 
 .qa-report {

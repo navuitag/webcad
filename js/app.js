@@ -140,7 +140,14 @@ class WebCADApp {
       divide: new DivideTool(this),
       measure: new MeasureTool(this),
       hatch: new HatchTool(this),
-      'insert-template': new InsertTemplateTool(this)
+      'insert-template': new InsertTemplateTool(this),
+      wall: new WallTool(this),
+      'open-wall': new OpenWallTool(this),
+      room: ArchDrawTools.createRoomTool(this),
+      'open-floor': ArchDrawTools.createOpenFloorTool(this),
+      'open-ceiling': ArchDrawTools.createOpenCeilingTool(this),
+      column: ArchDrawTools.createColumnTool(this),
+      'round-column': new RoundColumnTool(this)
     };
     this._templateCategory = 'all';
   }
@@ -1049,6 +1056,7 @@ class WebCADApp {
 
   _initFeaturesPanel() {
     this._renderTemplateLibrary();
+    this._renderArchDrawGrid();
     const sketchInput = document.getElementById('sketch-input');
     if (sketchInput) {
       sketchInput.addEventListener('change', async (e) => {
@@ -1118,6 +1126,33 @@ class WebCADApp {
       btn.addEventListener('click', () => {
         this.startInsertTemplate(t.id);
         this.logCommand(`Chọn vị trí chèn: ${t.name}`);
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  _renderArchDrawGrid() {
+    const grid = document.getElementById('arch-draw-grid');
+    if (!grid) return;
+    const tools = [
+      { id: 'wall', icon: '🧱', name: 'Tường' },
+      { id: 'room', icon: '📐', name: 'Phòng + diện tích' },
+      { id: 'column', icon: '⬛', name: 'Cột vuông' },
+      { id: 'round-column', icon: '⭕', name: 'Cột tròn' },
+      { id: 'open-wall', icon: '〰️', name: 'Tường mở' },
+      { id: 'open-floor', icon: '🟩', name: 'Sàn mở + S=' },
+      { id: 'open-ceiling', icon: '🟪', name: 'Trần mở + T=' }
+    ];
+    grid.innerHTML = '';
+    for (const t of tools) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'feature-tile';
+      btn.innerHTML = `<span class="feature-tile-icon">${t.icon}</span><span class="feature-tile-name">${t.name}</span>`;
+      btn.title = t.name;
+      btn.addEventListener('click', () => {
+        this.setTool(t.id);
+        this.logCommand(`Công cụ: ${t.name}`);
       });
       grid.appendChild(btn);
     }

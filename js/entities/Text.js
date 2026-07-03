@@ -14,13 +14,19 @@ class TextEntity extends Entity {
     ctx.save();
     ctx.fillStyle = this.getColor(layerManager);
     ctx.font = `${fontSize}px sans-serif`;
-    ctx.textBaseline = 'bottom';
-    if (this.rotation !== 0) {
-      ctx.translate(sp.x, sp.y);
-      ctx.rotate(-this.rotation);
-      ctx.fillText(this.text, 0, 0);
-    } else {
+    if (this.centered) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(this.text, sp.x, sp.y);
+    } else {
+      ctx.textBaseline = 'bottom';
+      if (this.rotation !== 0) {
+        ctx.translate(sp.x, sp.y);
+        ctx.rotate(-this.rotation);
+        ctx.fillText(this.text, 0, 0);
+      } else {
+        ctx.fillText(this.text, sp.x, sp.y);
+      }
     }
     ctx.restore();
   }
@@ -64,7 +70,8 @@ class TextEntity extends Entity {
       position: { ...this.position },
       text: this.text,
       height: this.height,
-      rotation: this.rotation
+      rotation: this.rotation,
+      centered: !!this.centered
     };
   }
 
@@ -72,6 +79,7 @@ class TextEntity extends Entity {
     const text = new TextEntity(data.layerId, data.position.x, data.position.y, data.text, data.height);
     text.id = data.id;
     text.rotation = data.rotation || 0;
+    text.centered = !!data.centered;
     text.style = { ...text.style, ...data.style };
     return text;
   }

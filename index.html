@@ -167,6 +167,16 @@
         </button>
       </div>
       <div class="tool-separator"></div>
+      <div class="tool-group" data-group="arch" title="Vẽ nhanh kiến trúc">
+        <button class="tool-btn" data-tool="wall" title="Tường (WA)">Tường</button>
+        <button class="tool-btn" data-tool="room" title="Phòng (RM)">Phòng</button>
+        <button class="tool-btn" data-tool="column" title="Cột (CO)">Cột</button>
+        <button class="tool-btn" data-tool="round-column" title="Cột tròn">C.Tròn</button>
+        <button class="tool-btn" data-tool="open-wall" title="Tường mở">T.Mở</button>
+        <button class="tool-btn" data-tool="open-floor" title="Sàn mở">Sàn</button>
+        <button class="tool-btn" data-tool="open-ceiling" title="Trần mở">Trần</button>
+      </div>
+      <div class="tool-separator"></div>
       <div class="tool-group" data-group="modify">
         <button class="tool-btn" data-tool="move" title="Di chuyển (M)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,9 2,12 5,15"/><polyline points="9,5 12,2 15,5"/><polyline points="15,19 12,22 9,19"/><polyline points="19,9 22,12 19,15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
@@ -320,6 +330,9 @@
           <p class="feature-hint">Click mẫu → click canvas để đặt (đơn vị cm)</p>
           <div id="template-library-tabs" class="template-tabs"></div>
           <div id="template-library-grid" class="template-grid"></div>
+          <h4 class="feature-subtitle">Vẽ nhanh kiến trúc</h4>
+          <p class="feature-hint">Phòng/sàn/trần tự ghi diện tích (m²) tại tâm vùng</p>
+          <div id="arch-draw-grid" class="template-grid arch-draw-grid"></div>
         </div>
         <div class="panel-section">
           <h3>Thuộc tính</h3>
@@ -539,6 +552,8 @@
   <script src="js/tools/Tools3D.js"></script>
   <script src="js/tools/AdvancedTools.js"></script>
   <script src="js/tools/ProTools.js"></script>
+  <script src="js/features/ArchDrawEngine.js"></script>
+  <script src="js/tools/ArchDrawTools.js"></script>
 
   <!-- Storage & Export -->
   <script src="js/storage/StorageEngine.js"></script>

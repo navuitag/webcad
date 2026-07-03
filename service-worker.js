@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v23';
+const CACHE_NAME = 'webcad-v24';
 const ASSETS = [
   './',
   './index.html',
@@ -61,6 +61,8 @@ const ASSETS = [
   './js/tools/Tool3D.js',
   './js/tools/AdvancedTools.js',
   './js/tools/ProTools.js',
+  './js/features/ArchDrawEngine.js',
+  './js/tools/ArchDrawTools.js',
   './js/tools/Tools3D.js',
   './js/storage/StorageEngine.js',
   './js/exporters/ExportEngine.js',
