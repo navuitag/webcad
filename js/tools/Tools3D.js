@@ -13,7 +13,9 @@ class ExtrudeTool extends Tool {
     const tol = 5 / this.app.drawing.view.zoom;
     const hit = this.app.cadCore.entities.hitTest(worldPos.x, worldPos.y, tol);
     if (!hit) return;
-    const entity3d = ExtrudeEngine3D.from2DEntity(hit, this.height);
+    const entity3d = ExtrudeEngine3D.from2DEntity(hit, this.height, {
+      layerManager: this.app.layerManager
+    });
     if (!entity3d) {
       this.app.cadCore.log('EXTRUDE: Cần hình kín (rectangle, polyline đóng, circle).');
       return;

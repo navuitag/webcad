@@ -27,6 +27,9 @@ class FeaturesHub {
   generateFloorPlan(w, d, preset) { return FloorPlanGenerator.generate(this.app, w, d, preset); }
   listArchTemplates(cat) { return ArchitecturalTemplates.list(cat); }
   applyArchTemplate(id) { return ArchitecturalTemplates.apply(this.app, id); }
+  convertToPlanView(selectionOnly = false) {
+    return PlanConversionEngine.convert(this.app, { selectionOnly });
+  }
 
   async importSketch(file, opts = {}) {
     await this.vision.loadImage(file);

@@ -9,15 +9,37 @@ class PolylineEntity extends Entity {
     if (this.points.length < 2) return;
 
     ctx.save();
+    const screenPts = this.points.map(p =>
+      drawing.worldToScreen(p.x, p.y, ctx.canvas.width, ctx.canvas.height)
+    );
+
+    if (this.planView && typeof ArchPlanStyle !== 'undefined') {
+      ctx.beginPath();
+      ctx.moveTo(screenPts[0].x, screenPts[0].y);
+      for (let i = 1; i < screenPts.length; i++) ctx.lineTo(screenPts[i].x, screenPts[i].y);
+      if (this.closed) ctx.closePath();
+      const opacity = ArchPlanStyle.fillOpacity(this);
+      if (this.closed && opacity > 0) {
+        ctx.fillStyle = this.getColor(layerManager);
+        ctx.globalAlpha = opacity;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = this.getColor(layerManager);
+      ctx.lineWidth = this.style.lineWidth || 1.5;
+      if (this.style.lineDash?.length) ctx.setLineDash(this.style.lineDash);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
     ctx.strokeStyle = this.getColor(layerManager);
     ctx.lineWidth = this.style.lineWidth;
     if (this.style.lineDash.length) ctx.setLineDash(this.style.lineDash);
     ctx.beginPath();
-    const first = drawing.worldToScreen(this.points[0].x, this.points[0].y, ctx.canvas.width, ctx.canvas.height);
-    ctx.moveTo(first.x, first.y);
-    for (let i = 1; i < this.points.length; i++) {
-      const p = drawing.worldToScreen(this.points[i].x, this.points[i].y, ctx.canvas.width, ctx.canvas.height);
-      ctx.lineTo(p.x, p.y);
+    ctx.moveTo(screenPts[0].x, screenPts[0].y);
+    for (let i = 1; i < screenPts.length; i++) {
+      ctx.lineTo(screenPts[i].x, screenPts[i].y);
     }
     if (this.closed) ctx.closePath();
     ctx.stroke();

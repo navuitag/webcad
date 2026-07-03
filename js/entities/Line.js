@@ -10,6 +10,17 @@ class LineEntity extends Entity {
     const p2 = drawing.worldToScreen(this.end.x, this.end.y, ctx.canvas.width, ctx.canvas.height);
 
     ctx.save();
+    if (this.planView && typeof ArchPlanStyle !== 'undefined') {
+      ctx.strokeStyle = this.getColor(layerManager);
+      ctx.lineWidth = this.planRole === 'open-wall' ? 2 : (this.style.lineWidth || 1.5);
+      if (this.style.lineDash?.length) ctx.setLineDash(this.style.lineDash);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
     this.applyStroke(ctx, layerManager, styleManager);
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);

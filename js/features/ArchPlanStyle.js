@@ -175,4 +175,125 @@ class ArchPlanStyle {
     else ctx.setLineDash([]);
     ctx.stroke();
   }
+
+  /** Chuyển entity 2D thường sang ký hiệu mặt bằng */
+  static convertEntity(entity, worldUnit = 'm') {
+    if (entity.type === 'TEXT' || entity.type === 'DIMENSION') return false;
+
+    if (entity.archLabel) {
+      entity.planView = true;
+      return true;
+    }
+
+    if (entity.archType || entity.landscapeKind) {
+      return ArchPlanStyle._convertArchEntity(entity);
+    }
+
+    if (entity.planView && entity.planRole) return false;
+
+    const scale = worldUnit === 'mm' ? 1000 : (worldUnit === 'cm' ? 100 : 1);
+    const wallThick = 0.3 * scale;
+
+    switch (entity.type) {
+      case 'HATCH':
+        ArchPlanStyle.mark(entity, 'furniture-fill', {
+          color: ArchPlanStyle.COLORS.furnitureFill,
+          fillOpacity: 0.35
+        });
+        return true;
+      case 'RECTANGLE': {
+        const bb = entity.getBoundingBox();
+        const w = bb.maxX - bb.minX;
+        const h = bb.maxY - bb.minY;
+        const thin = Math.min(w, h) < wallThick && Math.max(w, h) > Math.min(w, h) * 3;
+        ArchPlanStyle.mark(entity, thin ? 'wall' : 'furniture-fill', {
+          color: thin ? ArchPlanStyle.COLORS.wallCut : ArchPlanStyle.COLORS.furnitureFill,
+          fillOpacity: thin ? 0.92 : 0.35
+        });
+        return true;
+      }
+      case 'CIRCLE': {
+        const colTh = 0.8 * scale;
+        if (entity.radius <= colTh) {
+          ArchPlanStyle.mark(entity, 'column', {
+            color: ArchPlanStyle.COLORS.columnFill,
+            fillOpacity: 0.9
+          });
+        } else if (entity.radius <= 1.5 * scale) {
+          ArchPlanStyle.mark(entity, 'landscape-tree', {
+            color: ArchPlanStyle.COLORS.tree,
+            fillOpacity: 0.5
+          });
+        } else {
+          ArchPlanStyle.mark(entity, 'symbol', {
+            color: ArchPlanStyle.COLORS.outline,
+            fillOpacity: 0
+          });
+        }
+        return true;
+      }
+      case 'POLYLINE':
+        if (entity.closed) {
+          const dashed = entity.style?.lineDash?.length;
+          ArchPlanStyle.mark(entity, dashed ? 'floor' : 'room-floor', {
+            color: dashed ? ArchPlanStyle.COLORS.floor : ArchPlanStyle.COLORS.roomFloor,
+            fillOpacity: dashed ? 0.2 : 0.12,
+            lineDash: entity.style?.lineDash
+          });
+        } else {
+          ArchPlanStyle.mark(entity, entity.style?.lineDash?.length ? 'open-wall' : 'symbol', {
+            color: entity.style?.lineDash?.length
+              ? ArchPlanStyle.COLORS.openWall : ArchPlanStyle.COLORS.symbol,
+            lineWidth: 1.5
+          });
+        }
+        return true;
+      case 'LINE':
+        ArchPlanStyle.mark(entity, entity.style?.lineDash?.length ? 'open-wall' : 'symbol', {
+          color: entity.style?.lineDash?.length
+            ? ArchPlanStyle.COLORS.openWall : ArchPlanStyle.COLORS.symbol,
+          lineWidth: 1
+        });
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  static _convertArchEntity(entity) {
+    if (entity.landscapeKind && typeof ArchitecturalTemplates !== 'undefined') {
+      const st = ArchitecturalTemplates.ZONE_KINDS[entity.landscapeKind]
+        || ArchitecturalTemplates.ZONE_KINDS.lawn;
+      ArchPlanStyle.mark(entity, 'landscape-fill', {
+        color: st.color,
+        fillOpacity: st.fillOpacity,
+        lineDash: st.dash || undefined
+      });
+      return true;
+    }
+
+    const roles = {
+      wall: ['wall', ArchPlanStyle.COLORS.wallCut, 0.92],
+      'room-fill': ['room-floor', ArchPlanStyle.COLORS.roomFloor, 0.12],
+      floor: ['floor', ArchPlanStyle.COLORS.floor, 0.2],
+      ceiling: ['ceiling', ArchPlanStyle.COLORS.ceiling, 0.18],
+      column: ['column', ArchPlanStyle.COLORS.columnFill, 0.9],
+      landscape: ['landscape-fill', ArchPlanStyle.COLORS.lawn, 0.4],
+      site: ['symbol', '#78909c', 0, [12, 6]]
+    };
+
+    const spec = roles[entity.archType];
+    if (!spec) {
+      if (entity.planView) return false;
+      ArchPlanStyle.mark(entity, 'symbol', { color: ArchPlanStyle.COLORS.symbol });
+      return true;
+    }
+
+    ArchPlanStyle.mark(entity, spec[0], {
+      color: spec[1],
+      fillOpacity: spec[2],
+      lineDash: spec[3] || entity.style?.lineDash
+    });
+    return true;
+  }
 }

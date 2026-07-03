@@ -430,6 +430,11 @@ class WebCADApp {
         alert(r.message);
       },
       'import-sketch': () => document.getElementById('sketch-input')?.click(),
+      'convert-plan-view': () => {
+        const sel = this.selectionManager.getSelected();
+        const r = this.features.convertToPlanView(sel.length > 0);
+        this.logCommand(r.message);
+      },
       'share-link': () => this.createShareLink(),
       'undo': () => this.undo(),
       'redo': () => this.redo(),
@@ -515,6 +520,8 @@ class WebCADApp {
       const sync = ModeConversionEngine.onEnter3D(this);
       if (sync.created || sync.updated) {
         this.logCommand(`2D→3D: ${sync.created} mới, ${sync.updated} cập nhật.`);
+      } else if (this.drawing.entities.length > 0) {
+        this.logCommand('2D→3D: Không có hình kín để extrude (hatch, rectangle, polyline đóng, circle).');
       }
       await this.renderer3D.init();
       this.renderer3D.syncEntities(this.drawing.entities3D);

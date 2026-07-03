@@ -1,7 +1,9 @@
 class ExtrudeEngine3D {
   static from2DEntity(entity2d, height = 1, options = {}) {
-    const profile = MeshFactory3D.profileFrom2DEntity(entity2d);
-    if (!profile) return null;
+    const raw = MeshFactory3D.profileFrom2DEntity(entity2d);
+    if (!raw) return null;
+
+    const { profile, center } = MeshFactory3D.centerProfile(raw);
 
     const entity = new Entity3D('EXTRUDE', options.name || 'Extrude');
     entity.params = {
@@ -10,9 +12,19 @@ class ExtrudeEngine3D {
       bevel: options.bevel || false,
       bevelThickness: options.bevelThickness || 0.1,
       bevelSize: options.bevelSize || 0.1,
-      source2DId: entity2d.id
+      source2DId: entity2d.id,
+      archType: entity2d.archType || null
     };
-    entity.position = { x: 0, y: height / 2, z: 0 };
+
+    if (entity2d.getColor && options.layerManager) {
+      try {
+        entity.material.color = entity2d.getColor(options.layerManager);
+      } catch (_) { /* keep default */ }
+    } else if (entity2d.style?.color) {
+      entity.material.color = entity2d.style.color;
+    }
+
+    entity.position = { x: center.x, y: height / 2, z: center.y };
     entity._meshDirty = true;
     return entity;
   }
@@ -21,6 +33,7 @@ class ExtrudeEngine3D {
     if (entity.type !== 'EXTRUDE') return false;
     entity.params.height = height;
     entity.position.y = height / 2;
+    entity.markDirty();
     return true;
   }
 }
