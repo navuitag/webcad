@@ -72,6 +72,7 @@ class WebCADApp {
     window.addEventListener('offline', () => this._updateOfflineStatus());
     this._checkShareLink();
     this.updateCollabStatus();
+    this._updateCanvasViewToggles();
     this.updateStatusBar();
     this.requestRender();
 
@@ -620,6 +621,7 @@ class WebCADApp {
 
   toggleGrid() {
     this.drawing.view.showGrid = !this.drawing.view.showGrid;
+    this._updateCanvasViewToggles();
     this.requestRender();
   }
 
@@ -627,6 +629,7 @@ class WebCADApp {
     this.drawing.view.ortho = !this.drawing.view.ortho;
     document.getElementById('status-ortho').textContent =
       `Ortho: ${this.drawing.view.ortho ? 'ON' : 'OFF'}`;
+    this._updateCanvasViewToggles();
   }
 
   toggleSnap() {
@@ -634,6 +637,17 @@ class WebCADApp {
     this.snapEngine.enabled = this.drawing.view.snapEnabled;
     document.getElementById('status-snap').textContent =
       `Snap: ${this.drawing.view.snapEnabled ? 'ON' : 'OFF'}`;
+    this._updateCanvasViewToggles();
+  }
+
+  _updateCanvasViewToggles() {
+    const v = this.drawing?.view;
+    if (!v) return;
+    document.querySelectorAll('[data-view-toggle]').forEach((btn) => {
+      const key = btn.dataset.viewToggle;
+      const on = key === 'grid' ? v.showGrid : key === 'ortho' ? v.ortho : key === 'snap' ? v.snapEnabled : false;
+      btn.classList.toggle('active', !!on);
+    });
   }
 
   undo() {
