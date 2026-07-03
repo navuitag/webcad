@@ -428,6 +428,10 @@ class WebCADApp {
     });
 
     if (!is2D) {
+      const sync = ModeConversionEngine.onEnter3D(this);
+      if (sync.created || sync.updated) {
+        this.logCommand(`2D→3D: ${sync.created} mới, ${sync.updated} cập nhật.`);
+      }
       await this.renderer3D.init();
       this.renderer3D.syncEntities(this.drawing.entities3D);
       this._bind3DEvents();
@@ -438,6 +442,12 @@ class WebCADApp {
       this._update3DSelectionHighlight();
     } else {
       this.renderer3D.setLoopActive(false);
+      const sync = ModeConversionEngine.onEnter2D(this);
+      if (sync.created || sync.updated) {
+        this.logCommand(`3D→2D: ${sync.created} mới, ${sync.updated} cập nhật.`);
+      }
+      this._updateLayerPanel();
+      this.requestRender();
     }
 
     document.getElementById('status-mode').textContent = mode.toUpperCase();
