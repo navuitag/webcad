@@ -8,13 +8,16 @@ class GeometryKernelWASM {
   static _wasm = null;
   static _ready = null;
   static backend = 'javascript';
+  /** Bật khi đã ship webcad-geometry.wasm */
+  static wasmEnabled = false;
+  static wasmUrl = './wasm/webcad-geometry.wasm';
 
-  static async init(wasmUrl = './wasm/webcad-geometry.wasm') {
+  static async init(wasmUrl = GeometryKernelWASM.wasmUrl) {
     if (GeometryKernelWASM._ready) return GeometryKernelWASM._ready;
 
     GeometryKernelWASM._ready = (async () => {
-      try {
-        if (typeof WebAssembly !== 'undefined') {
+      if (GeometryKernelWASM.wasmEnabled && typeof WebAssembly !== 'undefined') {
+        try {
           const resp = await fetch(wasmUrl, { method: 'HEAD' });
           if (resp.ok) {
             // Future: instantiate WASM module
@@ -22,9 +25,9 @@ class GeometryKernelWASM {
             // GeometryKernelWASM._wasm = await WebAssembly.instantiate(bytes, imports);
             // GeometryKernelWASM.backend = 'wasm';
           }
+        } catch (_) {
+          /* WASM not available — use JS kernel */
         }
-      } catch (_) {
-        /* WASM not available — use JS kernel */
       }
       GeometryKernelWASM.backend = 'javascript';
       return GeometryKernelWASM.backend;
