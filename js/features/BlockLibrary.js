@@ -267,17 +267,36 @@ class BlockLibrary {
       ]
     },
     'stairs': {
-      category: 'stair', name: 'Cầu thang', icon: '🪜', width: 100, height: 200,
-      entities: () => {
-        const lines = [];
-        for (let i = 0; i <= 10; i++) {
-          const y = i * 20;
-          lines.push(BlockLibrary._line(0, y, 100, y));
-        }
-        lines.push(BlockLibrary._line(0, 0, 0, 200));
-        lines.push(BlockLibrary._line(100, 0, 100, 200));
-        return lines;
-      }
+      category: 'stair', name: 'Cầu thang thẳng', icon: '🪜', width: 100, height: 200,
+      entities: () => BlockLibrary._stairsStraight(100, 200, 10)
+    },
+    'stairs-l': {
+      category: 'stair', name: 'Cầu thang chữ L', icon: '↩️', width: 200, height: 200,
+      entities: () => BlockLibrary._stairsL(100, 200)
+    },
+    'stairs-u': {
+      category: 'stair', name: 'Cầu thang chữ U', icon: '⮕', width: 280, height: 200,
+      entities: () => BlockLibrary._stairsU(100, 200, 280)
+    },
+    'stairs-winder': {
+      category: 'stair', name: 'Cầu thang quạt', icon: '🌀', width: 200, height: 200,
+      entities: () => BlockLibrary._stairsWinder(100, 200)
+    },
+    'stairs-spiral': {
+      category: 'stair', name: 'Cầu thang xoắn ốc', icon: '🔄', width: 160, height: 160,
+      entities: () => BlockLibrary._stairsSpiral(80, 12)
+    },
+    'stairs-double': {
+      category: 'stair', name: 'Cầu thang đôi', icon: '⏫', width: 220, height: 200,
+      entities: () => BlockLibrary._stairsDouble(200)
+    },
+    'stairs-external': {
+      category: 'stair', name: 'Cầu thang ngoài', icon: '🏡', width: 120, height: 240,
+      entities: () => BlockLibrary._stairsExternal(120, 240)
+    },
+    'stairs-platform': {
+      category: 'stair', name: 'Cầu thang + bục', icon: '⬆️', width: 100, height: 260,
+      entities: () => BlockLibrary._stairsWithLanding(100, 260)
     },
     'toilet': {
       category: 'bath', name: 'Bồn cầu', icon: '🚽', width: 40, height: 60,
@@ -349,6 +368,120 @@ class BlockLibrary {
     return { type: 'LINE', x1, y1, x2, y2 };
   }
 
+  static _stairsStraight(w, len, steps) {
+    const lines = [];
+    const step = len / steps;
+    for (let i = 0; i <= steps; i++) {
+      const y = i * step;
+      lines.push(BlockLibrary._line(0, y, w, y));
+    }
+    lines.push(BlockLibrary._line(0, 0, 0, len));
+    lines.push(BlockLibrary._line(w, 0, w, len));
+    lines.push(BlockLibrary._line(w * 0.4, len * 0.5, w * 0.4, len * 0.35));
+    lines.push(BlockLibrary._line(w * 0.35, len * 0.4, w * 0.45, len * 0.4));
+    return lines;
+  }
+
+  static _stairsL(w, total) {
+    const lines = BlockLibrary._stairsStraight(w, total * 0.55, 6);
+    const y0 = total * 0.45;
+    lines.push(BlockLibrary._line(0, y0, w, y0));
+    lines.push(BlockLibrary._line(w, y0, w, total));
+    for (let i = 0; i <= 5; i++) {
+      const x = w + i * (total * 0.45 / 5);
+      lines.push(BlockLibrary._line(x, y0, x, total));
+    }
+    lines.push(BlockLibrary._line(w, total, w + total * 0.45, total));
+    return lines;
+  }
+
+  static _stairsU(runW, runLen, totalW) {
+    const lines = [];
+    const gap = totalW - runW * 2;
+    lines.push(...BlockLibrary._stairsStraight(runW, runLen * 0.42, 5));
+    const yMid = runLen * 0.42;
+    lines.push(BlockLibrary._line(0, yMid, totalW, yMid));
+    lines.push(BlockLibrary._line(0, runLen * 0.58, totalW, runLen * 0.58));
+    for (let i = 0; i <= 5; i++) {
+      const y = yMid + i * ((runLen * 0.42) / 5);
+      lines.push(BlockLibrary._line(totalW - runW, y, totalW, y));
+    }
+    lines.push(BlockLibrary._line(totalW - runW, yMid, totalW - runW, runLen));
+    lines.push(BlockLibrary._line(totalW, yMid, totalW, runLen));
+    for (let i = 0; i <= 5; i++) {
+      const y = runLen - i * ((runLen * 0.42) / 5);
+      lines.push(BlockLibrary._line(0, y, runW, y));
+    }
+    lines.push(BlockLibrary._line(gap, 0, gap, yMid));
+    lines.push(BlockLibrary._line(gap + runW, 0, gap + runW, yMid));
+    return lines;
+  }
+
+  static _stairsWinder(w, total) {
+    const lines = BlockLibrary._stairsL(w, total);
+    const cx = w;
+    const cy = total * 0.45;
+    for (let i = 0; i < 5; i++) {
+      const a1 = (Math.PI / 2) * (i / 5);
+      const a2 = (Math.PI / 2) * ((i + 1) / 5);
+      lines.push(BlockLibrary._line(
+        cx + Math.cos(a1) * w * 0.45, cy + Math.sin(a1) * w * 0.45,
+        cx + Math.cos(a2) * w * 0.45, cy + Math.sin(a2) * w * 0.45
+      ));
+    }
+    return lines;
+  }
+
+  static _stairsSpiral(r, steps) {
+    const lines = [];
+    lines.push({ type: 'CIRCLE', cx: r, cy: r, r });
+    lines.push({ type: 'CIRCLE', cx: r, cy: r, r: r * 0.25 });
+    for (let i = 0; i < steps; i++) {
+      const a1 = (i / steps) * Math.PI * 2;
+      const a2 = ((i + 0.85) / steps) * Math.PI * 2;
+      lines.push(BlockLibrary._line(
+        r + Math.cos(a1) * r * 0.3, r + Math.sin(a1) * r * 0.3,
+        r + Math.cos(a2) * r, r + Math.sin(a2) * r
+      ));
+    }
+    lines.push(BlockLibrary._line(r, r, r, r - r * 0.2));
+    return lines;
+  }
+
+  static _stairsDouble(len) {
+    const w = 100;
+    const lines = BlockLibrary._stairsStraight(w, len * 0.45, 5);
+    lines.push(...BlockLibrary._stairsStraight(w, len * 0.45, 5).map(def => ({
+      ...def,
+      x1: def.x1 + 120, x2: def.x2 + 120
+    })));
+    lines.push(BlockLibrary._line(0, len * 0.45, 220, len * 0.45));
+    lines.push(BlockLibrary._line(0, len * 0.55, 220, len * 0.55));
+    lines.push(BlockLibrary._line(110, 0, 110, len * 0.45));
+    return lines;
+  }
+
+  static _stairsExternal(w, len) {
+    const lines = BlockLibrary._stairsStraight(w, len * 0.7, 8);
+    lines.push(BlockLibrary._rect(0, len * 0.7, w, len));
+    lines.push(BlockLibrary._line(0, len * 0.7, w, len));
+    lines.push(BlockLibrary._line(w, len * 0.7, 0, len));
+    return lines;
+  }
+
+  static _stairsWithLanding(w, len) {
+    const lines = BlockLibrary._stairsStraight(w, len * 0.35, 4);
+    lines.push(BlockLibrary._rect(0, len * 0.35, w, len * 0.5));
+    lines.push(...BlockLibrary._stairsStraight(w, len * 0.35, 4).map(def => ({
+      ...def,
+      y1: def.y1 + len * 0.5,
+      y2: def.y2 + len * 0.5
+    })));
+    lines.push(BlockLibrary._line(0, len * 0.5, w, len * 0.5));
+    lines.push(BlockLibrary._line(0, len, w, len));
+    return lines;
+  }
+
   static list(category) {
     return Object.entries(this.templates)
       .filter(([, t]) => !category || category === 'all' || t.category === category)
@@ -394,6 +527,14 @@ class BlockLibrary {
       { re: /vach\s*tam|tam\s*đung|vach\s*tam/, id: 'shower' },
       { re: /may\s*giat|giặt/, id: 'washing-machine' },
       { re: /bon\s*cau|wc|toilet/, id: 'toilet' },
+      { re: /cau\s*thang\s*xoan|cau\s*thang\s*ốc|spiral/, id: 'stairs-spiral' },
+      { re: /cau\s*thang\s*quat|winder/, id: 'stairs-winder' },
+      { re: /cau\s*thang\s*chữ\s*u|cau\s*thang\s*u|chieu\s*u/, id: 'stairs-u' },
+      { re: /cau\s*thang\s*chữ\s*l|cau\s*thang\s*l|chieu\s*l/, id: 'stairs-l' },
+      { re: /cau\s*thang\s*doi|cau\s*thang\s*2\s*nhanh/, id: 'stairs-double' },
+      { re: /cau\s*thang\s*ngoai|thang\s*ngoai/, id: 'stairs-external' },
+      { re: /cau\s*thang\s*buc|thang.*buc|platform/, id: 'stairs-platform' },
+      { re: /cau\s*thang\s*thang|thang\s*thang/, id: 'stairs' },
       { re: /cau\s*thang|stairs/, id: 'stairs' },
       { re: /o\s*cam|dien|outlet/, id: 'outlet' },
       { re: /cong\s*tac|switch/, id: 'switch' },
