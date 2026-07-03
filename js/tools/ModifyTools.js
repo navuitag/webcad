@@ -131,11 +131,8 @@ class DeleteTool extends Tool {
   onKeyDown(e) {
     if (e.key === 'Escape') this.app.setTool('select');
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      const selected = this.app.selectionManager.getSelected();
-      if (selected.length > 0) {
-        this._run('DELETE', { entities: [...selected] });
-        this.app.selectionManager.clearSelection();
-      }
+      e.preventDefault();
+      this.app._deleteSelection();
     }
   }
 }

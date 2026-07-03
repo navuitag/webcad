@@ -593,9 +593,16 @@ class WebCADApp {
   _onKeyDown(e) {
     if (e.target === this.commandInput) return;
 
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      if (this._deleteSelection()) return;
+      this.setTool('delete');
+      return;
+    }
+
     const shortcuts = {
       'l': 'line', 'c': 'circle', 'r': 'rectangle', 'p': 'pan',
-      'm': 'move', 'Delete': 'delete', 'Backspace': 'delete',
+      'm': 'move',
       'Escape': 'select'
     };
 
@@ -1163,6 +1170,34 @@ class WebCADApp {
 
   updateToolInfo(text) {
     this.toolInfo.innerHTML = `<p>${text}</p>`;
+  }
+
+  _deleteSelection() {
+    if (!this._ready) return false;
+
+    if (this.mode === '3d') {
+      const sel = this.selectionManager3D?.selected;
+      if (!sel) return false;
+      this.drawing.removeEntity3D(sel);
+      this.selectionManager3D.selected = null;
+      this.renderer3D?.syncEntities(this.drawing.entities3D);
+      this.collaboration?.broadcastEntityRemoved?.(sel);
+      this.updatePropertiesPanel();
+      this.updateStatusBar();
+      this.requestRender();
+      this.logCommand(`Đã xóa ${sel.type}.`);
+      return true;
+    }
+
+    const selected = this.selectionManager.getSelected();
+    if (selected.length === 0 || !this.cadCore) return false;
+
+    this.cadCore.run('DELETE', { entities: [...selected] });
+    this.selectionManager.clearSelection();
+    this.updatePropertiesPanel();
+    this.updateStatusBar();
+    this.logCommand(`Đã xóa ${selected.length} đối tượng.`);
+    return true;
   }
 
   updatePropertiesPanel() {
