@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v29';
+const CACHE_NAME = 'webcad-v30';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './css/toolbar.css',
   './css/panel.css',
   './css/phase5.css',
+  './css/responsive.css',
   './js/app.js',
   './js/core/Drawing.js',
   './js/core/LayerManager.js',

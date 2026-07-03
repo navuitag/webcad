@@ -29,6 +29,7 @@ class WebCADApp {
     this._initDOM();
     this._initTools();
     this._initEvents();
+    this._initResponsive();
     this._initPWA();
   }
 
@@ -294,6 +295,69 @@ class WebCADApp {
       this.updatePropertiesPanel();
       this.updateStatusBar();
     });
+  }
+
+  _initResponsive() {
+    this.leftPanel = document.querySelector('.left-panel');
+    this.rightPanel = document.querySelector('.right-panel');
+    this.panelBackdrop = document.getElementById('panel-backdrop');
+
+    document.getElementById('menu-toggle')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelector('.menu-bar')?.classList.toggle('menu-expanded');
+    });
+
+    document.getElementById('toggle-left-panel')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._toggleSidePanel('left');
+    });
+
+    document.getElementById('toggle-right-panel')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._toggleSidePanel('right');
+    });
+
+    this.panelBackdrop?.addEventListener('click', () => this._closeSidePanels());
+
+    document.addEventListener('click', (e) => {
+      if (!document.querySelector('.menu-bar')?.classList.contains('menu-expanded')) return;
+      if (e.target.closest('.menu-bar')) return;
+      document.querySelector('.menu-bar')?.classList.remove('menu-expanded');
+    });
+
+    window.matchMedia('(min-width: 769px)').addEventListener('change', (e) => {
+      if (e.matches) this._closeSidePanels();
+    });
+
+    if (typeof ResizeObserver !== 'undefined' && this.canvasContainer) {
+      this._resizeObserver = new ResizeObserver(() => this._resize());
+      this._resizeObserver.observe(this.canvasContainer);
+    }
+
+    window.visualViewport?.addEventListener('resize', () => {
+      clearTimeout(this._viewportResizeTimer);
+      this._viewportResizeTimer = setTimeout(() => this._resize(), 100);
+    });
+  }
+
+  _toggleSidePanel(side) {
+    const panel = side === 'left' ? this.leftPanel : this.rightPanel;
+    const other = side === 'left' ? this.rightPanel : this.leftPanel;
+    if (!panel) return;
+    const opening = !panel.classList.contains('panel-open');
+    other?.classList.remove('panel-open');
+    panel.classList.toggle('panel-open', opening);
+    this.panelBackdrop?.classList.toggle('visible', opening);
+    this.panelBackdrop?.setAttribute('aria-hidden', opening ? 'false' : 'true');
+    if (opening) setTimeout(() => this._resize(), 280);
+  }
+
+  _closeSidePanels() {
+    this.leftPanel?.classList.remove('panel-open');
+    this.rightPanel?.classList.remove('panel-open');
+    this.panelBackdrop?.classList.remove('visible');
+    this.panelBackdrop?.setAttribute('aria-hidden', 'true');
+    this._resize();
   }
 
   _initCollabUI() {
