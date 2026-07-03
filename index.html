@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="WebCAD - Phần mềm thiết kế bản vẽ kỹ thuật 2D/3D trên web">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>WebCAD</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/toolbar.css">
+  <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Menu Bar -->
+    <header class="menu-bar">
+      <div class="menu-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="12" y1="3" x2="12" y2="21"/>
+        </svg>
+        <span>WebCAD</span>
+      </div>
+      <nav class="menu-items">
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="file">Tệp</button>
+          <div class="dropdown-content" id="menu-file">
+            <button data-action="new">Mới</button>
+            <button data-action="open">Mở...</button>
+            <button data-action="save">Lưu</button>
+            <button data-action="save-as">Lưu thành...</button>
+            <hr>
+            <button data-action="export-png">Xuất PNG</button>
+            <button data-action="export-svg">Xuất SVG</button>
+            <button data-action="export-pdf">Xuất PDF</button>
+            <button data-action="export-stl">Xuất STL</button>
+            <button data-action="export-obj">Xuất OBJ</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="edit">Sửa</button>
+          <div class="dropdown-content" id="menu-edit">
+            <button data-action="undo">Hoàn tác</button>
+            <button data-action="redo">Làm lại</button>
+            <hr>
+            <button data-action="delete">Xóa</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="view">Xem</button>
+          <div class="dropdown-content" id="menu-view">
+            <button data-action="zoom-in">Phóng to</button>
+            <button data-action="zoom-out">Thu nhỏ</button>
+            <button data-action="zoom-extents">Vừa khung</button>
+            <button data-action="toggle-grid">Lưới</button>
+            <button data-action="toggle-ortho">Ortho</button>
+            <button data-action="toggle-snap">Snap</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="mode">Chế độ</button>
+          <div class="dropdown-content" id="menu-mode">
+            <button data-action="mode-2d" class="active">2D</button>
+            <button data-action="mode-3d">3D</button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar" id="toolbar">
+      <div class="tool-group" data-group="draw">
+        <button class="tool-btn active" data-tool="select" title="Chọn (Esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="line" title="Đường thẳng (L)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="polyline" title="Đa tuyến (PL)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,20 8,8 16,16 20,4"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="circle" title="Đường tròn (C)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="arc" title="Cung tròn (A)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20 A16 16 0 0 1 20 4"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="rectangle" title="Hình chữ nhật (R)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="text" title="Văn bản (T)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,7 4,4 20,4 20,7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+        </button>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group" data-group="modify">
+        <button class="tool-btn" data-tool="move" title="Di chuyển (M)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,9 2,12 5,15"/><polyline points="9,5 12,2 15,5"/><polyline points="15,19 12,22 9,19"/><polyline points="19,9 22,12 19,15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="copy" title="Sao chép (CO)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="rotate" title="Xoay (RO)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="scale" title="Tỷ lệ (SC)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="delete" title="Xóa (Del)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group" data-group="measure">
+        <button class="tool-btn" data-tool="dimension" title="Ghi kích thước (DIM)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="8" x2="4" y2="16"/><line x1="20" y1="8" x2="20" y2="16"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="distance" title="Đo khoảng cách (DI)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 6H3"/><path d="M21 18H3"/><line x1="12" y1="6" x2="12" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group" data-group="view">
+        <button class="tool-btn" data-tool="pan" title="Pan (P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.7-2.3L3 14"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="zoom" title="Zoom (Z)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group" data-group="3d" id="toolbar-3d" style="display:none">
+        <button class="tool-btn" data-tool="box3d" title="Hộp 3D">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="sphere3d" title="Hình cầu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="cylinder3d" title="Hình trụ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v14c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="cone3d" title="Hình nón">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Left Panel - Tools info -->
+      <aside class="left-panel">
+        <div class="panel-section">
+          <h3>Công cụ</h3>
+          <div id="tool-info" class="tool-info">
+            <p>Chọn công cụ từ thanh công cụ hoặc nhập lệnh.</p>
+          </div>
+        </div>
+        <div class="panel-section">
+          <h3>Thuộc tính</h3>
+          <div id="properties-panel" class="properties-content">
+            <p class="empty-state">Chọn đối tượng để xem thuộc tính</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Canvas Area -->
+      <div class="canvas-container" id="canvas-container">
+        <canvas id="canvas-2d"></canvas>
+        <div id="canvas-3d" style="display:none"></div>
+        <div class="crosshair-h" id="crosshair-h"></div>
+        <div class="crosshair-v" id="crosshair-v"></div>
+      </div>
+
+      <!-- Right Panel - Layers -->
+      <aside class="right-panel">
+        <div class="panel-section">
+          <div class="panel-header">
+            <h3>Layers</h3>
+            <button class="icon-btn" id="add-layer-btn" title="Thêm layer">+</button>
+          </div>
+          <div id="layer-list" class="layer-list"></div>
+        </div>
+        <div class="panel-section">
+          <h3>Snap</h3>
+          <div class="snap-options">
+            <label><input type="checkbox" id="snap-endpoint" checked> Endpoint</label>
+            <label><input type="checkbox" id="snap-midpoint" checked> Midpoint</label>
+            <label><input type="checkbox" id="snap-center" checked> Center</label>
+            <label><input type="checkbox" id="snap-intersection"> Intersection</label>
+            <label><input type="checkbox" id="snap-nearest"> Nearest</label>
+            <label><input type="checkbox" id="snap-grid" checked> Grid</label>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Command Line -->
+    <div class="command-line">
+      <span class="cmd-prompt">Command:</span>
+      <input type="text" id="command-input" placeholder="Nhập lệnh (LINE, CIRCLE, MOVE...)" autocomplete="off">
+      <div id="command-history" class="command-history"></div>
+    </div>
+
+    <!-- Status Bar -->
+    <footer class="status-bar">
+      <span id="status-coords">X: 0.00  Y: 0.00</span>
+      <span id="status-zoom">Zoom: 100%</span>
+      <span id="status-layer">Layer: 0</span>
+      <span id="status-snap">Snap: ON</span>
+      <span id="status-ortho">Ortho: OFF</span>
+      <span id="status-mode">2D</span>
+      <span id="status-entities">Entities: 0</span>
+    </footer>
+  </div>
+
+  <input type="file" id="file-input" accept=".wcad,.json" style="display:none">
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Core -->
+  <script src="js/core/Drawing.js"></script>
+  <script src="js/core/LayerManager.js"></script>
+  <script src="js/core/SelectionManager.js"></script>
+  <script src="js/core/HistoryManager.js"></script>
+  <script src="js/core/CommandManager.js"></script>
+
+  <!-- Geometry -->
+  <script src="js/geometry/GeometryEngine.js"></script>
+  <script src="js/geometry/SnapEngine.js"></script>
+
+  <!-- Entities -->
+  <script src="js/entities/Entity.js"></script>
+  <script src="js/entities/Line.js"></script>
+  <script src="js/entities/Circle.js"></script>
+  <script src="js/entities/Arc.js"></script>
+  <script src="js/entities/Polyline.js"></script>
+  <script src="js/entities/Rectangle.js"></script>
+  <script src="js/entities/Text.js"></script>
+  <script src="js/entities/Dimension.js"></script>
+  <script src="js/entities/Entity3D.js"></script>
+
+  <!-- Renderers -->
+  <script src="js/renderers/CanvasRenderer.js"></script>
+  <script src="js/renderers/ThreeRenderer.js"></script>
+
+  <!-- Tools -->
+  <script src="js/tools/Tool.js"></script>
+  <script src="js/tools/SelectTool.js"></script>
+  <script src="js/tools/DrawTools.js"></script>
+  <script src="js/tools/ModifyTools.js"></script>
+  <script src="js/tools/MeasureTools.js"></script>
+  <script src="js/tools/ViewTools.js"></script>
+  <script src="js/tools/Tool3D.js"></script>
+
+  <!-- Storage & Export -->
+  <script src="js/storage/StorageEngine.js"></script>
+  <script src="js/exporters/ExportEngine.js"></script>
+
+  <!-- App -->
+  <script src="js/app.js"></script>
+</body>
+</html>

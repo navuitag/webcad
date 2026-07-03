@@ -1,0 +1,20 @@
+{
+  "name": "WebCAD",
+  "short_name": "WebCAD",
+  "description": "Phần mềm thiết kế bản vẽ kỹ thuật 2D/3D trên web",
+  "start_url": "/webcad/index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "vi"
+}
