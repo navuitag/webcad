@@ -1,0 +1,12 @@
+---
+description: Tự động push lên remote sau khi commit
+alwaysApply: true
+---
+
+# Git: auto-push
+
+Sau khi tạo commit thành công trong repo `webcad`, **tự động push** lên remote (`git push -u origin HEAD` hoặc branch hiện tại) mà **không hỏi lại** người dùng.
+
+- Chỉ push sau commit đã hoàn tất (hook pass, working tree sạch).
+- Không force-push lên `main`/`master`.
+- Không push nếu commit thất bại hoặc không có commit mới.
