@@ -34,7 +34,7 @@ class ThreeRenderer {
     const height = this.container.clientHeight || 600;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0d1117);
+    this.scene.background = new THREE.Color(0x37474f);
 
     this.materialManager = new MaterialManager3D();
     this.cameraManager = new CameraManager3D(this.container);

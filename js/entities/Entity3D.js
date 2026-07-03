@@ -7,11 +7,12 @@ class Entity3D {
     this.rotation = { x: 0, y: 0, z: 0 };
     this.scale = { x: 1, y: 1, z: 1 };
     this.material = {
-      color: '#4fc3f7',
-      metalness: 0.1,
-      roughness: 0.6,
-      opacity: 1,
-      transparent: false
+      color: '#b0bec5',
+      metalness: 0,
+      roughness: 0.88,
+      opacity: 0.55,
+      transparent: true,
+      depthWrite: false
     };
     this.params = {};
     this.mesh = null;

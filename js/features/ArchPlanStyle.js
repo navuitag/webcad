@@ -27,33 +27,33 @@ class ArchPlanStyle {
     outline: '#b0bec5'
   };
 
-  /** Màu vật liệu 3D theo loại kiến trúc */
+  /** Vật liệu 3D khi chuyển từ 2D — xám / khói / trong suốt (ghost preview) */
   static MATERIAL_3D = {
-    wall: { color: '#42a5f5', metalness: 0.05, roughness: 0.62 },
-    column: { color: '#ffa726', metalness: 0.12, roughness: 0.48 },
-    'round-column': { color: '#ffa726', metalness: 0.12, roughness: 0.48 },
-    'room-fill': { color: '#4dd0e1', metalness: 0.0, roughness: 0.72 },
-    floor: { color: '#66bb6a', metalness: 0.0, roughness: 0.68 },
-    ceiling: { color: '#ab47bc', metalness: 0.0, roughness: 0.7 },
-    landscape: { color: '#9ccc65', metalness: 0.0, roughness: 0.75 },
-    lawn: { color: '#aed581', metalness: 0.0, roughness: 0.78 },
-    garden: { color: '#c5e1a5', metalness: 0.0, roughness: 0.76 },
-    water: { color: '#4fc3f7', metalness: 0.05, roughness: 0.35, opacity: 0.88 },
-    pool: { color: '#29b6f6', metalness: 0.08, roughness: 0.3, opacity: 0.9 },
-    path: { color: '#e0e0e0', metalness: 0.0, roughness: 0.82 },
-    paving: { color: '#cfd8dc', metalness: 0.0, roughness: 0.8 },
-    sand: { color: '#fff176', metalness: 0.0, roughness: 0.9 },
-    deck: { color: '#a1887f', metalness: 0.0, roughness: 0.72 },
-    flower: { color: '#f06292', metalness: 0.0, roughness: 0.65 },
-    'furniture-fill': { color: '#ffca28', metalness: 0.05, roughness: 0.55 },
-    'room-floor': { color: '#80deea', metalness: 0.0, roughness: 0.74 },
-    'landscape-fill': { color: '#9ccc65', metalness: 0.0, roughness: 0.76 },
-    'landscape-tree': { color: '#66bb6a', metalness: 0.0, roughness: 0.7 },
-    'landscape-water': { color: '#4fc3f7', metalness: 0.05, roughness: 0.35, opacity: 0.88 },
-    'landscape-path': { color: '#e0e0e0', metalness: 0.0, roughness: 0.82 },
-    'landscape-flower': { color: '#f48fb1', metalness: 0.0, roughness: 0.65 },
-    symbol: { color: '#90caf9', metalness: 0.08, roughness: 0.6 },
-    default: { color: '#4fc3f7', metalness: 0.08, roughness: 0.6 }
+    wall: { color: '#cfd8dc', metalness: 0, roughness: 0.88, opacity: 0.62 },
+    column: { color: '#b0bec5', metalness: 0, roughness: 0.82, opacity: 0.68 },
+    'round-column': { color: '#b0bec5', metalness: 0, roughness: 0.82, opacity: 0.68 },
+    'room-fill': { color: '#eceff1', metalness: 0, roughness: 0.92, opacity: 0.38 },
+    floor: { color: '#e0e0e0', metalness: 0, roughness: 0.9, opacity: 0.45 },
+    ceiling: { color: '#f5f5f5', metalness: 0, roughness: 0.92, opacity: 0.35 },
+    landscape: { color: '#d7ccc8', metalness: 0, roughness: 0.9, opacity: 0.42 },
+    lawn: { color: '#e8f5e9', metalness: 0, roughness: 0.92, opacity: 0.4 },
+    garden: { color: '#f1f8e9', metalness: 0, roughness: 0.92, opacity: 0.4 },
+    water: { color: '#b3e5fc', metalness: 0, roughness: 0.75, opacity: 0.48 },
+    pool: { color: '#81d4fa', metalness: 0, roughness: 0.7, opacity: 0.5 },
+    path: { color: '#eeeeee', metalness: 0, roughness: 0.9, opacity: 0.5 },
+    paving: { color: '#e0e0e0', metalness: 0, roughness: 0.88, opacity: 0.48 },
+    sand: { color: '#fff9c4', metalness: 0, roughness: 0.92, opacity: 0.42 },
+    deck: { color: '#d7ccc8', metalness: 0, roughness: 0.88, opacity: 0.45 },
+    flower: { color: '#f8bbd0', metalness: 0, roughness: 0.9, opacity: 0.4 },
+    'furniture-fill': { color: '#bdbdbd', metalness: 0, roughness: 0.85, opacity: 0.52 },
+    'room-floor': { color: '#eceff1', metalness: 0, roughness: 0.92, opacity: 0.38 },
+    'landscape-fill': { color: '#e0e0e0', metalness: 0, roughness: 0.9, opacity: 0.42 },
+    'landscape-tree': { color: '#c8e6c9', metalness: 0, roughness: 0.9, opacity: 0.45 },
+    'landscape-water': { color: '#b3e5fc', metalness: 0, roughness: 0.75, opacity: 0.48 },
+    'landscape-path': { color: '#f5f5f5', metalness: 0, roughness: 0.9, opacity: 0.5 },
+    'landscape-flower': { color: '#f5f5f5', metalness: 0, roughness: 0.9, opacity: 0.42 },
+    symbol: { color: '#b0bec5', metalness: 0, roughness: 0.88, opacity: 0.5 },
+    default: { color: '#b0bec5', metalness: 0, roughness: 0.88, opacity: 0.55 }
   };
 
   static PLAN_SPEC = {
@@ -85,11 +85,12 @@ class ArchPlanStyle {
   static applyMaterial3D(entity3d, entity2d) {
     const mat = ArchPlanStyle.materialForEntity2D(entity2d);
     entity3d.material.color = mat.color;
-    entity3d.material.metalness = mat.metalness ?? 0.08;
-    entity3d.material.roughness = mat.roughness ?? 0.62;
-    const opacity = mat.opacity ?? 1;
+    entity3d.material.metalness = mat.metalness ?? 0;
+    entity3d.material.roughness = mat.roughness ?? 0.88;
+    const opacity = mat.opacity ?? 0.55;
     entity3d.material.opacity = opacity;
-    entity3d.material.transparent = opacity < 1;
+    entity3d.material.transparent = opacity < 0.99;
+    entity3d.material.depthWrite = opacity >= 0.65;
     return entity3d;
   }
 
@@ -108,24 +109,7 @@ class ArchPlanStyle {
     if (role && ArchPlanStyle.MATERIAL_3D[role]) {
       return { ...ArchPlanStyle.MATERIAL_3D[role] };
     }
-    if (entity2d?.style?.color && !ArchPlanStyle._isDarkColor(entity2d.style.color)) {
-      return {
-        color: entity2d.style.color,
-        metalness: 0.05,
-        roughness: 0.65
-      };
-    }
     return { ...ArchPlanStyle.MATERIAL_3D.default };
-  }
-
-  static _isDarkColor(hex) {
-    if (!hex || typeof hex !== 'string') return false;
-    const c = hex.replace('#', '');
-    if (c.length < 6) return false;
-    const r = parseInt(c.slice(0, 2), 16);
-    const g = parseInt(c.slice(2, 4), 16);
-    const b = parseInt(c.slice(4, 6), 16);
-    return (r * 0.299 + g * 0.587 + b * 0.114) < 72;
   }
 
   static applyEntityPlanStyle(entity) {
