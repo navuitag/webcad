@@ -1,9 +1,16 @@
 class DimensionEntity extends Entity {
+  static DEFAULT_COLOR = DimensionEngine.COLOR;
+
   constructor(layerId, x1, y1, x2, y2, offset = 10) {
     super('DIMENSION', layerId);
     this.start = { x: x1, y: y1 };
     this.end = { x: x2, y: y2 };
     this.offset = offset;
+    this.style.color = DimensionEntity.DEFAULT_COLOR;
+  }
+
+  getColor(layerManager) {
+    return this.style.color || DimensionEntity.DEFAULT_COLOR;
   }
 
   getDistance() {

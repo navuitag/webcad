@@ -2,14 +2,19 @@
  * DimensionEngine — tạo và tính toán kích thước qua kernel
  */
 class DimensionEngine {
+  /** Màu dimension — khác layer và live measure (#ffa726) */
+  static COLOR = '#81c784';
+
   constructor(cadCore) {
     this.core = cadCore;
   }
 
   createLinear(p1, p2, offset = 10, layerId) {
-    return this.core.entities.create('DIMENSION', {
+    const entity = this.core.entities.create('DIMENSION', {
       x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, offset
     }, layerId);
+    entity.style.color = DimensionEngine.COLOR;
+    return entity;
   }
 
   measureDistance(p1, p2) {
