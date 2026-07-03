@@ -1441,9 +1441,30 @@ class WebCADApp {
         html += `<div class="prop-row"><label>Height</label><span>${(bb.maxY - bb.minY).toFixed(2)}</span></div>`;
         break;
       }
-      case 'TEXT':
-        html += `<div class="prop-row"><label>Text</label><input type="text" id="prop-text" value="${entity.text}"></div>`;
+      case 'TEXT': {
+        const rotDeg = ((entity.rotation || 0) * 180 / Math.PI).toFixed(1);
+        const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        const fonts = [
+          ['Arial, sans-serif', 'Arial'],
+          ['Georgia, serif', 'Georgia'],
+          ['Times New Roman, serif', 'Times New Roman'],
+          ['Courier New, monospace', 'Courier'],
+          ['Verdana, sans-serif', 'Verdana']
+        ];
+        const curFont = entity.fontFamily || styles.getTextStyle(entity.textStyleId).fontFamily || 'Arial, sans-serif';
+        html += `<div class="prop-row"><label>Nội dung</label><textarea id="prop-text" rows="2">${esc(entity.text)}</textarea></div>`;
+        html += `<div class="prop-row"><label>Chiều cao</label><input type="number" id="prop-text-height" min="0.1" step="0.1" value="${entity.height}"></div>`;
+        html += `<div class="prop-row"><label>Font</label><select id="prop-font-family">${fonts.map(([v, n]) =>
+          `<option value="${v}" ${v === curFont ? 'selected' : ''}>${n}</option>`
+        ).join('')}</select></div>`;
+        html += `<div class="prop-row prop-checks"><label>Định dạng</label>
+          <label class="prop-check"><input type="checkbox" id="prop-text-bold" ${entity.fontWeight === 'bold' ? 'checked' : ''}> Đậm</label>
+          <label class="prop-check"><input type="checkbox" id="prop-text-italic" ${entity.fontStyle === 'italic' ? 'checked' : ''}> Nghiêng</label>
+          <label class="prop-check"><input type="checkbox" id="prop-text-center" ${entity.centered ? 'checked' : ''}> Giữa</label>
+        </div>`;
+        html += `<div class="prop-row"><label>Xoay (°)</label><input type="number" id="prop-text-rotation" step="1" value="${rotDeg}"></div>`;
         break;
+      }
       case 'DIMENSION':
         html += `<div class="prop-row"><label>Distance</label><span>${GeometryEngine.formatDistance(entity.getDistance())}</span></div>`;
         break;
@@ -1462,10 +1483,26 @@ class WebCADApp {
     document.getElementById('prop-linetype')?.addEventListener('change', (e) => setProp('linetypeId', e.target.value));
     document.getElementById('prop-color')?.addEventListener('input', (e) => setProp('color', e.target.value));
     document.getElementById('prop-linewidth')?.addEventListener('change', (e) => setProp('lineWidth', e.target.value));
-    document.getElementById('prop-textstyle')?.addEventListener('change', (e) => setProp('textStyleId', e.target.value));
+    document.getElementById('prop-textstyle')?.addEventListener('change', (e) => {
+      const ts = styles.getTextStyle(e.target.value);
+      setProp('textStyleId', e.target.value);
+      if (entity.type === 'TEXT' && ts) {
+        if (ts.height) setProp('height', ts.height);
+        if (ts.fontFamily) setProp('fontFamily', ts.fontFamily);
+        if (ts.fontWeight) setProp('fontWeight', ts.fontWeight);
+        if (ts.fontStyle) setProp('fontStyle', ts.fontStyle);
+        this.updatePropertiesPanel();
+      }
+    });
     document.getElementById('prop-dimstyle')?.addEventListener('change', (e) => setProp('dimStyleId', e.target.value));
     document.getElementById('prop-hatch')?.addEventListener('change', (e) => setProp('pattern', e.target.value));
-    document.getElementById('prop-text')?.addEventListener('change', (e) => setProp('text', e.target.value));
+    document.getElementById('prop-text')?.addEventListener('input', (e) => setProp('text', e.target.value));
+    document.getElementById('prop-text-height')?.addEventListener('input', (e) => setProp('height', e.target.value));
+    document.getElementById('prop-font-family')?.addEventListener('change', (e) => setProp('fontFamily', e.target.value));
+    document.getElementById('prop-text-bold')?.addEventListener('change', (e) => setProp('fontWeight', e.target.checked ? 'bold' : 'normal'));
+    document.getElementById('prop-text-italic')?.addEventListener('change', (e) => setProp('fontStyle', e.target.checked ? 'italic' : 'normal'));
+    document.getElementById('prop-text-center')?.addEventListener('change', (e) => setProp('centered', e.target.checked));
+    document.getElementById('prop-text-rotation')?.addEventListener('input', (e) => setProp('rotation', e.target.value));
     document.getElementById('prop-constraint-btn')?.addEventListener('click', () => {
       this.cadCore.run('ADD_CONSTRAINT', {
         type: 'FIXED',

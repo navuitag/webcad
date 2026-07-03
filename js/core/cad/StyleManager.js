@@ -14,7 +14,23 @@ class StyleManager {
     this.textStyles = new Map([
       ['Standard', {
         id: 'Standard', name: 'Standard',
-        fontFamily: 'Arial, sans-serif', height: 2.5, widthFactor: 1, oblique: 0
+        fontFamily: 'Arial, sans-serif', height: 2.5, widthFactor: 1,
+        fontWeight: 'normal', fontStyle: 'normal'
+      }],
+      ['Title', {
+        id: 'Title', name: 'Tiêu đề',
+        fontFamily: 'Georgia, serif', height: 4, widthFactor: 1,
+        fontWeight: 'bold', fontStyle: 'normal'
+      }],
+      ['Note', {
+        id: 'Note', name: 'Ghi chú',
+        fontFamily: 'Arial, sans-serif', height: 2, widthFactor: 1,
+        fontWeight: 'normal', fontStyle: 'italic'
+      }],
+      ['RoomLabel', {
+        id: 'RoomLabel', name: 'Nhãn phòng',
+        fontFamily: 'Arial, sans-serif', height: 2.5, widthFactor: 1,
+        fontWeight: 'bold', fontStyle: 'normal'
       }]
     ]);
 

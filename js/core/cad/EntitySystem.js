@@ -409,5 +409,11 @@ class EntitySystem {
     else if (key === 'layerId') entity.layerId = value;
     else if (entity.type === 'HATCH' && key === 'pattern') entity.pattern = value;
     else if (entity.type === 'TEXT' && key === 'text') entity.text = value;
+    else if (entity.type === 'TEXT' && key === 'height') entity.height = parseFloat(value) || entity.height;
+    else if (entity.type === 'TEXT' && key === 'rotation') entity.rotation = (parseFloat(value) || 0) * Math.PI / 180;
+    else if (entity.type === 'TEXT' && key === 'centered') entity.centered = !!value;
+    else if (entity.type === 'TEXT' && key === 'fontFamily') entity.fontFamily = value || null;
+    else if (entity.type === 'TEXT' && key === 'fontWeight') entity.fontWeight = value || 'normal';
+    else if (entity.type === 'TEXT' && key === 'fontStyle') entity.fontStyle = value || 'normal';
   }
 }

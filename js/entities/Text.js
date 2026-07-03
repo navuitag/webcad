@@ -5,28 +5,55 @@ class TextEntity extends Entity {
     this.text = text;
     this.height = height;
     this.rotation = 0;
+    this.centered = false;
+    this.fontFamily = null;
+    this.fontWeight = 'normal';
+    this.fontStyle = 'normal';
   }
 
-  draw(ctx, drawing, layerManager) {
+  _resolveStyle(styleManager) {
+    const ts = styleManager?.getTextStyle?.(this.textStyleId) || {};
+    return {
+      height: this.height ?? ts.height ?? 10,
+      fontFamily: this.fontFamily || ts.fontFamily || 'Arial, sans-serif',
+      fontWeight: this.fontWeight || ts.fontWeight || 'normal',
+      fontStyle: this.fontStyle || ts.fontStyle || 'normal',
+      widthFactor: ts.widthFactor || 1
+    };
+  }
+
+  draw(ctx, drawing, layerManager, styleManager) {
+    const st = this._resolveStyle(styleManager);
     const sp = drawing.worldToScreen(this.position.x, this.position.y, ctx.canvas.width, ctx.canvas.height);
-    const fontSize = this.height * drawing.view.zoom;
+    const fontSize = st.height * drawing.view.zoom;
 
     ctx.save();
     ctx.fillStyle = this.getColor(layerManager);
-    ctx.font = `${fontSize}px sans-serif`;
+    ctx.font = `${st.fontStyle} ${st.fontWeight} ${fontSize}px ${st.fontFamily}`;
+
     if (this.centered) {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this.text, sp.x, sp.y);
-    } else {
-      ctx.textBaseline = 'bottom';
       if (this.rotation !== 0) {
         ctx.translate(sp.x, sp.y);
         ctx.rotate(-this.rotation);
+        if (st.widthFactor !== 1) ctx.scale(st.widthFactor, 1);
         ctx.fillText(this.text, 0, 0);
       } else {
-        ctx.fillText(this.text, sp.x, sp.y);
+        if (st.widthFactor !== 1) {
+          ctx.translate(sp.x, sp.y);
+          ctx.scale(st.widthFactor, 1);
+          ctx.fillText(this.text, 0, 0);
+        } else {
+          ctx.fillText(this.text, sp.x, sp.y);
+        }
       }
+    } else {
+      ctx.textBaseline = 'bottom';
+      ctx.translate(sp.x, sp.y);
+      ctx.rotate(-this.rotation);
+      if (st.widthFactor !== 1) ctx.scale(st.widthFactor, 1);
+      ctx.fillText(this.text, 0, 0);
     }
     ctx.restore();
   }
@@ -71,7 +98,10 @@ class TextEntity extends Entity {
       text: this.text,
       height: this.height,
       rotation: this.rotation,
-      centered: !!this.centered
+      centered: !!this.centered,
+      fontFamily: this.fontFamily,
+      fontWeight: this.fontWeight,
+      fontStyle: this.fontStyle
     };
   }
 
@@ -80,6 +110,9 @@ class TextEntity extends Entity {
     text.id = data.id;
     text.rotation = data.rotation || 0;
     text.centered = !!data.centered;
+    text.fontFamily = data.fontFamily || null;
+    text.fontWeight = data.fontWeight || 'normal';
+    text.fontStyle = data.fontStyle || 'normal';
     text.style = { ...text.style, ...data.style };
     return text;
   }
