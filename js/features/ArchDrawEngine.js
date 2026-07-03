@@ -76,7 +76,7 @@ class ArchDrawEngine {
     const wall = new HatchEntity(layerId, pts, 'SOLID');
     ArchPlanStyle.mark(wall, 'wall', {
       color: ArchPlanStyle.COLORS.wallCut,
-      fillOpacity: 0.92
+      fillOpacity: 0.72
     });
     wall.archType = 'wall';
     return wall;
@@ -185,7 +185,7 @@ class ArchDrawEngine {
     );
     ArchPlanStyle.mark(floor, 'room-floor', {
       color: ArchPlanStyle.COLORS.roomFloor,
-      fillOpacity: 0.12
+      fillOpacity: 0.58
     });
     floor.archType = 'room-fill';
     const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S', ArchDrawEngine._unitOpts(app));
@@ -213,7 +213,7 @@ class ArchDrawEngine {
     );
     ArchPlanStyle.mark(fill, 'floor', {
       color: ArchPlanStyle.COLORS.floor,
-      fillOpacity: 0.25
+      fillOpacity: 0.62
     });
     fill.archType = 'open-floor';
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
@@ -237,7 +237,7 @@ class ArchDrawEngine {
     );
     ArchPlanStyle.mark(fill, 'ceiling', {
       color: ArchPlanStyle.COLORS.ceiling,
-      fillOpacity: 0.22
+      fillOpacity: 0.55
     });
     fill.archType = 'open-ceiling';
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
@@ -261,7 +261,7 @@ class ArchDrawEngine {
     );
     ArchPlanStyle.mark(col, 'column', {
       color: ArchPlanStyle.COLORS.columnFill,
-      fillOpacity: 0.92
+      fillOpacity: 0.82
     });
     col.archType = 'column';
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
@@ -285,7 +285,7 @@ class ArchDrawEngine {
     const fill = new HatchEntity(layerId, ArchDrawEngine._circlePoints(cx, cy, r, 32), 'SOLID');
     ArchPlanStyle.mark(fill, 'column', {
       color: ArchPlanStyle.COLORS.columnFill,
-      fillOpacity: 0.92
+      fillOpacity: 0.82
     });
     fill.archType = 'round-column';
     const outer = new CircleEntity(layerId, cx, cy, r);

@@ -28,8 +28,9 @@ class HatchEntity extends Entity {
       ctx.globalAlpha = fillOpacity;
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = isPlan && this.planRole === 'wall'
-        ? ArchPlanStyle.COLORS.column : color;
+      ctx.strokeStyle = isPlan
+        ? ArchPlanStyle.edgeColor(this, color)
+        : color;
       ctx.lineWidth = isPlan ? 1.5 : 1;
       ctx.stroke();
     } else {

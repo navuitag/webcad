@@ -14,6 +14,20 @@ class ModeConversionEngine {
     site: 0.02
   };
 
+  static PLAN_ROLE_HEIGHTS_M = {
+    wall: 2.8,
+    column: 2.8,
+    'room-floor': 0.12,
+    floor: 0.15,
+    ceiling: 0.1,
+    'furniture-fill': 0.85,
+    'landscape-fill': 0.05,
+    'landscape-tree': 1.2,
+    'landscape-water': 0.08,
+    'landscape-path': 0.06,
+    'landscape-flower': 0.25
+  };
+
   static onEnter3D(app) {
     const stats = { created: 0, updated: 0, skipped: 0 };
     const bySource = ModeConversionEngine._mapBySource2D(app.drawing.entities3D);
@@ -87,7 +101,9 @@ class ModeConversionEngine {
     if (e2.type === 'TEXT' || e2.type === 'DIMENSION') return true;
     if (e2.archLabel) return true;
     if (e2.archType === 'site') return true;
-    if (e2.planRole === 'symbol' && !e2.archType && e2.type === 'LINE') return true;
+    if (e2.planRole === 'open-wall') return true;
+    if (e2.planRole === 'symbol' && !e2.archType
+      && (e2.type === 'LINE' || (e2.type === 'POLYLINE' && !e2.closed))) return true;
     return false;
   }
 
@@ -105,8 +121,10 @@ class ModeConversionEngine {
     }
 
     let hM = ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType];
-    if (hM == null && e2.planRole === 'wall') hM = ModeConversionEngine.ARCH_HEIGHTS_M.wall;
-    if (hM == null && e2.planRole === 'column') hM = ModeConversionEngine.ARCH_HEIGHTS_M.column;
+    if (hM == null && e2.planRole) {
+      hM = ModeConversionEngine.PLAN_ROLE_HEIGHTS_M[e2.planRole];
+    }
+    if (hM == null && e2.landscapeKind) hM = ModeConversionEngine.ARCH_HEIGHTS_M.landscape;
     if (hM == null) hM = ModeConversionEngine.DEFAULT_EXTRUDE_HEIGHT_M;
 
     if (worldUnit === 'mm' || worldUnit === 'cm') {
@@ -124,6 +142,9 @@ class ModeConversionEngine {
     e3.position.x = center.x;
     e3.position.y = height / 2;
     e3.position.z = center.y;
+    if (typeof ArchPlanStyle !== 'undefined') {
+      ArchPlanStyle.applyMaterial3D(e3, e2);
+    }
     e3.markDirty();
   }
 

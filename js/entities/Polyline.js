@@ -25,7 +25,7 @@ class PolylineEntity extends Entity {
         ctx.fill();
         ctx.globalAlpha = 1;
       }
-      ctx.strokeStyle = this.getColor(layerManager);
+      ctx.strokeStyle = ArchPlanStyle.edgeColor(this, this.getColor(layerManager));
       ctx.lineWidth = this.style.lineWidth || 1.5;
       if (this.style.lineDash?.length) ctx.setLineDash(this.style.lineDash);
       ctx.stroke();

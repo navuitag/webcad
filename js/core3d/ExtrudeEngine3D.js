@@ -16,10 +16,8 @@ class ExtrudeEngine3D {
       archType: entity2d.archType || null
     };
 
-    if (entity2d.getColor && options.layerManager) {
-      try {
-        entity.material.color = entity2d.getColor(options.layerManager);
-      } catch (_) { /* keep default */ }
+    if (typeof ArchPlanStyle !== 'undefined') {
+      ArchPlanStyle.applyMaterial3D(entity, entity2d);
     } else if (entity2d.style?.color) {
       entity.material.color = entity2d.style.color;
     }

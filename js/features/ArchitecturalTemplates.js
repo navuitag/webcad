@@ -10,15 +10,15 @@ class ArchitecturalTemplates {
   };
 
   static ZONE_KINDS = {
-    lawn: { color: '#43a047', fillOpacity: 0.35, dash: null },
-    garden: { color: '#7cb342', fillOpacity: 0.4, dash: null },
-    water: { color: '#29b6f6', fillOpacity: 0.45, dash: [8, 4] },
-    pool: { color: '#0288d1', fillOpacity: 0.5, dash: null },
-    path: { color: '#bdbdbd', fillOpacity: 0.55, dash: null },
-    paving: { color: '#9e9e9e', fillOpacity: 0.55, dash: null },
-    sand: { color: '#ffd54f', fillOpacity: 0.4, dash: null },
-    deck: { color: '#8d6e63', fillOpacity: 0.45, dash: null },
-    flower: { color: '#ec407a', fillOpacity: 0.35, dash: null }
+    lawn: { color: '#aed581', fillOpacity: 0.48, dash: null },
+    garden: { color: '#c5e1a5', fillOpacity: 0.5, dash: null },
+    water: { color: '#81d4fa', fillOpacity: 0.55, dash: [8, 4] },
+    pool: { color: '#4fc3f7', fillOpacity: 0.58, dash: null },
+    path: { color: '#eeeeee', fillOpacity: 0.62, dash: null },
+    paving: { color: '#cfd8dc', fillOpacity: 0.6, dash: null },
+    sand: { color: '#fff59d', fillOpacity: 0.52, dash: null },
+    deck: { color: '#bcaaa4', fillOpacity: 0.5, dash: null },
+    flower: { color: '#f48fb1', fillOpacity: 0.48, dash: null }
   };
 
   static catalog = {
