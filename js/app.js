@@ -38,6 +38,7 @@ class WebCADApp {
     await this.cloudStorage.init();
     this.collaboration = new CollaborationEngine(this);
     this.collaboration.init();
+    this._initCollabUI();
     this.pluginManager = new PluginManager(this);
     this.pluginManager.loadBuiltIn();
     this.aiAssistant = new AiAssistant(this);
@@ -239,20 +240,11 @@ class WebCADApp {
 
     document.getElementById('cloud-save-btn')?.addEventListener('click', () => this.saveToCloud());
     document.getElementById('cloud-share-btn')?.addEventListener('click', () => this.createShareLink());
-    document.getElementById('collab-sync-btn')?.addEventListener('click', () => this.collaboration.broadcastFullSync());
-    document.getElementById('collab-connect-btn')?.addEventListener('click', () => {
-      const url = document.getElementById('collab-ws-url')?.value;
-      if (url) this.collaboration.connect(url);
-    });
-    document.getElementById('collab-username')?.addEventListener('change', (e) => {
-      this.collaboration.setUserName(e.target.value);
-    });
+
     document.getElementById('ai-send-btn')?.addEventListener('click', () => this._sendAiMessage());
     document.getElementById('ai-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this._sendAiMessage();
     });
-
-    this.collaboration.onEvent(() => this.updateCollabStatus());
 
     document.getElementById('add-layout-btn')?.addEventListener('click', () => {
       const name = prompt('Tên layout:', `Layout${this.layoutManager.layouts.length}`);
@@ -266,6 +258,26 @@ class WebCADApp {
       this.updatePropertiesPanel();
       this.requestRender();
     });
+  }
+
+  _initCollabUI() {
+    if (!this.collaboration) return;
+
+    document.getElementById('collab-sync-btn')?.addEventListener('click', () => this.collaboration.broadcastFullSync());
+    document.getElementById('collab-connect-btn')?.addEventListener('click', () => {
+      const url = document.getElementById('collab-ws-url')?.value;
+      if (url) this.collaboration.connect(url);
+    });
+    document.getElementById('collab-username')?.addEventListener('change', (e) => {
+      this.collaboration.setUserName(e.target.value);
+    });
+
+    const usernameInput = document.getElementById('collab-username');
+    if (usernameInput && !usernameInput.value) {
+      usernameInput.value = this.collaboration.userName;
+    }
+
+    this.collaboration.onEvent(() => this.updateCollabStatus());
   }
 
   _initPWA() {
