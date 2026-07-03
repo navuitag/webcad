@@ -1,7 +1,7 @@
 class CloudStorageEngine {
   constructor(storageEngine) {
     this.storage = storageEngine;
-    this.cloudStoreName = 'cloud_drawings';
+    this.cloudStoreName = StorageEngine.STORE_CLOUD;
     this.db = null;
     this.apiUrl = localStorage.getItem('webcad_cloud_api') || '';
   }
@@ -10,32 +10,6 @@ class CloudStorageEngine {
     if (this.storage.db) {
       this.db = this.storage.db;
     }
-    await this._ensureCloudStore();
-  }
-
-  _ensureCloudStore() {
-    return new Promise((resolve) => {
-      if (!this.db) { resolve(); return; }
-      if (this.db.objectStoreNames.contains(this.cloudStoreName)) {
-        resolve();
-        return;
-      }
-      const ver = this.db.version;
-      this.db.close();
-      const req = indexedDB.open('WebCADDB', ver + 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(this.cloudStoreName)) {
-          db.createObjectStore(this.cloudStoreName, { keyPath: 'id' });
-        }
-      };
-      req.onsuccess = (e) => {
-        this.db = e.target.result;
-        this.storage.db = this.db;
-        resolve();
-      };
-      req.onerror = () => resolve();
-    });
   }
 
   setApiUrl(url) {

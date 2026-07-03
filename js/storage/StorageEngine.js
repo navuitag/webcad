@@ -1,17 +1,25 @@
 class StorageEngine {
+  static DB_NAME = 'WebCADDB';
+  static DB_VERSION = 2;
+  static STORE_DRAWINGS = 'drawings';
+  static STORE_CLOUD = 'cloud_drawings';
+
   constructor() {
-    this.dbName = 'WebCADDB';
-    this.storeName = 'drawings';
+    this.dbName = StorageEngine.DB_NAME;
+    this.storeName = StorageEngine.STORE_DRAWINGS;
     this.db = null;
   }
 
   async init() {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
+      const request = indexedDB.open(this.dbName, StorageEngine.DB_VERSION);
       request.onupgradeneeded = (e) => {
         const db = e.target.result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(StorageEngine.STORE_DRAWINGS)) {
+          db.createObjectStore(StorageEngine.STORE_DRAWINGS, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(StorageEngine.STORE_CLOUD)) {
+          db.createObjectStore(StorageEngine.STORE_CLOUD, { keyPath: 'id' });
         }
       };
       request.onsuccess = (e) => {
