@@ -10,6 +10,11 @@ class RectangleEntity extends Entity {
     const p2 = drawing.worldToScreen(this.corner2.x, this.corner2.y, ctx.canvas.width, ctx.canvas.height);
 
     ctx.save();
+    if (this.planView && typeof ArchPlanStyle !== 'undefined') {
+      ArchPlanStyle.drawRectFill(this, ctx, p1, p2, layerManager);
+      ctx.restore();
+      return;
+    }
     ctx.strokeStyle = this.getColor(layerManager);
     ctx.lineWidth = this.style.lineWidth;
     if (this.style.lineDash.length) ctx.setLineDash(this.style.lineDash);

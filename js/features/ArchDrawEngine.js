@@ -1,5 +1,5 @@
 /**
- * ArchDrawEngine — vẽ nhanh kiến trúc (tường, phòng, cột, sàn/trần mở)
+ * ArchDrawEngine — vẽ nhanh kiến trúc (mặt bằng / plan view)
  * Đơn vị: mét (m²)
  */
 class ArchDrawEngine {
@@ -44,15 +44,56 @@ class ArchDrawEngine {
     ];
   }
 
-  static rectOutline(layerId, minX, minY, maxX, maxY, style = {}) {
-    const pl = new PolylineEntity(layerId, [
+  static _innerRect(b, inset) {
+    return {
+      minX: b.minX + inset,
+      maxX: b.maxX - inset,
+      minY: b.minY + inset,
+      maxY: b.maxY - inset
+    };
+  }
+
+  static _rectPoints(minX, minY, maxX, maxY) {
+    return [
       { x: minX, y: minY }, { x: maxX, y: minY },
       { x: maxX, y: maxY }, { x: minX, y: maxY }
-    ]);
+    ];
+  }
+
+  static _wallHatch(layerId, p1, p2, thickness) {
+    const pts = ArchDrawEngine.wallPolygon(p1, p2, thickness);
+    if (!pts) return null;
+    const wall = new HatchEntity(layerId, pts, 'SOLID');
+    ArchPlanStyle.mark(wall, 'wall', {
+      color: ArchPlanStyle.COLORS.wallCut,
+      fillOpacity: 0.92
+    });
+    wall.archType = 'wall';
+    return wall;
+  }
+
+  static _edgeWalls(layerId, b, thickness) {
+    const t = thickness;
+    return [
+      ArchDrawEngine._wallHatch(layerId, { x: b.minX, y: b.minY }, { x: b.maxX, y: b.minY }, t),
+      ArchDrawEngine._wallHatch(layerId, { x: b.maxX, y: b.minY }, { x: b.maxX, y: b.maxY }, t),
+      ArchDrawEngine._wallHatch(layerId, { x: b.maxX, y: b.maxY }, { x: b.minX, y: b.maxY }, t),
+      ArchDrawEngine._wallHatch(layerId, { x: b.minX, y: b.maxY }, { x: b.minX, y: b.minY }, t)
+    ].filter(Boolean);
+  }
+
+  static rectOutline(layerId, minX, minY, maxX, maxY, style = {}) {
+    const pl = new PolylineEntity(layerId, ArchDrawEngine._rectPoints(minX, minY, maxX, maxY));
     pl.closed = true;
     if (style.lineDash) pl.style.lineDash = style.lineDash;
     if (style.lineWidth) pl.style.lineWidth = style.lineWidth;
     if (style.color) pl.style.color = style.color;
+    if (style.planView !== false) {
+      ArchPlanStyle.mark(pl, style.planRole || 'symbol', {
+        color: style.color || ArchPlanStyle.COLORS.outline,
+        lineWidth: style.lineWidth || 1
+      });
+    }
     return pl;
   }
 
@@ -62,6 +103,7 @@ class ArchDrawEngine {
     const label = new TextEntity(layerId, cx, cy, text, height);
     label.centered = true;
     label.archLabel = true;
+    label.planView = true;
     label.style.color = ArchDrawEngine.DEFAULTS.labelColor;
     return label;
   }
@@ -82,96 +124,156 @@ class ArchDrawEngine {
   }
 
   static createWall(app, x1, y1, x2, y2, thickness) {
-    const pts = ArchDrawEngine.wallPolygon({ x: x1, y: y1 }, { x: x2, y: y2 }, thickness);
-    if (!pts) return [];
-    const layerId = app.layerManager.currentLayerId;
-    const wall = new HatchEntity(layerId, pts, 'SOLID');
-    wall.style.color = '#78909c';
-    wall.archType = 'wall';
+    const wall = ArchDrawEngine._wallHatch(
+      app.layerManager.currentLayerId,
+      { x: x1, y: y1 }, { x: x2, y: y2 },
+      thickness || ArchDrawEngine.DEFAULTS.wallThickness
+    );
+    if (!wall) return [];
     return ArchDrawEngine._commit(app, [wall]);
   }
 
   static createOpenWall(app, x1, y1, x2, y2) {
     const layerId = app.layerManager.currentLayerId;
-    const line = new LineEntity(layerId, x1, y1, x2, y2);
-    line.style.lineDash = [12, 6];
-    line.style.lineWidth = 2;
-    line.style.color = '#78909c';
-    line.archType = 'open-wall';
-    return ArchDrawEngine._commit(app, [line]);
+    const t = 0.04;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-9) return [];
+    const ox = (-dy / len) * t;
+    const oy = (dx / len) * t;
+    const mk = (sx, sy, ex, ey) => {
+      const line = new LineEntity(layerId, sx, sy, ex, ey);
+      ArchPlanStyle.mark(line, 'open-wall', {
+        color: ArchPlanStyle.COLORS.openWall,
+        lineWidth: 1.5,
+        lineDash: [8, 5]
+      });
+      line.archType = 'open-wall';
+      return line;
+    };
+    return ArchDrawEngine._commit(app, [
+      mk(x1 + ox, y1 + oy, x2 + ox, y2 + oy),
+      mk(x1 - ox, y1 - oy, x2 - ox, y2 - oy)
+    ]);
   }
 
   static createRoom(app, x1, y1, x2, y2) {
     const b = ArchDrawEngine.bounds(x1, y1, x2, y2);
     if (b.w < 1e-6 || b.h < 1e-6) return [];
     const layerId = app.layerManager.currentLayerId;
-    const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY);
-    outline.archType = 'room';
-    const fill = new HatchEntity(layerId, outline.points, 'SOLID');
-    fill.style.color = '#4fc3f7';
-    fill.archType = 'room-fill';
+    const t = ArchDrawEngine.DEFAULTS.wallThickness;
+    const inner = ArchDrawEngine._innerRect(b, t);
+    if (inner.maxX <= inner.minX || inner.maxY <= inner.minY) return [];
+
+    const walls = ArchDrawEngine._edgeWalls(layerId, b, t);
+    const floor = new HatchEntity(
+      layerId,
+      ArchDrawEngine._rectPoints(inner.minX, inner.minY, inner.maxX, inner.maxY),
+      'SOLID'
+    );
+    ArchPlanStyle.mark(floor, 'room-floor', {
+      color: ArchPlanStyle.COLORS.roomFloor,
+      fillOpacity: 0.12
+    });
+    floor.archType = 'room-fill';
     const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S');
-    return ArchDrawEngine._commit(app, [fill, outline, label]);
+    return ArchDrawEngine._commit(app, [...walls, floor, label]);
   }
 
   static createOpenFloor(app, x1, y1, x2, y2) {
     const b = ArchDrawEngine.bounds(x1, y1, x2, y2);
     if (b.w < 1e-6 || b.h < 1e-6) return [];
     const layerId = app.layerManager.currentLayerId;
+    const fill = new HatchEntity(
+      layerId,
+      ArchDrawEngine._rectPoints(b.minX, b.minY, b.maxX, b.maxY),
+      'ANSI31', 1, 45
+    );
+    ArchPlanStyle.mark(fill, 'floor', {
+      color: ArchPlanStyle.COLORS.floor,
+      fillOpacity: 0.25
+    });
+    fill.archType = 'open-floor';
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
       lineDash: [10, 5],
-      color: '#66bb6a'
+      color: ArchPlanStyle.COLORS.floor,
+      planRole: 'floor'
     });
     outline.archType = 'open-floor';
     const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S');
-    return ArchDrawEngine._commit(app, [outline, label]);
+    return ArchDrawEngine._commit(app, [fill, outline, label]);
   }
 
   static createOpenCeiling(app, x1, y1, x2, y2) {
     const b = ArchDrawEngine.bounds(x1, y1, x2, y2);
     if (b.w < 1e-6 || b.h < 1e-6) return [];
     const layerId = app.layerManager.currentLayerId;
+    const fill = new HatchEntity(
+      layerId,
+      ArchDrawEngine._rectPoints(b.minX, b.minY, b.maxX, b.maxY),
+      'DOTS', 1.2, 0
+    );
+    ArchPlanStyle.mark(fill, 'ceiling', {
+      color: ArchPlanStyle.COLORS.ceiling,
+      fillOpacity: 0.22
+    });
+    fill.archType = 'open-ceiling';
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
       lineDash: [4, 4, 12, 4],
-      color: '#ab47bc'
+      color: ArchPlanStyle.COLORS.ceiling,
+      planRole: 'ceiling'
     });
     outline.archType = 'open-ceiling';
     const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'T');
-    return ArchDrawEngine._commit(app, [outline, label]);
+    return ArchDrawEngine._commit(app, [fill, outline, label]);
   }
 
   static createColumn(app, x1, y1, x2, y2) {
     const b = ArchDrawEngine.bounds(x1, y1, x2, y2);
     if (b.w < 1e-6 || b.h < 1e-6) return [];
     const layerId = app.layerManager.currentLayerId;
-    const pts = [
-      { x: b.minX, y: b.minY }, { x: b.maxX, y: b.minY },
-      { x: b.maxX, y: b.maxY }, { x: b.minX, y: b.maxY }
-    ];
-    const col = new HatchEntity(layerId, pts, 'SOLID');
-    col.style.color = '#455a64';
+    const col = new HatchEntity(
+      layerId,
+      ArchDrawEngine._rectPoints(b.minX, b.minY, b.maxX, b.maxY),
+      'SOLID'
+    );
+    ArchPlanStyle.mark(col, 'column', {
+      color: ArchPlanStyle.COLORS.columnFill,
+      fillOpacity: 0.92
+    });
     col.archType = 'column';
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
-      color: '#263238',
-      lineWidth: 2
+      color: ArchPlanStyle.COLORS.column,
+      lineWidth: 2,
+      planRole: 'column'
     });
-    return ArchDrawEngine._commit(app, [col, outline]);
+    const x1l = new LineEntity(layerId, b.minX, b.minY, b.maxX, b.maxY);
+    const x2l = new LineEntity(layerId, b.maxX, b.minY, b.minX, b.maxY);
+    [x1l, x2l].forEach(l => ArchPlanStyle.mark(l, 'symbol', {
+      color: ArchPlanStyle.COLORS.outline,
+      lineWidth: 1
+    }));
+    return ArchDrawEngine._commit(app, [col, outline, x1l, x2l]);
   }
 
   static createRoundColumn(app, cx, cy, edgeX, edgeY) {
     const r = GeometryEngine.distance(cx, cy, edgeX, edgeY);
     if (r < 1e-6) return [];
     const layerId = app.layerManager.currentLayerId;
+    const fill = new HatchEntity(layerId, ArchDrawEngine._circlePoints(cx, cy, r, 32), 'SOLID');
+    ArchPlanStyle.mark(fill, 'column', {
+      color: ArchPlanStyle.COLORS.columnFill,
+      fillOpacity: 0.92
+    });
+    fill.archType = 'round-column';
     const outer = new CircleEntity(layerId, cx, cy, r);
-    outer.style.lineWidth = 2;
-    outer.style.color = '#263238';
-    outer.archType = 'round-column';
-    const inner = new CircleEntity(layerId, cx, cy, r * 0.55);
-    inner.style.lineDash = [4, 3];
-    inner.style.color = '#455a64';
-    const fill = new HatchEntity(layerId, ArchDrawEngine._circlePoints(cx, cy, r, 24), 'SOLID');
-    fill.style.color = '#546e7a';
-    return ArchDrawEngine._commit(app, [fill, outer, inner]);
+    ArchPlanStyle.mark(outer, 'column', {
+      color: ArchPlanStyle.COLORS.column,
+      fillOpacity: 0,
+      lineWidth: 2
+    });
+    return ArchDrawEngine._commit(app, [fill, outer]);
   }
 
   static _circlePoints(cx, cy, r, n = 24) {

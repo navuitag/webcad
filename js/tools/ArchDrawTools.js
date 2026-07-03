@@ -99,7 +99,10 @@ class WallTool extends Tool {
     if (!pts) return;
     const layerId = this.app.layerManager.currentLayerId;
     const preview = new HatchEntity(layerId, pts, 'SOLID');
-    preview.style.color = '#78909c';
+    ArchPlanStyle.mark(preview, 'wall', {
+      color: ArchPlanStyle.COLORS.wallCut,
+      fillOpacity: 0.92
+    });
     this.app.renderer2D.setPreview(preview);
     LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
   }
@@ -163,7 +166,11 @@ class OpenWallTool extends Tool {
   _showPreview(end) {
     const layerId = this.app.layerManager.currentLayerId;
     const preview = new LineEntity(layerId, this.startPoint.x, this.startPoint.y, end.x, end.y);
-    preview.style.lineDash = [12, 6];
+    ArchPlanStyle.mark(preview, 'open-wall', {
+      color: ArchPlanStyle.COLORS.openWall,
+      lineWidth: 1.5,
+      lineDash: [8, 5]
+    });
     this.app.renderer2D.setPreview(preview);
     LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
   }

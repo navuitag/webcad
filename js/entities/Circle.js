@@ -10,6 +10,11 @@ class CircleEntity extends Entity {
     const sr = this.radius * drawing.view.zoom;
 
     ctx.save();
+    if (this.planView && typeof ArchPlanStyle !== 'undefined') {
+      ArchPlanStyle.drawCircleFill(this, ctx, sc, sr, layerManager);
+      ctx.restore();
+      return;
+    }
     ctx.strokeStyle = this.getColor(layerManager);
     ctx.lineWidth = this.style.lineWidth;
     if (this.style.lineDash.length) ctx.setLineDash(this.style.lineDash);

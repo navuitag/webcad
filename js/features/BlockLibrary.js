@@ -17,7 +17,11 @@ class BlockLibrary {
   static templates = {
     'wall-segment': {
       category: 'house', name: 'Tường 100mm', icon: '🧱', width: 100, height: 10,
-      entities: (w) => [BlockLibrary._rect(0, 0, w, 10)]
+      entities: (w) => [{
+        type: 'HATCH',
+        boundary: [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: 10 }, { x: 0, y: 10 }],
+        pattern: 'SOLID'
+      }]
     },
     'room-label': {
       category: 'house', name: 'Nhãn phòng', icon: '🏷️', width: 40, height: 10,
@@ -557,6 +561,7 @@ class BlockLibrary {
     for (const def of defs) {
       const e = BlockLibrary._createEntity(def, layerId);
       if (e) {
+        ArchPlanStyle.styleBlockEntity(e, templateId);
         e.move(insertPoint.x, insertPoint.y);
         app.drawing.addEntity(e);
         entities.push(e);
@@ -583,6 +588,10 @@ class BlockLibrary {
       case 'ARC': return new ArcEntity(layerId, def.cx, def.cy, def.r, def.startAngle, def.endAngle);
       case 'RECTANGLE': return new RectangleEntity(layerId, def.x1, def.y1, def.x2, def.y2);
       case 'TEXT': return new TextEntity(layerId, def.x, def.y, def.text, def.height || 3);
+      case 'HATCH': {
+        const h = new HatchEntity(layerId, def.boundary || [], def.pattern || 'SOLID', def.scale, def.angle);
+        return h;
+      }
       case 'POLYLINE': {
         const pl = new PolylineEntity(layerId, def.points || []);
         pl.closed = def.closed || false;

@@ -16,6 +16,8 @@ class HatchEntity extends Entity {
 
     ctx.save();
     const color = this.getColor(layerManager);
+    const isPlan = this.planView && typeof ArchPlanStyle !== 'undefined';
+    const fillOpacity = isPlan ? ArchPlanStyle.fillOpacity(this) : 0.35;
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -23,11 +25,12 @@ class HatchEntity extends Entity {
 
     if (this.pattern === 'SOLID') {
       ctx.fillStyle = color;
-      ctx.globalAlpha = 0.35;
+      ctx.globalAlpha = fillOpacity;
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = isPlan && this.planRole === 'wall'
+        ? ArchPlanStyle.COLORS.column : color;
+      ctx.lineWidth = isPlan ? 1.5 : 1;
       ctx.stroke();
     } else {
       ctx.clip();
@@ -108,7 +111,11 @@ class HatchEntity extends Entity {
       pattern: this.pattern,
       scale: this.scale,
       angle: this.angle,
-      linetypeId: this.linetypeId
+      linetypeId: this.linetypeId,
+      planView: this.planView,
+      planRole: this.planRole,
+      planFillOpacity: this.planFillOpacity,
+      archType: this.archType
     };
   }
 
@@ -117,6 +124,10 @@ class HatchEntity extends Entity {
     h.id = data.id;
     h.style = { ...h.style, ...data.style };
     h.linetypeId = data.linetypeId || 'Continuous';
+    h.planView = data.planView;
+    h.planRole = data.planRole;
+    h.planFillOpacity = data.planFillOpacity;
+    h.archType = data.archType;
     return h;
   }
 }
