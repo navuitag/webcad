@@ -518,7 +518,10 @@ class WebCADApp {
         <select id="3d-section-axis"><option value="x">X</option><option value="y" selected>Y</option><option value="z">Z</option></select></div>
       <div class="prop-row"><label>Section offset</label><input type="range" id="3d-section-offset" min="-10" max="10" step="0.5" value="0"></div>
       <div class="prop-row"><label>Section on</label><input type="checkbox" id="3d-section-enable"></div>
-      <div class="prop-actions"><button id="3d-fit-view">Fit View</button></div>
+      <div class="prop-actions">
+        <button type="button" id="3d-reset-view">Reset view</button>
+        <button type="button" id="3d-fit-view">Fit view</button>
+      </div>
       <p class="orbit-hint">Chuột trái: xoay 360° · Giữa: zoom · Phải: pan</p>
     `;
     document.getElementById('3d-material')?.addEventListener('change', (e) => {
@@ -534,6 +537,12 @@ class WebCADApp {
     });
     document.getElementById('3d-view-preset')?.addEventListener('change', (e) => {
       r.setCameraPreset(e.target.value);
+      this.requestRender();
+    });
+    document.getElementById('3d-reset-view')?.addEventListener('click', () => {
+      r.resetView();
+      const preset = document.getElementById('3d-view-preset');
+      if (preset) preset.value = 'home';
       this.requestRender();
     });
     document.getElementById('3d-section-axis')?.addEventListener('change', (e) => {
@@ -679,6 +688,12 @@ class WebCADApp {
   }
 
   zoomExtents() {
+    if (this.mode === '3d') {
+      if (this.renderer3D?.initialized) {
+        this.renderer3D.resetView();
+      }
+      return;
+    }
     const bb = this.drawing.getBoundingBox();
     const padding = 50;
     const w = this.canvas.width - padding * 2;

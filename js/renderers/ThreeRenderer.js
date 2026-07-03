@@ -206,11 +206,21 @@ class ThreeRenderer {
   }
 
   fitView() {
+    if (!this.initialized) return;
     const box = new THREE.Box3();
     for (const mesh of this.meshes.values()) {
       box.expandByObject(mesh);
     }
     this.cameraManager.fitToBox(box);
+  }
+
+  resetView() {
+    if (!this.initialized) return;
+    if (this.meshes.size > 0) {
+      this.fitView();
+    } else {
+      this.cameraManager.setPreset('home');
+    }
   }
 
   get raycaster() {

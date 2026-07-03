@@ -73,6 +73,7 @@ class CameraManager3D {
   }
 
   setPreset(preset) {
+    if (!this.camera) return;
     const d = 12;
     const presets = {
       top: { pos: [0, d, 0.001], target: [0, 0, 0] },
@@ -83,8 +84,12 @@ class CameraManager3D {
     };
     const p = presets[preset] || presets.home;
     this.camera.position.set(...p.pos);
-    this.controls.target.set(...p.target);
-    this.controls.update();
+    if (this.controls) {
+      this.controls.target.set(...p.target);
+      this.controls.update();
+    } else {
+      this.camera.lookAt(...p.target);
+    }
   }
 
   resize(w, h) {
@@ -102,13 +107,37 @@ class CameraManager3D {
   }
 
   fitToBox(box) {
-    if (!box || box.isEmpty()) return;
+    if (!this.camera) return;
+    if (!box || box.isEmpty()) {
+      this.setPreset('home');
+      return;
+    }
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 1);
-    const dist = maxDim * 1.8;
-    this.camera.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist);
-    this.controls.target.copy(center);
-    this.controls.update();
+    const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+
+    if (this.camera.isOrthographicCamera) {
+      const w = this.container.clientWidth || 800;
+      const h = this.container.clientHeight || 600;
+      const frustum = maxDim * 0.65;
+      this.camera.left = -frustum * w / h;
+      this.camera.right = frustum * w / h;
+      this.camera.top = frustum;
+      this.camera.bottom = -frustum;
+      this.camera.updateProjectionMatrix();
+      this.camera.position.set(center.x, center.y + maxDim * 0.01, center.z + maxDim * 0.01);
+    } else {
+      const fovRad = (this.camera.fov * Math.PI) / 180;
+      const dist = (maxDim / 2) / Math.tan(fovRad / 2) * 1.35;
+      const offset = new THREE.Vector3(1, 0.55, 1).normalize().multiplyScalar(dist);
+      this.camera.position.copy(center).add(offset);
+    }
+
+    if (this.controls) {
+      this.controls.target.copy(center);
+      this.controls.update();
+    } else {
+      this.camera.lookAt(center);
+    }
   }
 }
