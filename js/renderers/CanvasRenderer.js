@@ -4,6 +4,7 @@ class CanvasRenderer {
     this.ctx = canvas.getContext('2d');
     this.previewEntity = null;
     this.measureLine = null;
+    this.liveMeasures = [];
     this.selectionRect = null;
     this.selectionWindowMode = false;
   }
@@ -54,8 +55,8 @@ class CanvasRenderer {
       entity.drawSelection(this.ctx, drawing, layerManager);
     }
 
-    if (this.measureLine) {
-      this._drawMeasureLine(drawing, this.measureLine);
+    if (this.liveMeasures.length) {
+      this._drawLiveMeasures(drawing);
     }
 
     if (this.selectionRect) {
@@ -149,9 +150,14 @@ class CanvasRenderer {
   }
 
   _drawMeasureLine(drawing, line) {
-    const p1 = drawing.worldToScreen(line.x1, line.y1, this.canvas.width, this.canvas.height);
-    const p2 = drawing.worldToScreen(line.x2, line.y2, this.canvas.width, this.canvas.height);
-    const dist = GeometryEngine.distance(line.x1, line.y1, line.x2, line.y2);
+    this._drawMeasureSegment(drawing, line.x1, line.y1, line.x2, line.y2, null);
+  }
+
+  _drawMeasureSegment(drawing, x1, y1, x2, y2, label) {
+    const p1 = drawing.worldToScreen(x1, y1, this.canvas.width, this.canvas.height);
+    const p2 = drawing.worldToScreen(x2, y2, this.canvas.width, this.canvas.height);
+    const dist = GeometryEngine.distance(x1, y1, x2, y2);
+    const text = label || GeometryEngine.formatDistance(dist);
 
     this.ctx.save();
     this.ctx.strokeStyle = '#ffa726';
@@ -165,10 +171,40 @@ class CanvasRenderer {
     this.ctx.setLineDash([]);
     this.ctx.fillStyle = '#ffa726';
     this.ctx.font = '12px sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'bottom';
     const midX = (p1.x + p2.x) / 2;
     const midY = (p1.y + p2.y) / 2;
-    this.ctx.fillText(GeometryEngine.formatDistance(dist), midX + 8, midY - 8);
+    this._drawMeasureLabel(text, midX, midY - 6);
     this.ctx.restore();
+  }
+
+  _drawMeasureLabel(text, x, y) {
+    const padX = 6;
+    const padY = 3;
+    const metrics = this.ctx.measureText(text);
+    const w = metrics.width + padX * 2;
+    const h = 14 + padY * 2;
+    this.ctx.fillStyle = 'rgba(13, 17, 23, 0.85)';
+    this.ctx.fillRect(x - w / 2, y - h, w, h);
+    this.ctx.fillStyle = '#ffa726';
+    this.ctx.fillText(text, x, y - padY);
+  }
+
+  _drawLiveMeasures(drawing) {
+    for (const item of this.liveMeasures) {
+      if (item.kind === 'segment') {
+        this._drawMeasureSegment(drawing, item.x1, item.y1, item.x2, item.y2, item.label);
+      } else if (item.kind === 'label') {
+        const p = drawing.worldToScreen(item.x, item.y, this.canvas.width, this.canvas.height);
+        this.ctx.save();
+        this.ctx.font = '12px sans-serif';
+        this.ctx.textAlign = item.align || 'center';
+        this.ctx.textBaseline = 'bottom';
+        this._drawMeasureLabel(item.text, p.x, p.y + (item.offsetY || -8));
+        this.ctx.restore();
+      }
+    }
   }
 
   setPreview(entity) {
@@ -177,6 +213,19 @@ class CanvasRenderer {
 
   setMeasureLine(line) {
     this.measureLine = line;
+    if (line) {
+      this.setLiveMeasures([{
+        kind: 'segment',
+        x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2
+      }]);
+    } else {
+      this.setLiveMeasures([]);
+    }
+  }
+
+  setLiveMeasures(measures) {
+    this.liveMeasures = measures || [];
+    if (!this.liveMeasures.length) this.measureLine = null;
   }
 
   _drawPaperLayout(layout, drawing) {

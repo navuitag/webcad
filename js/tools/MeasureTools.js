@@ -95,7 +95,7 @@ class DistanceTool extends Tool {
 
   onKeyDown(e) {
     if (e.key === 'Escape') {
-      this.app.renderer2D.setMeasureLine(null);
+      LiveMeasureOverlay.clear(this.app);
       this.app.setTool('select');
     }
   }

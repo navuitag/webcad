@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v18';
+const CACHE_NAME = 'webcad-v19';
 const ASSETS = [
   './',
   './index.html',
@@ -51,6 +51,7 @@ const ASSETS = [
   './js/core3d/three-bootstrap.js',
   './js/renderers/CanvasRenderer.js',
   './js/renderers/ThreeRenderer.js',
+  './js/tools/LiveMeasureOverlay.js',
   './js/tools/Tool.js',
   './js/tools/SelectTool.js',
   './js/tools/DrawTools.js',

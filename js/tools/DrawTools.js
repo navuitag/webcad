@@ -42,6 +42,7 @@ class LineTool extends Tool {
         x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
       });
       this.app.renderer2D.setPreview(preview);
+      LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
       this.app.requestRender();
     }
   }
@@ -96,6 +97,7 @@ class CircleTool extends Tool {
         cx: this.center.x, cy: this.center.y, r: radius
       });
       this.app.renderer2D.setPreview(preview);
+      LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, snap.x, snap.y);
       this.app.requestRender();
     }
   }
@@ -148,6 +150,7 @@ class RectangleTool extends Tool {
         x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
       });
       this.app.renderer2D.setPreview(preview);
+      LiveMeasureOverlay.rectangle(this.app, this.corner1.x, this.corner1.y, end.x, end.y);
       this.app.requestRender();
     }
   }
@@ -210,12 +213,17 @@ class ArcTool extends Tool {
       if (this.step === 1) {
         const radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
         this.app.renderer2D.setPreview(core.create('CIRCLE', { cx: this.center.x, cy: this.center.y, r: radius }));
+        LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, snap.x, snap.y);
       } else if (this.step === 2) {
         const endAngle = GeometryKernel.angle(this.center.x, this.center.y, snap.x, snap.y);
         this.app.renderer2D.setPreview(core.create('ARC', {
           cx: this.center.x, cy: this.center.y, r: this.radius,
           startAngle: this.startAngle, endAngle
         }));
+        LiveMeasureOverlay.arc(
+          this.app, this.center.x, this.center.y, this.radius,
+          this.startAngle, endAngle
+        );
       }
       this.app.requestRender();
     }
@@ -260,6 +268,7 @@ class PolylineTool extends Tool {
       const previewPoints = [...this.points, { x: snap.x, y: snap.y }];
       const preview = new PolylineEntity(layerId, previewPoints);
       this.app.renderer2D.setPreview(preview);
+      LiveMeasureOverlay.polylineSegment(this.app, this.points, { x: snap.x, y: snap.y });
       this.app.requestRender();
     }
   }

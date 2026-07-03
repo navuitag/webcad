@@ -13,7 +13,7 @@ class Tool {
   deactivate() {
     this.active = false;
     this.app.renderer2D.setPreview(null);
-    this.app.renderer2D.setMeasureLine(null);
+    LiveMeasureOverlay.clear(this.app);
   }
 
   getPrompt() {

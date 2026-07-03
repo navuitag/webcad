@@ -86,6 +86,22 @@ class ArrayTool extends Tool {
     }
   }
 
+  onMouseMove(e, worldPos) {
+    if (this.step === 2 && this.basePoint) {
+      const snap = this._getSnappedPos(worldPos);
+      if (this.mode === 'rect') {
+        LiveMeasureOverlay.rectangle(
+          this.app, this.basePoint.x, this.basePoint.y, snap.x, snap.y
+        );
+      } else {
+        LiveMeasureOverlay.radius(
+          this.app, this.basePoint.x, this.basePoint.y, snap.x, snap.y
+        );
+      }
+      this.app.requestRender();
+    }
+  }
+
   onKeyDown(e) {
     if (e.key === 'Enter' && this.step === 0 && this.entities.length > 0) {
       this.step = 1;
@@ -143,6 +159,16 @@ class StretchTool extends Tool {
         dx: snap.x - this.basePoint.x, dy: snap.y - this.basePoint.y
       });
       this.app.setTool('select');
+    }
+  }
+
+  onMouseMove(e, worldPos) {
+    if (this.step === 3 && this.basePoint) {
+      const snap = this._getSnappedPos(worldPos);
+      LiveMeasureOverlay.segment(
+        this.app, this.basePoint.x, this.basePoint.y, snap.x, snap.y
+      );
+      this.app.requestRender();
     }
   }
 
@@ -259,10 +285,18 @@ class MeasureTool extends Tool {
       const r = this._run('MEASURE', { p1: this.p1, p2: snap });
       if (r.success) {
         this.app.cadCore.log(`MEASURE: ${r.formatted}`);
-        this.app.renderer2D.setMeasureLine({ x1: this.p1.x, y1: this.p1.y, x2: snap.x, y2: snap.y });
+        LiveMeasureOverlay.segment(this.app, this.p1.x, this.p1.y, snap.x, snap.y);
         this.app.requestRender();
       }
       this.app.setTool('select');
+    }
+  }
+
+  onMouseMove(e, worldPos) {
+    if (this.step === 1 && this.p1) {
+      const snap = this._getSnappedPos(worldPos);
+      LiveMeasureOverlay.segment(this.app, this.p1.x, this.p1.y, snap.x, snap.y);
+      this.app.requestRender();
     }
   }
 

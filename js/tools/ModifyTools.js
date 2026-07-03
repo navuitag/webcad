@@ -51,6 +51,15 @@ class ModifyTool extends Tool {
       const snap = this._getSnappedPos(worldPos);
       this._restoreOriginal();
       this.modifyFn(this.entities, this.basePoint, snap, false);
+      if (this.name === 'move' || this.name === 'copy') {
+        LiveMeasureOverlay.segment(
+          this.app, this.basePoint.x, this.basePoint.y, snap.x, snap.y
+        );
+      } else if (this.name === 'rotate' || this.name === 'scale') {
+        LiveMeasureOverlay.radius(
+          this.app, this.basePoint.x, this.basePoint.y, snap.x, snap.y
+        );
+      }
       this.app.requestRender();
     }
   }
