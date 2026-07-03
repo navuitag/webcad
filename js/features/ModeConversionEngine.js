@@ -11,7 +11,10 @@ class ModeConversionEngine {
     floor: 0.15,
     ceiling: 0.1,
     landscape: 0.05,
-    site: 0.02
+    site: 0.02,
+    'round-column': 2.8,
+    'open-floor': 0.15,
+    'open-ceiling': 0.1
   };
 
   static PLAN_ROLE_HEIGHTS_M = {
@@ -34,6 +37,10 @@ class ModeConversionEngine {
     const worldUnit = app.drawing.worldUnit || app.drawing.unit || 'm';
 
     for (const e2 of app.drawing.entities) {
+      if (typeof ArchPlanStyle !== 'undefined' && !e2.planView) {
+        ArchPlanStyle.convertEntity(e2, worldUnit);
+      }
+
       if (ModeConversionEngine.shouldSkip3D(e2)) {
         stats.skipped++;
         continue;
@@ -71,6 +78,10 @@ class ModeConversionEngine {
       if (e3) {
         e3.params._syncPos = { x: e3.position.x, z: e3.position.z };
       }
+    }
+
+    for (const e3 of app.drawing.entities3D) {
+      e3.markDirty();
     }
 
     return stats;
@@ -116,16 +127,19 @@ class ModeConversionEngine {
   }
 
   static _getHeight(e2, worldUnit = 'm') {
-    if (e2.extrudeHeight != null && e2.extrudeHeight > 0) {
-      return e2.extrudeHeight;
-    }
+    let hM = null;
 
-    let hM = ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType];
-    if (hM == null && e2.planRole) {
+    if (e2.archType != null && ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType] != null) {
+      hM = ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType];
+    } else if (e2.planRole && ModeConversionEngine.PLAN_ROLE_HEIGHTS_M[e2.planRole] != null) {
       hM = ModeConversionEngine.PLAN_ROLE_HEIGHTS_M[e2.planRole];
+    } else if (e2.landscapeKind) {
+      hM = ModeConversionEngine.ARCH_HEIGHTS_M.landscape;
+    } else if (e2.extrudeHeight != null && e2.extrudeHeight > 0) {
+      return e2.extrudeHeight;
+    } else {
+      hM = ModeConversionEngine.DEFAULT_EXTRUDE_HEIGHT_M;
     }
-    if (hM == null && e2.landscapeKind) hM = ModeConversionEngine.ARCH_HEIGHTS_M.landscape;
-    if (hM == null) hM = ModeConversionEngine.DEFAULT_EXTRUDE_HEIGHT_M;
 
     if (worldUnit === 'mm' || worldUnit === 'cm') {
       const toMm = worldUnit === 'cm' ? 10 : 1;
@@ -145,6 +159,7 @@ class ModeConversionEngine {
     if (typeof ArchPlanStyle !== 'undefined') {
       ArchPlanStyle.applyMaterial3D(e3, e2);
     }
+    e2.extrudeHeight = height;
     e3.markDirty();
   }
 

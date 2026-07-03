@@ -31,6 +31,7 @@ class ArchPlanStyle {
   static MATERIAL_3D = {
     wall: { color: '#42a5f5', metalness: 0.05, roughness: 0.62 },
     column: { color: '#ffa726', metalness: 0.12, roughness: 0.48 },
+    'round-column': { color: '#ffa726', metalness: 0.12, roughness: 0.48 },
     'room-fill': { color: '#4dd0e1', metalness: 0.0, roughness: 0.72 },
     floor: { color: '#66bb6a', metalness: 0.0, roughness: 0.68 },
     ceiling: { color: '#ab47bc', metalness: 0.0, roughness: 0.7 },
@@ -107,14 +108,24 @@ class ArchPlanStyle {
     if (role && ArchPlanStyle.MATERIAL_3D[role]) {
       return { ...ArchPlanStyle.MATERIAL_3D[role] };
     }
-    if (entity2d?.style?.color) {
+    if (entity2d?.style?.color && !ArchPlanStyle._isDarkColor(entity2d.style.color)) {
       return {
         color: entity2d.style.color,
-        metalness: 0.08,
-        roughness: 0.62
+        metalness: 0.05,
+        roughness: 0.65
       };
     }
     return { ...ArchPlanStyle.MATERIAL_3D.default };
+  }
+
+  static _isDarkColor(hex) {
+    if (!hex || typeof hex !== 'string') return false;
+    const c = hex.replace('#', '');
+    if (c.length < 6) return false;
+    const r = parseInt(c.slice(0, 2), 16);
+    const g = parseInt(c.slice(2, 4), 16);
+    const b = parseInt(c.slice(4, 6), 16);
+    return (r * 0.299 + g * 0.587 + b * 0.114) < 72;
   }
 
   static applyEntityPlanStyle(entity) {

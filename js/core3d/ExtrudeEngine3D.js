@@ -13,7 +13,8 @@ class ExtrudeEngine3D {
       bevelThickness: options.bevelThickness || 0.1,
       bevelSize: options.bevelSize || 0.1,
       source2DId: entity2d.id,
-      archType: entity2d.archType || null
+      archType: entity2d.archType || null,
+      planRole: entity2d.planRole || null
     };
 
     if (typeof ArchPlanStyle !== 'undefined') {

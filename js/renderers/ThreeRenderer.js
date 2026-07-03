@@ -72,6 +72,9 @@ class ThreeRenderer {
         await wgpu.init();
         wgpu.setPixelRatio(window.devicePixelRatio);
         wgpu.setSize(width, height);
+        if (wgpu.outputColorSpace !== undefined) {
+          wgpu.outputColorSpace = THREE.SRGBColorSpace;
+        }
         this.renderer = wgpu;
         this.backend = 'webgpu';
         console.info('WebCAD 3D: WebGPURenderer active');
@@ -84,6 +87,8 @@ class ThreeRenderer {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(width, height);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
     this.backend = 'webgl2';
     console.info('WebCAD 3D: WebGLRenderer active');
   }
@@ -147,17 +152,22 @@ class ThreeRenderer {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    if (entity.type === 'EXTRUDE') {
-      mesh.rotation.x = -Math.PI / 2;
-    }
-
     this._updateMesh(entity, mesh);
     return mesh;
   }
 
+  /** ExtrudeGeometry extrude theo trục Z — xoay -90° quanh X để chiều cao hướng lên trục Y */
+  static _extrudeRotationX(entity) {
+    return entity.type === 'EXTRUDE' ? -Math.PI / 2 : 0;
+  }
+
   _updateMesh(entity, mesh) {
     mesh.position.set(entity.position.x, entity.position.y, entity.position.z);
-    mesh.rotation.set(entity.rotation.x, entity.rotation.y, entity.rotation.z);
+    mesh.rotation.set(
+      ThreeRenderer._extrudeRotationX(entity) + (entity.rotation.x || 0),
+      entity.rotation.y || 0,
+      entity.rotation.z || 0
+    );
     mesh.scale.set(entity.scale.x, entity.scale.y, entity.scale.z);
     this.materialManager.updateMaterial(mesh.material, entity.material);
     mesh.userData.entityMaterial = { ...entity.material };
