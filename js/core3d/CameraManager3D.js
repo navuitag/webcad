@@ -40,10 +40,36 @@ class CameraManager3D {
       this.controls.update();
     } else if (domElement) {
       this.controls = new ThreeAddons.OrbitControls(this.camera, domElement);
-      this.controls.enableDamping = true;
-      this.controls.dampingFactor = 0.08;
+      CameraManager3D.configureControls(this.controls);
     }
     return this.camera;
+  }
+
+  static configureControls(controls) {
+    if (!controls) return;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enableRotate = true;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.minAzimuthAngle = -Infinity;
+    controls.maxAzimuthAngle = Infinity;
+    controls.minPolarAngle = 0.01;
+    controls.maxPolarAngle = Math.PI - 0.01;
+    controls.screenSpacePanning = true;
+    if (window.THREE?.MOUSE) {
+      controls.mouseButtons = {
+        LEFT: THREE.MOUSE.ROTATE,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.PAN
+      };
+    }
+    if (window.THREE?.TOUCH) {
+      controls.touches = {
+        ONE: THREE.TOUCH.ROTATE,
+        TWO: THREE.TOUCH.DOLLY_PAN
+      };
+    }
   }
 
   setPreset(preset) {

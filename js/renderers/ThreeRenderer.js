@@ -18,6 +18,8 @@ class ThreeRenderer {
     this._pointer = null;
     this.initialized = false;
     this.viewerMode = false;
+    this._loopActive = false;
+    this._animId = null;
   }
 
   async init() {
@@ -44,8 +46,7 @@ class ThreeRenderer {
       this.cameraManager.camera,
       this.renderer.domElement
     );
-    this.cameraManager.controls.enableDamping = true;
-    this.cameraManager.controls.dampingFactor = 0.08;
+    CameraManager3D.configureControls(this.cameraManager.controls);
 
     this.lighting = new LightingManager3D(this.scene);
     this.section = new SectionEngine3D(this.renderer, this.scene);
@@ -223,6 +224,30 @@ class ThreeRenderer {
     this.renderer.render(this.scene, this.camera);
   }
 
+  setLoopActive(active) {
+    this._loopActive = active;
+    if (active) this._startLoop();
+  }
+
+  _startLoop() {
+    if (this._animId != null) return;
+    const tick = () => {
+      this._animId = requestAnimationFrame(tick);
+      if (!this._loopActive || !this.initialized) return;
+      this.cameraManager.controls.update();
+      this.renderer.render(this.scene, this.camera);
+    };
+    tick();
+  }
+
+  _stopLoop() {
+    if (this._animId != null) {
+      cancelAnimationFrame(this._animId);
+      this._animId = null;
+    }
+    this._loopActive = false;
+  }
+
   getScene() {
     return this.scene;
   }
@@ -238,6 +263,7 @@ class ThreeRenderer {
 
   dispose() {
     if (!this.initialized) return;
+    this._stopLoop();
     this.section?.dispose();
     for (const [, mesh] of this.meshes) {
       mesh.geometry?.dispose();

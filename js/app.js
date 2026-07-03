@@ -424,9 +424,12 @@ class WebCADApp {
       await this.renderer3D.init();
       this.renderer3D.syncEntities(this.drawing.entities3D);
       this._bind3DEvents();
+      this.renderer3D.setLoopActive(true);
       this._resize();
       this._update3DPanel();
       if (this.drawing.entities3D.length > 0) this.renderer3D.fitView();
+    } else {
+      this.renderer3D.setLoopActive(false);
     }
 
     document.getElementById('status-mode').textContent = mode.toUpperCase();
@@ -438,14 +441,27 @@ class WebCADApp {
   _bind3DEvents() {
     if (this._3dEventsBound || !this.renderer3D.renderer) return;
     const el = this.renderer3D.renderer.domElement;
-    el.addEventListener('mousedown', (e) => {
-      if (this.mode !== '3d' || e.button !== 0) return;
+    el.style.touchAction = 'none';
+
+    let dragStart = null;
+    el.addEventListener('pointerdown', (e) => {
+      if (this.mode !== '3d') return;
+      dragStart = { x: e.clientX, y: e.clientY };
+    });
+    el.addEventListener('pointerup', (e) => {
+      if (this.mode !== '3d' || e.button !== 0 || !dragStart) return;
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      dragStart = null;
+      if (Math.hypot(dx, dy) > 5) return;
+
       if (this.currentTool?.onMouseDown3D) {
         this.currentTool.onMouseDown3D(e);
       } else if (this.currentTool?.name === 'select') {
         new SelectTool3D(this).onMouseDown3D(e);
       }
     });
+
     this._3dEventsBound = true;
   }
 
@@ -470,6 +486,7 @@ class WebCADApp {
       <div class="prop-row"><label>Section offset</label><input type="range" id="3d-section-offset" min="-10" max="10" step="0.5" value="0"></div>
       <div class="prop-row"><label>Section on</label><input type="checkbox" id="3d-section-enable"></div>
       <div class="prop-actions"><button id="3d-fit-view">Fit View</button></div>
+      <p class="orbit-hint">Chuột trái: xoay 360° · Giữa: zoom · Phải: pan</p>
     `;
     document.getElementById('3d-material')?.addEventListener('change', (e) => {
       r.setMaterialPreset(e.target.value);
