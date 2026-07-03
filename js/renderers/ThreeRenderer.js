@@ -63,9 +63,10 @@ class ThreeRenderer {
   }
 
   async _createRenderer(width, height) {
-    if (navigator.gpu && ThreeAddons.WebGPURenderer) {
+    if (navigator.gpu) {
       try {
-        const wgpu = new ThreeAddons.WebGPURenderer({ antialias: true, alpha: false });
+        const { WebGPURenderer } = await import('three/webgpu');
+        const wgpu = new WebGPURenderer({ antialias: true, alpha: false });
         await wgpu.init();
         wgpu.setPixelRatio(window.devicePixelRatio);
         wgpu.setSize(width, height);

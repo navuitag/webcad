@@ -3,7 +3,6 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import WebGPURenderer from 'three/addons/renderers/webgpu/WebGPURenderer.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
@@ -15,7 +14,6 @@ import { Evaluator, Brush, ADDITION, SUBTRACTION, INTERSECTION } from 'three-bvh
 window.THREE = THREE;
 window.ThreeAddons = {
   OrbitControls,
-  WebGPURenderer,
   GLTFExporter,
   STLExporter,
   OBJExporter,
