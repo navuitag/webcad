@@ -2,19 +2,38 @@
  * FloorPlanGenerator — tự động mặt bằng từ kích thước đất
  */
 class FloorPlanGenerator {
-  /** Chiều cao chữ nhãn phòng (đơn vị m) — tỉ lệ theo kích thước phòng */
-  static _roomLabelHeight(w, h) {
-    const minSide = Math.min(w, h);
-    const area = w * h;
-    return Math.max(0.12, Math.min(minSide * 0.07, Math.sqrt(area) * 0.045, 0.22));
+  static generate(app, landWidth, landDepth, preset = '2bed') {
+    app.drawing.worldUnit = 'm';
+
+    const scaled = typeof ArchitecturalTemplates !== 'undefined'
+      && ArchitecturalTemplates.presetRooms(preset, landWidth, landDepth);
+
+    if (scaled) {
+      if (scaled.length) {
+        ArchitecturalTemplates._drawSite(app, 0, 0, landWidth, landDepth);
+        for (const room of scaled) {
+          ArchitecturalTemplates._placeRoom(
+            app, room.x, room.y, room.w, room.h, room.name
+          );
+        }
+      }
+    } else {
+      FloorPlanGenerator._legacyGenerate(app, landWidth, landDepth, preset);
+    }
+
+    AutoDimensionEngine.dimensionAll(app);
+    app.zoomExtents();
+    app.requestRender();
+    return {
+      success: true, preset, landWidth, landDepth,
+      roomCount: scaled?.length || 0,
+      message: `Đã tạo mặt bằng ${landWidth}×${landDepth}m (${preset}).`
+    };
   }
 
-  static generate(app, landWidth, landDepth, preset = '2bed') {
-    const layerId = app.layerManager.currentLayerId;
+  static _legacyGenerate(app, landWidth, landDepth, preset) {
     const margin = 0.5;
-
     app.cadCore.run('DRAW_RECTANGLE', { x1: 0, y1: 0, x2: landWidth, y2: landDepth });
-
     const presets = {
       '1bed': [
         { name: 'PHÒNG KHÁCH', x: margin, y: margin, w: landWidth * 0.55, h: landDepth * 0.45 },
@@ -33,34 +52,11 @@ class FloorPlanGenerator {
         { name: 'WC', x: margin, y: landDepth * 0.68, w: landWidth * 0.3, h: landDepth * 0.28 }
       ]
     };
-
     const rooms = presets[preset] || presets['2bed'];
-
     for (const room of rooms) {
-      app.cadCore.run('DRAW_RECTANGLE', {
-        x1: room.x, y1: room.y, x2: room.x + room.w, y2: room.y + room.h
-      });
-      const labelH = FloorPlanGenerator._roomLabelHeight(room.w, room.h);
-      const textResult = app.cadCore.run('DRAW_TEXT', {
-        x: room.x + room.w / 2,
-        y: room.y + room.h / 2,
-        text: room.name,
-        height: labelH
-      });
-      if (textResult.entity) {
-        textResult.entity.centered = true;
-        textResult.entity.textStyleId = 'RoomLabel';
-      }
-      const doorX = room.x + room.w / 2;
-      app.cadCore.run('DRAW_LINE', { x1: doorX - 0.45, y1: room.y, x2: doorX + 0.45, y2: room.y });
+      ArchDrawEngine.createRoom(
+        app, room.x, room.y, room.x + room.w, room.y + room.h, { name: room.name }
+      );
     }
-
-    AutoDimensionEngine.dimensionAll(app);
-    app.zoomExtents();
-    app.requestRender();
-    return {
-      success: true, preset, landWidth, landDepth, roomCount: rooms.length,
-      message: `Đã tạo mặt bằng ${landWidth}×${landDepth}m (${preset}, ${rooms.length} phòng).`
-    };
   }
 }

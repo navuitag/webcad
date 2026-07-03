@@ -169,7 +169,7 @@ class ArchDrawEngine {
     ]);
   }
 
-  static createRoom(app, x1, y1, x2, y2) {
+  static createRoom(app, x1, y1, x2, y2, opts = {}) {
     const b = ArchDrawEngine.bounds(x1, y1, x2, y2);
     if (b.w < 1e-6 || b.h < 1e-6) return [];
     const layerId = app.layerManager.currentLayerId;
@@ -189,7 +189,17 @@ class ArchDrawEngine {
     });
     floor.archType = 'room-fill';
     const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S', ArchDrawEngine._unitOpts(app));
-    return ArchDrawEngine._commit(app, [...walls, floor, label]);
+    const entities = [...walls, floor, label];
+    if (opts.name) {
+      const nh = Math.max(0.12, Math.min(b.w, b.h) * 0.055);
+      const nameLabel = new TextEntity(layerId, b.cx, b.cy + nh * 0.6, opts.name, nh);
+      nameLabel.centered = true;
+      nameLabel.textStyleId = 'RoomLabel';
+      nameLabel.planView = true;
+      nameLabel.style.color = ArchDrawEngine.DEFAULTS.labelColor;
+      entities.push(nameLabel);
+    }
+    return ArchDrawEngine._commit(app, entities);
   }
 
   static createOpenFloor(app, x1, y1, x2, y2) {

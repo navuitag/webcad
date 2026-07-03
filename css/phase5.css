@@ -351,6 +351,11 @@
   color: var(--text-secondary);
 }
 
+.arch-template-grid {
+  max-height: 200px;
+  margin-bottom: 10px;
+}
+
 .arch-draw-grid {
   max-height: 120px;
   margin-bottom: 8px;

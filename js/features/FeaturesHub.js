@@ -25,6 +25,8 @@ class FeaturesHub {
     return all ? AutoDimensionEngine.dimensionAll(this.app) : AutoDimensionEngine.dimensionSelection(this.app);
   }
   generateFloorPlan(w, d, preset) { return FloorPlanGenerator.generate(this.app, w, d, preset); }
+  listArchTemplates(cat) { return ArchitecturalTemplates.list(cat); }
+  applyArchTemplate(id) { return ArchitecturalTemplates.apply(this.app, id); }
 
   async importSketch(file, opts = {}) {
     await this.vision.loadImage(file);

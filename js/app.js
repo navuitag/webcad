@@ -155,6 +155,7 @@ class WebCADApp {
       'round-column': new RoundColumnTool(this)
     };
     this._templateCategory = 'all';
+    this._archTemplateCategory = 'house';
   }
 
   startInsertTemplate(id) {
@@ -1163,6 +1164,7 @@ class WebCADApp {
 
   _initFeaturesPanel() {
     this._renderTemplateLibrary();
+    this._renderArchTemplateLibrary();
     this._renderArchDrawGrid();
     const sketchInput = document.getElementById('sketch-input');
     if (sketchInput) {
@@ -1233,6 +1235,41 @@ class WebCADApp {
       btn.addEventListener('click', () => {
         this.startInsertTemplate(t.id);
         this.logCommand(`Chọn vị trí chèn: ${t.name}`);
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  _renderArchTemplateLibrary() {
+    const tabsEl = document.getElementById('arch-template-tabs');
+    const grid = document.getElementById('arch-template-grid');
+    if (!grid || !this.features || typeof ArchitecturalTemplates === 'undefined') return;
+
+    if (tabsEl) {
+      tabsEl.innerHTML = '';
+      for (const [key, cat] of Object.entries(ArchitecturalTemplates.categories)) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'template-tab' + (key === this._archTemplateCategory ? ' active' : '');
+        tab.textContent = `${cat.icon} ${cat.label}`;
+        tab.addEventListener('click', () => {
+          this._archTemplateCategory = key;
+          this._renderArchTemplateLibrary();
+        });
+        tabsEl.appendChild(tab);
+      }
+    }
+
+    grid.innerHTML = '';
+    for (const t of this.features.listArchTemplates(this._archTemplateCategory)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'feature-tile';
+      btn.innerHTML = `<span class="feature-tile-icon">${t.icon || '🏠'}</span><span class="feature-tile-name">${t.name}</span>`;
+      btn.title = t.desc || t.name;
+      btn.addEventListener('click', () => {
+        const r = this.features.applyArchTemplate(t.id);
+        this.logCommand(r.message || `Đã tạo ${t.name}`);
       });
       grid.appendChild(btn);
     }
