@@ -433,6 +433,14 @@ html, body {
   min-width: 160px;
 }
 
+#status-direct-input {
+  color: #ffb74d;
+  flex: 1;
+  min-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Properties */
 .properties-content .prop-row {
   display: flex;

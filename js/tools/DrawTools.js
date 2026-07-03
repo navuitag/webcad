@@ -14,7 +14,23 @@ class LineTool extends Tool {
 
   getPrompt() {
     if (this.step === 0) return 'LINE: Chọn điểm đầu.';
-    return 'LINE: Chọn điểm cuối.';
+    return 'LINE: Chọn điểm cuối hoặc gõ chiều dài + Enter.';
+  }
+
+  _showPreview(end) {
+    const preview = this.app.cadCore.entities.create('LINE', {
+      x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
+    });
+    this.app.renderer2D.setPreview(preview);
+    LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
+  }
+
+  _commitPoint(end) {
+    this._run('DRAW_LINE', {
+      x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
+    });
+    this.startPoint = { x: end.x, y: end.y };
+    this.app.updateToolInfo(this.getPrompt());
   }
 
   onMouseDown(e, worldPos) {
@@ -26,11 +42,7 @@ class LineTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
     } else {
       let end = this._applyOrtho(this.startPoint, snap);
-      this._run('DRAW_LINE', {
-        x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
-      });
-      this.startPoint = { x: end.x, y: end.y };
-      this.app.updateToolInfo(this.getPrompt());
+      this._commitPoint(end);
     }
   }
 
@@ -38,11 +50,12 @@ class LineTool extends Tool {
     if (this.step === 1 && this.startPoint) {
       const snap = this._getSnappedPos(worldPos);
       let end = this._applyOrtho(this.startPoint, snap);
-      const preview = this.app.cadCore.entities.create('LINE', {
-        x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
+      this._showPreview(end);
+      this._bindLengthInput(this.startPoint, end, {
+        label: 'D',
+        onPreview: (pt) => this._showPreview(pt),
+        onApply: (pt) => this._commitPoint(pt)
       });
-      this.app.renderer2D.setPreview(preview);
-      LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
       this.app.requestRender();
     }
   }
@@ -70,7 +83,16 @@ class CircleTool extends Tool {
 
   getPrompt() {
     if (this.step === 0) return 'CIRCLE: Chọn tâm.';
-    return 'CIRCLE: Chọn bán kính.';
+    return 'CIRCLE: Chọn bán kính hoặc gõ R + Enter.';
+  }
+
+  _showPreview(radius) {
+    const preview = this.app.cadCore.entities.create('CIRCLE', {
+      cx: this.center.x, cy: this.center.y, r: radius
+    });
+    this.app.renderer2D.setPreview(preview);
+    const px = this.center.x + radius;
+    LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, px, this.center.y);
   }
 
   onMouseDown(e, worldPos) {
@@ -93,11 +115,14 @@ class CircleTool extends Tool {
     if (this.step === 1 && this.center) {
       const snap = this._getSnappedPos(worldPos);
       const radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
-      const preview = this.app.cadCore.entities.create('CIRCLE', {
-        cx: this.center.x, cy: this.center.y, r: radius
+      this._showPreview(radius);
+      this._bindRadiusInput(this.center, snap, {
+        onPreview: (r) => this._showPreview(r),
+        onApply: (r) => {
+          if (r > 0) this._run('DRAW_CIRCLE', { cx: this.center.x, cy: this.center.y, r });
+          this.app.setTool('select');
+        }
       });
-      this.app.renderer2D.setPreview(preview);
-      LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, snap.x, snap.y);
       this.app.requestRender();
     }
   }
@@ -123,7 +148,22 @@ class RectangleTool extends Tool {
 
   getPrompt() {
     if (this.step === 0) return 'RECTANGLE: Chọn góc thứ nhất.';
-    return 'RECTANGLE: Chọn góc đối diện.';
+    return 'RECTANGLE: Chọn góc đối hoặc gõ R×S + Enter (vd 4000x3000).';
+  }
+
+  _showPreview(end) {
+    const preview = this.app.cadCore.entities.create('RECTANGLE', {
+      x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
+    });
+    this.app.renderer2D.setPreview(preview);
+    LiveMeasureOverlay.rectangle(this.app, this.corner1.x, this.corner1.y, end.x, end.y);
+  }
+
+  _commit(end) {
+    this._run('DRAW_RECTANGLE', {
+      x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
+    });
+    this.app.setTool('select');
   }
 
   onMouseDown(e, worldPos) {
@@ -135,10 +175,7 @@ class RectangleTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
     } else {
       let end = this._applyOrtho(this.corner1, snap);
-      this._run('DRAW_RECTANGLE', {
-        x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
-      });
-      this.app.setTool('select');
+      this._commit(end);
     }
   }
 
@@ -146,11 +183,11 @@ class RectangleTool extends Tool {
     if (this.step === 1 && this.corner1) {
       const snap = this._getSnappedPos(worldPos);
       let end = this._applyOrtho(this.corner1, snap);
-      const preview = this.app.cadCore.entities.create('RECTANGLE', {
-        x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
+      this._showPreview(end);
+      this._bindRectangleInput(this.corner1, end, {
+        onPreview: (pt) => this._showPreview(pt),
+        onApply: (pt) => this._commit(pt)
       });
-      this.app.renderer2D.setPreview(preview);
-      LiveMeasureOverlay.rectangle(this.app, this.corner1.x, this.corner1.y, end.x, end.y);
       this.app.requestRender();
     }
   }
@@ -179,7 +216,11 @@ class ArcTool extends Tool {
   }
 
   getPrompt() {
-    const prompts = ['ARC: Chọn tâm.', 'ARC: Chọn điểm bắt đầu (bán kính).', 'ARC: Chọn điểm kết thúc.'];
+    const prompts = [
+      'ARC: Chọn tâm.',
+      'ARC: Chọn điểm bắt đầu hoặc gõ R + Enter.',
+      'ARC: Chọn điểm kết thúc.'
+    ];
     return prompts[this.step] || prompts[0];
   }
 
@@ -214,6 +255,18 @@ class ArcTool extends Tool {
         const radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
         this.app.renderer2D.setPreview(core.create('CIRCLE', { cx: this.center.x, cy: this.center.y, r: radius }));
         LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, snap.x, snap.y);
+        this._bindRadiusInput(this.center, snap, {
+          onPreview: (r) => {
+            this.app.renderer2D.setPreview(core.create('CIRCLE', { cx: this.center.x, cy: this.center.y, r }));
+            LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, this.center.x + r, this.center.y);
+          },
+          onApply: (r) => {
+            this.radius = r;
+            this.startAngle = GeometryKernel.angle(this.center.x, this.center.y, snap.x, snap.y);
+            this.step = 2;
+            this.app.updateToolInfo(this.getPrompt());
+          }
+        });
       } else if (this.step === 2) {
         const endAngle = GeometryKernel.angle(this.center.x, this.center.y, snap.x, snap.y);
         this.app.renderer2D.setPreview(core.create('ARC', {
@@ -248,7 +301,15 @@ class PolylineTool extends Tool {
 
   getPrompt() {
     if (this.points.length === 0) return 'PLINE: Chọn điểm đầu. Enter để kết thúc.';
-    return `PLINE: Chọn điểm tiếp theo (${this.points.length} điểm). Enter/Click phải để kết thúc.`;
+    return `PLINE: Chọn điểm tiếp hoặc gõ chiều dài + Enter (${this.points.length} điểm). Enter/Esc kết thúc.`;
+  }
+
+  _showPreview(cursor) {
+    const layerId = this.app.layerManager.currentLayerId;
+    const previewPoints = [...this.points, { x: cursor.x, y: cursor.y }];
+    const preview = new PolylineEntity(layerId, previewPoints);
+    this.app.renderer2D.setPreview(preview);
+    LiveMeasureOverlay.polylineSegment(this.app, this.points, cursor);
   }
 
   onMouseDown(e, worldPos) {
@@ -264,11 +325,16 @@ class PolylineTool extends Tool {
   onMouseMove(e, worldPos) {
     if (this.points.length > 0) {
       const snap = this._getSnappedPos(worldPos);
-      const layerId = this.app.layerManager.currentLayerId;
-      const previewPoints = [...this.points, { x: snap.x, y: snap.y }];
-      const preview = new PolylineEntity(layerId, previewPoints);
-      this.app.renderer2D.setPreview(preview);
-      LiveMeasureOverlay.polylineSegment(this.app, this.points, { x: snap.x, y: snap.y });
+      this._showPreview(snap);
+      const last = this.points[this.points.length - 1];
+      this._bindLengthInput(last, snap, {
+        label: 'D',
+        onPreview: (pt) => this._showPreview(pt),
+        onApply: (pt) => {
+          this.points.push({ x: pt.x, y: pt.y });
+          this.app.updateToolInfo(this.getPrompt());
+        }
+      });
       this.app.requestRender();
     }
   }

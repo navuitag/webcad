@@ -14,6 +14,44 @@ class Tool {
     this.active = false;
     this.app.renderer2D.setPreview(null);
     LiveMeasureOverlay.clear(this.app);
+    this.app.directInput?.clear();
+  }
+
+  _bindLengthInput(anchor, cursor, callbacks) {
+    this.app.directInput.setContext({
+      type: 'length',
+      label: callbacks.label || 'KT',
+      anchor,
+      cursor,
+      ortho: this.app.drawing.view.ortho,
+      onPreview: callbacks.onPreview,
+      onApply: callbacks.onApply
+    });
+  }
+
+  _bindRadiusInput(center, cursor, callbacks) {
+    this.app.directInput.setContext({
+      type: 'radius',
+      label: callbacks.label || 'R',
+      anchor: center,
+      cursor,
+      ortho: false,
+      onPreview: callbacks.onPreview,
+      onApply: callbacks.onApply
+    });
+  }
+
+  _bindRectangleInput(corner1, cursor, callbacks) {
+    this.app.directInput.setContext({
+      type: 'rectangle',
+      label: callbacks.label || 'R×S',
+      corner1,
+      anchor: corner1,
+      cursor,
+      ortho: this.app.drawing.view.ortho,
+      onPreview: callbacks.onPreview,
+      onApply: callbacks.onApply
+    });
   }
 
   getPrompt() {

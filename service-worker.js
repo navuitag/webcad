@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v27';
+const CACHE_NAME = 'webcad-v28';
 const ASSETS = [
   './',
   './index.html',
@@ -52,6 +52,7 @@ const ASSETS = [
   './js/renderers/CanvasRenderer.js',
   './js/renderers/ThreeRenderer.js',
   './js/tools/LiveMeasureOverlay.js',
+  './js/tools/DirectInput.js',
   './js/tools/Tool.js',
   './js/tools/SelectTool.js',
   './js/tools/DrawTools.js',

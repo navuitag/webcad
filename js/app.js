@@ -10,6 +10,7 @@ class WebCADApp {
     this.blockManager = new BlockManager();
     this.layoutManager = new LayoutManager();
     this.commandManager = new CommandManager(this);
+    this.directInput = new DirectInput(this);
 
     this.cloudStorage = null;
     this.collaboration = null;
@@ -635,6 +636,8 @@ class WebCADApp {
   _onKeyDown(e) {
     if (e.target === this.commandInput) return;
 
+    if (this.directInput?.handleKeyDown(e)) return;
+
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
       if (this._deleteSelection()) return;
@@ -666,9 +669,11 @@ class WebCADApp {
       }
     }
 
-    if (shortcuts[e.key] || shortcuts[e.key.toLowerCase()]) {
-      this.setTool(shortcuts[e.key] || shortcuts[e.key.toLowerCase()]);
-      return;
+    if (!this.directInput?.isActive()) {
+      if (shortcuts[e.key] || shortcuts[e.key.toLowerCase()]) {
+        this.setTool(shortcuts[e.key] || shortcuts[e.key.toLowerCase()]);
+        return;
+      }
     }
 
     if (this.currentTool) {

@@ -20,7 +20,23 @@ class ArchRectDrawTool extends Tool {
 
   getPrompt() {
     if (this.step === 0) return `${this.promptName}: Chọn góc thứ nhất.`;
-    return `${this.promptName}: Chọn góc đối diện.`;
+    return `${this.promptName}: Chọn góc đối hoặc gõ R×S + Enter.`;
+  }
+
+  _showPreview(end) {
+    const layerId = this.app.layerManager.currentLayerId;
+    const b = ArchDrawEngine.bounds(this.corner1.x, this.corner1.y, end.x, end.y);
+    const preview = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
+      lineDash: this.areaPrefix ? [8, 4] : []
+    });
+    this.app.renderer2D.setPreview(preview);
+    if (this.areaPrefix) {
+      this.app.renderer2D.setLiveMeasures(
+        ArchDrawEngine.previewAreaMeasures(this.corner1.x, this.corner1.y, end.x, end.y, this.areaPrefix)
+      );
+    } else {
+      LiveMeasureOverlay.rectangle(this.app, this.corner1.x, this.corner1.y, end.x, end.y);
+    }
   }
 
   onMouseDown(e, worldPos) {
@@ -41,19 +57,15 @@ class ArchRectDrawTool extends Tool {
     if (this.step !== 1 || !this.corner1) return;
     const snap = this._getSnappedPos(worldPos);
     const end = this._applyOrtho(this.corner1, snap);
-    const layerId = this.app.layerManager.currentLayerId;
-    const b = ArchDrawEngine.bounds(this.corner1.x, this.corner1.y, end.x, end.y);
-    const preview = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
-      lineDash: this.areaPrefix ? [8, 4] : []
+    this._showPreview(end);
+    this._bindRectangleInput(this.corner1, end, {
+      onPreview: (pt) => this._showPreview(pt),
+      onApply: (pt) => {
+        this.createFn(this.app, this.corner1.x, this.corner1.y, pt.x, pt.y);
+        LiveMeasureOverlay.clear(this.app);
+        this.app.setTool('select');
+      }
     });
-    this.app.renderer2D.setPreview(preview);
-    if (this.areaPrefix) {
-      this.app.renderer2D.setLiveMeasures(
-        ArchDrawEngine.previewAreaMeasures(this.corner1.x, this.corner1.y, end.x, end.y, this.areaPrefix)
-      );
-    } else {
-      LiveMeasureOverlay.rectangle(this.app, this.corner1.x, this.corner1.y, end.x, end.y);
-    }
     this.app.requestRender();
   }
 
@@ -77,7 +89,25 @@ class WallTool extends Tool {
   }
 
   getPrompt() {
-    return this.step === 0 ? 'TƯỜNG: Chọn điểm đầu.' : 'TƯỜNG: Chọn điểm cuối (Enter/Esc kết thúc).';
+    return this.step === 0
+      ? 'TƯỜNG: Chọn điểm đầu.'
+      : 'TƯỜNG: Chọn điểm cuối hoặc gõ chiều dài + Enter (Enter/Esc kết thúc).';
+  }
+
+  _showPreview(end) {
+    const pts = ArchDrawEngine.wallPolygon(this.startPoint, end);
+    if (!pts) return;
+    const layerId = this.app.layerManager.currentLayerId;
+    const preview = new HatchEntity(layerId, pts, 'SOLID');
+    preview.style.color = '#78909c';
+    this.app.renderer2D.setPreview(preview);
+    LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
+  }
+
+  _commit(end) {
+    ArchDrawEngine.createWall(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
+    this.startPoint = { x: end.x, y: end.y };
+    this.app.updateToolInfo(this.getPrompt());
   }
 
   onMouseDown(e, worldPos) {
@@ -88,9 +118,7 @@ class WallTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
     } else {
       const end = this._applyOrtho(this.startPoint, snap);
-      ArchDrawEngine.createWall(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
-      this.startPoint = { x: end.x, y: end.y };
-      this.app.updateToolInfo(this.getPrompt());
+      this._commit(end);
     }
   }
 
@@ -98,13 +126,12 @@ class WallTool extends Tool {
     if (this.step !== 1 || !this.startPoint) return;
     const snap = this._getSnappedPos(worldPos);
     const end = this._applyOrtho(this.startPoint, snap);
-    const pts = ArchDrawEngine.wallPolygon(this.startPoint, end);
-    if (!pts) return;
-    const layerId = this.app.layerManager.currentLayerId;
-    const preview = new HatchEntity(layerId, pts, 'SOLID');
-    preview.style.color = '#78909c';
-    this.app.renderer2D.setPreview(preview);
-    LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
+    this._showPreview(end);
+    this._bindLengthInput(this.startPoint, end, {
+      label: 'D',
+      onPreview: (pt) => this._showPreview(pt),
+      onApply: (pt) => this._commit(pt)
+    });
     this.app.requestRender();
   }
 
@@ -128,7 +155,17 @@ class OpenWallTool extends Tool {
   }
 
   getPrompt() {
-    return this.step === 0 ? 'T.MỞ: Chọn điểm đầu tường mở.' : 'T.MỞ: Chọn điểm cuối.';
+    return this.step === 0
+      ? 'T.MỞ: Chọn điểm đầu tường mở.'
+      : 'T.MỞ: Chọn điểm cuối hoặc gõ chiều dài + Enter.';
+  }
+
+  _showPreview(end) {
+    const layerId = this.app.layerManager.currentLayerId;
+    const preview = new LineEntity(layerId, this.startPoint.x, this.startPoint.y, end.x, end.y);
+    preview.style.lineDash = [12, 6];
+    this.app.renderer2D.setPreview(preview);
+    LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
   }
 
   onMouseDown(e, worldPos) {
@@ -148,11 +185,15 @@ class OpenWallTool extends Tool {
     if (this.step !== 1 || !this.startPoint) return;
     const snap = this._getSnappedPos(worldPos);
     const end = this._applyOrtho(this.startPoint, snap);
-    const layerId = this.app.layerManager.currentLayerId;
-    const preview = new LineEntity(layerId, this.startPoint.x, this.startPoint.y, end.x, end.y);
-    preview.style.lineDash = [12, 6];
-    this.app.renderer2D.setPreview(preview);
-    LiveMeasureOverlay.segment(this.app, this.startPoint.x, this.startPoint.y, end.x, end.y);
+    this._showPreview(end);
+    this._bindLengthInput(this.startPoint, end, {
+      label: 'D',
+      onPreview: (pt) => this._showPreview(pt),
+      onApply: (pt) => {
+        ArchDrawEngine.createOpenWall(this.app, this.startPoint.x, this.startPoint.y, pt.x, pt.y);
+        this.app.setTool('select');
+      }
+    });
     this.app.requestRender();
   }
 
@@ -176,7 +217,14 @@ class RoundColumnTool extends Tool {
   }
 
   getPrompt() {
-    return this.step === 0 ? 'CỘT TRÒN: Chọn tâm.' : 'CỘT TRÒN: Chọn bán kính.';
+    return this.step === 0 ? 'CỘT TRÒN: Chọn tâm.' : 'CỘT TRÒN: Chọn bán kính hoặc gõ R + Enter.';
+  }
+
+  _showPreview(radius) {
+    const layerId = this.app.layerManager.currentLayerId;
+    const preview = new CircleEntity(layerId, this.center.x, this.center.y, radius);
+    this.app.renderer2D.setPreview(preview);
+    LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, this.center.x + radius, this.center.y);
   }
 
   onMouseDown(e, worldPos) {
@@ -194,11 +242,16 @@ class RoundColumnTool extends Tool {
   onMouseMove(e, worldPos) {
     if (this.step !== 1 || !this.center) return;
     const snap = this._getSnappedPos(worldPos);
-    const layerId = this.app.layerManager.currentLayerId;
     const r = GeometryEngine.distance(this.center.x, this.center.y, snap.x, snap.y);
-    const preview = new CircleEntity(layerId, this.center.x, this.center.y, r);
-    this.app.renderer2D.setPreview(preview);
-    LiveMeasureOverlay.radius(this.app, this.center.x, this.center.y, snap.x, snap.y);
+    this._showPreview(r);
+    this._bindRadiusInput(this.center, snap, {
+      onPreview: (radius) => this._showPreview(radius),
+      onApply: (radius) => {
+        const px = this.center.x + radius;
+        ArchDrawEngine.createRoundColumn(this.app, this.center.x, this.center.y, px, this.center.y);
+        this.app.setTool('select');
+      }
+    });
     this.app.requestRender();
   }
 
