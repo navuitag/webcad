@@ -13,7 +13,8 @@ class Drawing {
       gridSize: 10,
       showGrid: true,
       ortho: false,
-      snapEnabled: true
+      snapEnabled: true,
+      showDimensions: true
     };
     this.metadata = {
       author: '',
@@ -69,6 +70,7 @@ class Drawing {
 
   getVisibleEntities(layerManager) {
     return this.entities.filter(e => {
+      if (e.type === 'DIMENSION' && !this.view.showDimensions) return false;
       const layer = layerManager.getLayer(e.layerId);
       return layer && layer.visible;
     });

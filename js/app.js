@@ -357,6 +357,7 @@ class WebCADApp {
       'toggle-grid': () => this.toggleGrid(),
       'toggle-ortho': () => this.toggleOrtho(),
       'toggle-snap': () => this.toggleSnap(),
+      'toggle-dimensions': () => this.toggleDimensions(),
       'mode-2d': () => this.setMode('2d'),
       'mode-3d': () => this.setMode('3d'),
       'block-create': () => this.setTool('block-create'),
@@ -701,12 +702,24 @@ class WebCADApp {
     this._updateCanvasViewToggles();
   }
 
+  toggleDimensions() {
+    this.drawing.view.showDimensions = !this.drawing.view.showDimensions;
+    document.getElementById('status-dimensions').textContent =
+      `Dim: ${this.drawing.view.showDimensions ? 'ON' : 'OFF'}`;
+    this._updateCanvasViewToggles();
+    this.requestRender();
+  }
+
   _updateCanvasViewToggles() {
     const v = this.drawing?.view;
     if (!v) return;
     document.querySelectorAll('[data-view-toggle]').forEach((btn) => {
       const key = btn.dataset.viewToggle;
-      const on = key === 'grid' ? v.showGrid : key === 'ortho' ? v.ortho : key === 'snap' ? v.snapEnabled : false;
+      const on = key === 'grid' ? v.showGrid
+        : key === 'ortho' ? v.ortho
+        : key === 'snap' ? v.snapEnabled
+        : key === 'dimensions' ? v.showDimensions
+        : false;
       btn.classList.toggle('active', !!on);
     });
   }
@@ -1420,6 +1433,8 @@ class WebCADApp {
     const layer = this.layerManager.getCurrentLayer();
     document.getElementById('status-layer').textContent =
       `Layer: ${layer ? layer.name : '0'}`;
+    document.getElementById('status-dimensions').textContent =
+      `Dim: ${this.drawing.view.showDimensions ? 'ON' : 'OFF'}`;
     const selCount = this.mode === '3d'
       ? this.selectionManager3D.getSelected().length
       : this.selectionManager.getSelected().length;

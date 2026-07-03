@@ -33,12 +33,15 @@ class DimensionTool extends Tool {
   }
 
   onMouseMove(e, worldPos) {
-    if (this.step === 1 && this.startPoint) {
+    if (this.step === 1 && this.startPoint && this.app.drawing.view.showDimensions) {
       const snap = this._getSnappedPos(worldPos);
       const preview = this.app.cadCore.dimensions.createLinear(
         this.startPoint, { x: snap.x, y: snap.y }
       );
       this.app.renderer2D.setPreview(preview);
+      this.app.requestRender();
+    } else if (this.step === 1) {
+      this.app.renderer2D.setPreview(null);
       this.app.requestRender();
     }
   }

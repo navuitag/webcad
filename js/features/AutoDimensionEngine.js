@@ -24,6 +24,7 @@ class AutoDimensionEngine {
   }
 
   static onCommandResult(app, command, result) {
+    if (!app.drawing.view.showDimensions) return;
     if (!AutoDimensionEngine.DRAW_COMMANDS.has(String(command).toUpperCase())) return;
     if (result.entity) {
       AutoDimensionEngine.dimensionEntity(app, result.entity);
