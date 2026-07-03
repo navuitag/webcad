@@ -44,6 +44,13 @@ class Tool {
   }
 
   _run(command, params) {
-    return this.app.cadCore.run(command, params);
+    const result = this.app.cadCore.run(command, params);
+    if (result.success) {
+      LiveMeasureOverlay.clear(this.app);
+      if (typeof AutoDimensionEngine !== 'undefined') {
+        AutoDimensionEngine.onCommandResult(this.app, command, result);
+      }
+    }
+    return result;
   }
 }
