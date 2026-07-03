@@ -415,5 +415,9 @@ class EntitySystem {
     else if (entity.type === 'TEXT' && key === 'fontFamily') entity.fontFamily = value || null;
     else if (entity.type === 'TEXT' && key === 'fontWeight') entity.fontWeight = value || 'normal';
     else if (entity.type === 'TEXT' && key === 'fontStyle') entity.fontStyle = value || 'normal';
+    else if (key === 'width') EntityDimensionEngine.setWidth(entity, value);
+    else if (key === 'height') EntityDimensionEngine.setHeight(entity, value);
+    else if (key === 'length') EntityDimensionEngine.setLength(entity, value);
+    else if (key === 'radius') EntityDimensionEngine.setRadius(entity, value);
   }
 }

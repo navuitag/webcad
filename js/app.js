@@ -1501,16 +1501,28 @@ class WebCADApp {
     }
 
     switch (entity.type) {
-      case 'LINE':
-        html += `<div class="prop-row"><label>Length</label><span>${GeometryEngine.formatDistance(GeometryEngine.distance(entity.start.x, entity.start.y, entity.end.x, entity.end.y))}</span></div>`;
+      case 'LINE': {
+        const len = GeometryEngine.distance(entity.start.x, entity.start.y, entity.end.x, entity.end.y);
+        html += `<div class="prop-row"><label>Chiều dài</label><input type="number" id="prop-length" min="0.01" step="0.01" value="${len.toFixed(3)}"></div>`;
         break;
+      }
       case 'CIRCLE':
-        html += `<div class="prop-row"><label>Radius</label><span>${entity.radius.toFixed(2)}</span></div>`;
+        html += `<div class="prop-row"><label>Đường kính</label><input type="number" id="prop-width" min="0.01" step="0.01" value="${(entity.radius * 2).toFixed(3)}"></div>`;
+        html += `<div class="prop-row"><label>Bán kính</label><input type="number" id="prop-radius" min="0.01" step="0.01" value="${entity.radius.toFixed(3)}"></div>`;
         break;
-      case 'RECTANGLE': {
+      case 'ARC':
+        html += `<div class="prop-row"><label>Bán kính</label><input type="number" id="prop-radius" min="0.01" step="0.01" value="${entity.radius.toFixed(3)}"></div>`;
+        break;
+      case 'RECTANGLE':
+      case 'HATCH':
+      case 'POLYLINE': {
         const bb = entity.getBoundingBox();
-        html += `<div class="prop-row"><label>Width</label><span>${(bb.maxX - bb.minX).toFixed(2)}</span></div>`;
-        html += `<div class="prop-row"><label>Height</label><span>${(bb.maxY - bb.minY).toFixed(2)}</span></div>`;
+        if (bb) {
+          const w = bb.maxX - bb.minX;
+          const h = bb.maxY - bb.minY;
+          html += `<div class="prop-row"><label>Chiều dài</label><input type="number" id="prop-width" min="0.01" step="0.01" value="${w.toFixed(3)}"></div>`;
+          html += `<div class="prop-row"><label>Chiều cao</label><input type="number" id="prop-height" min="0.01" step="0.01" value="${h.toFixed(3)}"></div>`;
+        }
         break;
       }
       case 'TEXT': {
@@ -1575,6 +1587,10 @@ class WebCADApp {
     document.getElementById('prop-text-italic')?.addEventListener('change', (e) => setProp('fontStyle', e.target.checked ? 'italic' : 'normal'));
     document.getElementById('prop-text-center')?.addEventListener('change', (e) => setProp('centered', e.target.checked));
     document.getElementById('prop-text-rotation')?.addEventListener('input', (e) => setProp('rotation', e.target.value));
+    document.getElementById('prop-length')?.addEventListener('input', (e) => setProp('length', e.target.value));
+    document.getElementById('prop-width')?.addEventListener('input', (e) => setProp('width', e.target.value));
+    document.getElementById('prop-height')?.addEventListener('input', (e) => setProp('height', e.target.value));
+    document.getElementById('prop-radius')?.addEventListener('input', (e) => setProp('radius', e.target.value));
     document.getElementById('prop-constraint-btn')?.addEventListener('click', () => {
       this.cadCore.run('ADD_CONSTRAINT', {
         type: 'FIXED',
