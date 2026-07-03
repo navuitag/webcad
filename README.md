@@ -18,6 +18,8 @@
 8. [Định dạng file](#định-dạng-file)
 9. [Xử lý sự cố](#xử-lý-sự-cố)
 10. [Phát triển](#phát-triển)
+11. [Tác giả](#tác-giả)
+12. [Giấy phép](#giấy-phép)
 
 ---
 
@@ -335,7 +337,7 @@ Nhập lệnh vào **dòng lệnh** (command line) phía dưới canvas.
 - **2D:** Canvas API
 - **3D:** Three.js r170 (WebGPU / WebGL2)
 - **Lưu trữ:** IndexedDB, localStorage
-- **PWA:** Service Worker (`webcad-v37`)
+- **PWA:** Service Worker (`webcad-v38`)
 
 ### Tài liệu kỹ thuật
 
@@ -351,9 +353,41 @@ Nhập lệnh vào **dòng lệnh** (command line) phía dưới canvas.
 
 ---
 
+## Tác giả
+
+**Nguyễn Anh Vũ** — [navuitag@gmail.com](mailto:navuitag@gmail.com)
+
+Repository: [github.com/navuitag/webcad](https://github.com/navuitag/webcad)
+
+### Công cụ phát triển
+
+Dự án được phát triển với sự hỗ trợ của **[Cursor AI](https://cursor.com)** — trợ lý lập trình tích hợp IDE.
+
+---
+
 ## Giấy phép
 
-Xem thông tin license trong repository (nếu có). Liên hệ maintainer qua GitHub: [navuitag/webcad](https://github.com/navuitag/webcad).
+Phần mềm được phát hành theo **Giấy phép MIT**.
+
+Copyright (c) 2026 Nguyễn Anh Vũ
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ---
 
