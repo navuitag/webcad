@@ -17,7 +17,7 @@ class AiAssistant {
 
     this.history.push({ role: 'user', content: trimmed });
 
-    const local = AiDrawingEngine.parse(this.app, trimmed) || this._parseLocal(trimmed);
+    const local = AiDrawingEngine.parse(this.app, trimmed) || await this._parseLocal(trimmed);
     if (local) {
       this.history.push({ role: 'assistant', content: local.message });
       return local;
@@ -33,7 +33,7 @@ class AiAssistant {
     };
   }
 
-  _parseLocal(input) {
+  async _parseLocal(input) {
     const s = input.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -121,9 +121,9 @@ class AiAssistant {
     for (const { re, fn } of patterns) {
       const m = s.match(re);
       if (m) {
-        const result = fn(m);
-        const message = typeof result === 'string' ? result : result.message;
-        return { success: true, message };
+        const result = await fn(m);
+        const message = typeof result === 'string' ? result : result?.message;
+        return { success: true, message: message || 'OK' };
       }
     }
     return null;
@@ -191,7 +191,7 @@ class AiAssistant {
       const data = await res.json();
       const cmd = data.choices?.[0]?.message?.content?.trim();
       if (cmd) {
-        const result = this._parseLocal(cmd) || { success: this.app.commandManager.execute(cmd), message: cmd };
+        const result = await this._parseLocal(cmd) || { success: this.app.commandManager.execute(cmd), message: cmd };
         this.history.push({ role: 'assistant', content: result.message || cmd });
         return result;
       }

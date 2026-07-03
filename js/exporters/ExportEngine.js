@@ -53,6 +53,9 @@ class ExportEngine {
   }
 
   static exportPDF(canvas, drawing, filename = 'drawing.pdf') {
+    if (!window.jspdf?.jsPDF) {
+      throw new Error('jsPDF chưa tải — kiểm tra kết nối mạng');
+    }
     const { jsPDF } = window.jspdf;
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({
@@ -169,17 +172,20 @@ class ExportEngine {
   }
 
   static exportGLTF(scene, filename = 'model.gltf') {
-    if (!scene || !window.ThreeAddons?.GLTFExporter) {
-      console.warn('GLTFExporter not available');
-      return;
-    }
-    const exporter = new ThreeAddons.GLTFExporter();
-    exporter.parse(scene, (gltf) => {
-      ExportEngine._downloadBlob(
-        new Blob([JSON.stringify(gltf, null, 2)], { type: 'model/gltf+json' }),
-        filename
-      );
-    }, (err) => console.error('GLTF export error', err), { binary: false });
+    return new Promise((resolve, reject) => {
+      if (!scene || !window.ThreeAddons?.GLTFExporter) {
+        reject(new Error('GLTFExporter not available'));
+        return;
+      }
+      const exporter = new ThreeAddons.GLTFExporter();
+      exporter.parse(scene, (gltf) => {
+        ExportEngine._downloadBlob(
+          new Blob([JSON.stringify(gltf, null, 2)], { type: 'model/gltf+json' }),
+          filename
+        );
+        resolve();
+      }, (err) => reject(err || new Error('GLTF export failed')), { binary: false });
+    });
   }
 
   static _downloadBlob(blob, filename) {

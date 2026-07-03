@@ -23,6 +23,7 @@ class WebCADApp {
     this.tools = {};
     this.renderScheduled = false;
     this.autosaveInterval = null;
+    this._ready = false;
 
     this._initDOM();
     this._initTools();
@@ -77,6 +78,7 @@ class WebCADApp {
     this.requestRender();
 
     window.addEventListener('resize', () => this._resize());
+    this._ready = true;
   }
 
   _initDOM() {
@@ -188,10 +190,18 @@ class WebCADApp {
     });
 
     document.querySelectorAll('[data-action]').forEach(btn => {
+      if (btn.closest('.features-panel')) return;
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         this._handleMenuAction(btn.dataset.action);
       });
+    });
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.features-panel [data-action]');
+      if (!btn) return;
+      e.stopPropagation();
+      this._handleMenuAction(btn.dataset.action);
     });
 
     document.getElementById('add-layer-btn').addEventListener('click', () => this._addLayer());
@@ -288,6 +298,10 @@ class WebCADApp {
   }
 
   _handleMenuAction(action) {
+    if (!this._ready) {
+      this.logCommand('Đang khởi tạo, vui lòng đợi...');
+      return;
+    }
     const actions = {
       'new': () => this.newDrawing(),
       'open': () => this.openDrawing(),
@@ -668,6 +682,7 @@ class WebCADApp {
 
   newDrawing(skipConfirm = false) {
     if (!skipConfirm && !confirm('Tạo bản vẽ mới? Dữ liệu chưa lưu sẽ bị mất.')) return;
+    if (!this.cadCore) return;
     this.drawing = new Drawing();
     this.layerManager = new LayerManager();
     this.blockManager = new BlockManager();
@@ -682,6 +697,10 @@ class WebCADApp {
     this._updateBlockPanel();
     this._updateLayoutPanel();
     this._updateStylesPanel();
+    this._updateCanvasViewToggles();
+    if (this.renderer3D?.initialized) {
+      this.renderer3D.syncEntities(this.drawing.entities3D);
+    }
     this.updateStatusBar();
     this.requestRender();
   }
@@ -725,8 +744,8 @@ class WebCADApp {
     this.importInput.click();
   }
 
-  _exportFormat(formatId) {
-    const result = this.cadCore.fileFormat.exportFormat(this, formatId);
+  async _exportFormat(formatId) {
+    const result = await this.cadCore.fileFormat.exportFormat(this, formatId);
     if (result.success) {
       this.logCommand(`Xuất ${result.filename}`);
     } else {
@@ -852,9 +871,9 @@ class WebCADApp {
         <span class="layer-name">${layer.name}</span>
         <span class="layer-count">${count}</span>
         <div class="layer-actions">
-          <button class="layer-action-btn ${layer.visible ? '' : 'hidden'}" data-action="visibility" title="Hiện/Ẩn">${layer.visible ? '👁' : '👁‍🗨'}</button>
-          <button class="layer-action-btn ${layer.locked ? 'locked' : ''}" data-action="lock" title="Khóa">${layer.locked ? '🔒' : '🔓'}</button>
-          <button class="layer-action-btn" data-action="delete" title="Xóa">✕</button>
+          <button class="layer-action-btn ${layer.visible ? '' : 'hidden'}" data-layer-action="visibility" title="Hiện/Ẩn">${layer.visible ? '👁' : '👁‍🗨'}</button>
+          <button class="layer-action-btn ${layer.locked ? 'locked' : ''}" data-layer-action="lock" title="Khóa">${layer.locked ? '🔒' : '🔓'}</button>
+          <button class="layer-action-btn" data-layer-action="delete" title="Xóa">✕</button>
         </div>
       `;
 
@@ -865,20 +884,20 @@ class WebCADApp {
         this.updateStatusBar();
       });
 
-      item.querySelector('[data-action="visibility"]').addEventListener('click', (e) => {
+      item.querySelector('[data-layer-action="visibility"]').addEventListener('click', (e) => {
         e.stopPropagation();
         this.layerManager.toggleVisibility(layer.id);
         this._updateLayerPanel();
         this.requestRender();
       });
 
-      item.querySelector('[data-action="lock"]').addEventListener('click', (e) => {
+      item.querySelector('[data-layer-action="lock"]').addEventListener('click', (e) => {
         e.stopPropagation();
         this.layerManager.toggleLock(layer.id);
         this._updateLayerPanel();
       });
 
-      item.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+      item.querySelector('[data-layer-action="delete"]').addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.layerManager.deleteLayer(layer.id)) {
           this._updateLayerPanel();
@@ -978,9 +997,7 @@ class WebCADApp {
         grid.appendChild(btn);
       }
     }
-    document.querySelectorAll('.features-panel [data-action]').forEach((btn) => {
-      btn.addEventListener('click', () => this._handleMenuAction(btn.dataset.action));
-    });
+    const sketchInput = document.getElementById('sketch-input');
     if (sketchInput) {
       sketchInput.addEventListener('change', async (e) => {
         const file = e.target.files?.[0];
@@ -1302,13 +1319,13 @@ class WebCADApp {
     this.renderScheduled = true;
     requestAnimationFrame(() => {
       this.renderScheduled = false;
-      if (this.mode === '2d') {
+      if (this.mode === '2d' && this.renderer2D && this.cadCore) {
         this.renderer2D.render(
           this.drawing, this.layerManager,
           this.selectionManager, this.snapEngine,
           this.layoutManager, this.cadCore.styles
         );
-      } else if (this.renderer3D.initialized) {
+      } else if (this.renderer3D?.initialized) {
         this.renderer3D.render();
       }
     });
@@ -1328,6 +1345,9 @@ class WebCADApp {
 
 document.addEventListener('DOMContentLoaded', () => {
   const app = new WebCADApp();
-  app.init();
+  app.init().catch((err) => {
+    console.error('WebCAD init failed:', err);
+    app.logCommand?.('Khởi tạo lỗi: ' + err.message);
+  });
   window.webcad = app;
 });

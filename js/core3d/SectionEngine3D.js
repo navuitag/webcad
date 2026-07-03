@@ -36,6 +36,10 @@ class SectionEngine3D {
 
   _apply() {
     if (!this.renderer) return;
+    if (this.renderer.isWebGPURenderer) {
+      if (this.helper) this.helper.visible = this.enabled;
+      return;
+    }
     this.renderer.clippingPlanes = this.enabled ? [this.plane] : [];
     this.renderer.localClippingEnabled = this.enabled;
     this.scene.traverse(obj => {

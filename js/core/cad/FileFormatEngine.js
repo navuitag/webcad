@@ -30,7 +30,7 @@ class FileFormatEngine {
     );
   }
 
-  exportFormat(app, formatId) {
+  async exportFormat(app, formatId) {
     const fmt = FormatRegistry.get(formatId);
     if (!fmt || !fmt.export) {
       return { success: false, message: `Export not supported: ${formatId}` };
@@ -66,7 +66,7 @@ class FileFormatEngine {
           break;
         case 'gltf':
           if (!app.renderer3D.initialized) throw new Error('Chuyển sang chế độ 3D trước khi xuất GLTF');
-          ExportEngine.exportGLTF(app.renderer3D.getScene(), filename);
+          await ExportEngine.exportGLTF(app.renderer3D.getScene(), filename);
           break;
         default:
           return { success: false, message: `Unknown format: ${formatId}` };
