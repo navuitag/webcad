@@ -8,22 +8,18 @@ class Entity3D {
     this.scale = { x: 1, y: 1, z: 1 };
     this.material = {
       color: '#4fc3f7',
+      metalness: 0.1,
+      roughness: 0.6,
       opacity: 1,
       transparent: false
     };
     this.params = {};
     this.mesh = null;
+    this._meshDirty = true;
   }
 
-  createMesh() {
-    return null;
-  }
-
-  updateMesh() {
-    if (!this.mesh) return;
-    this.mesh.position.set(this.position.x, this.position.y, this.position.z);
-    this.mesh.rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
-    this.mesh.scale.set(this.scale.x, this.scale.y, this.scale.z);
+  markDirty() {
+    this._meshDirty = true;
   }
 
   toJSON() {
@@ -35,7 +31,7 @@ class Entity3D {
       rotation: { ...this.rotation },
       scale: { ...this.scale },
       material: { ...this.material },
-      params: { ...this.params }
+      params: JSON.parse(JSON.stringify(this.params))
     };
   }
 
@@ -46,31 +42,49 @@ class Entity3D {
     entity.rotation = { ...data.rotation };
     entity.scale = { ...data.scale };
     entity.material = { ...data.material };
-    entity.params = { ...data.params };
+    entity.params = data.params || {};
+    entity._meshDirty = true;
     return entity;
   }
 
   static createBox(width = 2, height = 2, depth = 2) {
     const entity = new Entity3D('BOX', 'Box');
     entity.params = { width, height, depth };
+    entity.position.y = height / 2;
     return entity;
   }
 
   static createSphere(radius = 1) {
     const entity = new Entity3D('SPHERE', 'Sphere');
     entity.params = { radius };
+    entity.position.y = radius;
     return entity;
   }
 
   static createCylinder(radiusTop = 1, radiusBottom = 1, height = 2) {
     const entity = new Entity3D('CYLINDER', 'Cylinder');
     entity.params = { radiusTop, radiusBottom, height };
+    entity.position.y = height / 2;
     return entity;
   }
 
   static createCone(radius = 1, height = 2) {
     const entity = new Entity3D('CONE', 'Cone');
     entity.params = { radius, height };
+    entity.position.y = height / 2;
+    return entity;
+  }
+
+  static createExtrude(profile, height = 1, options = {}) {
+    const entity = new Entity3D('EXTRUDE', options.name || 'Extrude');
+    entity.params = { profile, height, ...options };
+    entity.position.y = height / 2;
+    return entity;
+  }
+
+  static createBoolean(operation, geometry, sourceIds = []) {
+    const entity = new Entity3D('BOOLEAN', `Boolean_${operation}`);
+    entity.params = { operation, geometry, sourceIds };
     return entity;
   }
 }

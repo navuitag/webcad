@@ -25,11 +25,9 @@ class DimensionTool extends Tool {
       this.step = 1;
       this.app.updateToolInfo(this.getPrompt());
     } else {
-      const layerId = this.app.layerManager.currentLayerId;
-      const dim = new DimensionEntity(
-        layerId, this.startPoint.x, this.startPoint.y, snap.x, snap.y
-      );
-      this._addEntity(dim);
+      this._run('DRAW_DIMENSION', {
+        p1: this.startPoint, p2: { x: snap.x, y: snap.y }
+      });
       this.app.setTool('select');
     }
   }
@@ -37,9 +35,8 @@ class DimensionTool extends Tool {
   onMouseMove(e, worldPos) {
     if (this.step === 1 && this.startPoint) {
       const snap = this._getSnappedPos(worldPos);
-      const layerId = this.app.layerManager.currentLayerId;
-      const preview = new DimensionEntity(
-        layerId, this.startPoint.x, this.startPoint.y, snap.x, snap.y
+      const preview = this.app.cadCore.dimensions.createLinear(
+        this.startPoint, { x: snap.x, y: snap.y }
       );
       this.app.renderer2D.setPreview(preview);
       this.app.requestRender();

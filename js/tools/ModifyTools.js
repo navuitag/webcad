@@ -30,16 +30,10 @@ class ModifyTool extends Tool {
 
     if (this.step === 0) {
       const tolerance = 5 / this.app.drawing.view.zoom;
-      const entities = this.app.drawing.getVisibleEntities(this.app.layerManager);
-      for (let i = entities.length - 1; i >= 0; i--) {
-        if (this.app.layerManager.isLocked(entities[i].layerId)) continue;
-        if (entities[i].hitTest(snap.x, snap.y, tolerance)) {
-          if (!this.entities.includes(entities[i])) {
-            this.entities.push(entities[i]);
-            this.app.selectionManager.select(entities[i], true);
-          }
-          break;
-        }
+      const hit = this.app.cadCore.entities.hitTest(snap.x, snap.y, tolerance);
+      if (hit && !this.entities.includes(hit)) {
+        this.entities.push(hit);
+        this.app.selectionManager.select(hit, true);
       }
     } else if (this.step === 1) {
       this.basePoint = { x: snap.x, y: snap.y };
@@ -78,23 +72,41 @@ class ModifyTool extends Tool {
 
   _applyModify(target) {
     this._restoreOriginal();
-    this.modifyFn(this.entities, this.basePoint, target, this.name === 'copy');
+    const dx = target.x - this.basePoint.x;
+    const dy = target.y - this.basePoint.y;
 
     if (this.name === 'copy') {
-      const copies = this.entities.map(e => e.clone());
-      for (const copy of copies) {
-        this.app.drawing.addEntity(copy);
-      }
-      this.app.history.push({ type: 'ADD_ENTITIES', entities: copies });
-    } else {
+      this._run('COPY', { entities: this.entities, dx, dy });
+    } else if (this.name === 'move') {
+      this.app.cadCore.entities.move(this.entities, dx, dy);
       this.app.history.push({
         type: 'MODIFY_ENTITY',
         entity: this.entities[0],
         before: this.originalStates[0],
         after: this.entities[0].toJSON()
       });
+      this.app.requestRender();
+    } else if (this.name === 'rotate') {
+      const angle = GeometryKernel.angle(this.basePoint.x, this.basePoint.y, target.x, target.y);
+      this.app.cadCore.entities.rotate(this.entities, this.basePoint.x, this.basePoint.y, angle);
+      this.app.history.push({
+        type: 'MODIFY_ENTITY',
+        entity: this.entities[0],
+        before: this.originalStates[0],
+        after: this.entities[0].toJSON()
+      });
+      this.app.requestRender();
+    } else if (this.name === 'scale') {
+      const factor = GeometryKernel.distance(this.basePoint.x, this.basePoint.y, target.x, target.y) / 10;
+      this.app.cadCore.entities.scale(this.entities, this.basePoint.x, this.basePoint.y, factor);
+      this.app.history.push({
+        type: 'MODIFY_ENTITY',
+        entity: this.entities[0],
+        before: this.originalStates[0],
+        after: this.entities[0].toJSON()
+      });
+      this.app.requestRender();
     }
-    this.app.requestRender();
   }
 }
 
@@ -110,16 +122,9 @@ class DeleteTool extends Tool {
 
   onMouseDown(e, worldPos) {
     const tolerance = 5 / this.app.drawing.view.zoom;
-    const entities = this.app.drawing.getVisibleEntities(this.app.layerManager);
-    for (let i = entities.length - 1; i >= 0; i--) {
-      if (this.app.layerManager.isLocked(entities[i].layerId)) continue;
-      if (entities[i].hitTest(worldPos.x, worldPos.y, tolerance)) {
-        this.app.drawing.removeEntity(entities[i]);
-        this.app.selectionManager.deselect(entities[i]);
-        this.app.history.push({ type: 'REMOVE_ENTITY', entity: entities[i] });
-        this.app.requestRender();
-        break;
-      }
+    const entity = this.app.cadCore.entities.hitTest(worldPos.x, worldPos.y, tolerance);
+    if (entity) {
+      this._run('DELETE', { entities: [entity] });
     }
   }
 
@@ -128,12 +133,8 @@ class DeleteTool extends Tool {
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const selected = this.app.selectionManager.getSelected();
       if (selected.length > 0) {
-        for (const entity of selected) {
-          this.app.drawing.removeEntity(entity);
-        }
-        this.app.history.push({ type: 'REMOVE_ENTITIES', entities: [...selected] });
+        this._run('DELETE', { entities: [...selected] });
         this.app.selectionManager.clearSelection();
-        this.app.requestRender();
       }
     }
   }

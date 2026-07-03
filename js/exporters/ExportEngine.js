@@ -7,7 +7,7 @@ class ExportEngine {
     a.click();
   }
 
-  static exportSVG(drawing, layerManager, width, height) {
+  static exportSVG(drawing, layerManager, width, height, filename) {
     const bb = drawing.getBoundingBox();
     const padding = 20;
     const svgWidth = bb.maxX - bb.minX + padding * 2;
@@ -25,12 +25,7 @@ class ExportEngine {
     svg += `</g>\n</svg>`;
 
     const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (drawing.name || 'drawing') + '.svg';
-    a.click();
-    URL.revokeObjectURL(url);
+    ExportEngine._downloadBlob(blob, filename || FormatRegistry.filename(drawing.name, 'svg'));
   }
 
   static _entityToSVG(entity, layerManager) {
@@ -66,7 +61,7 @@ class ExportEngine {
       format: [canvas.width, canvas.height]
     });
     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save(filename || drawing.name + '.pdf');
+    pdf.save(filename || FormatRegistry.filename(drawing.name, 'pdf'));
   }
 
   static exportJSON(drawing, layerManager) {
@@ -82,6 +77,12 @@ class ExportEngine {
 
   static exportSTL(scene, filename = 'model.stl') {
     if (!scene) return;
+    if (window.ThreeAddons?.STLExporter) {
+      const exporter = new ThreeAddons.STLExporter();
+      const stl = exporter.parse(scene);
+      ExportEngine._downloadBlob(new Blob([stl], { type: 'application/sla' }), filename);
+      return;
+    }
     let stl = 'solid WebCAD\n';
     scene.traverse((obj) => {
       if (obj.isMesh && obj.geometry) {
@@ -124,18 +125,17 @@ class ExportEngine {
       }
     });
     stl += 'endsolid WebCAD\n';
-
-    const blob = new Blob([stl], { type: 'application/sla' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    ExportEngine._downloadBlob(new Blob([stl], { type: 'application/sla' }), filename);
   }
 
   static exportOBJ(scene, filename = 'model.obj') {
     if (!scene) return;
+    if (window.ThreeAddons?.OBJExporter) {
+      const exporter = new ThreeAddons.OBJExporter();
+      const obj = exporter.parse(scene);
+      ExportEngine._downloadBlob(new Blob([obj], { type: 'text/plain' }), filename);
+      return;
+    }
     let obj = '# WebCAD OBJ Export\n';
     let vertexOffset = 0;
 
@@ -165,12 +165,43 @@ class ExportEngine {
       vertexOffset += pos.count;
     });
 
-    const blob = new Blob([obj], { type: 'text/plain' });
+    ExportEngine._downloadBlob(new Blob([obj], { type: 'text/plain' }), filename);
+  }
+
+  static exportGLTF(scene, filename = 'model.gltf') {
+    if (!scene || !window.ThreeAddons?.GLTFExporter) {
+      console.warn('GLTFExporter not available');
+      return;
+    }
+    const exporter = new ThreeAddons.GLTFExporter();
+    exporter.parse(scene, (gltf) => {
+      ExportEngine._downloadBlob(
+        new Blob([JSON.stringify(gltf, null, 2)], { type: 'model/gltf+json' }),
+        filename
+      );
+    }, (err) => console.error('GLTF export error', err), { binary: false });
+  }
+
+  static _downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  static print(canvas, drawing) {
+    const win = window.open('', '_blank');
+    if (!win) {
+      alert('Cho phép popup để in bản vẽ.');
+      return;
+    }
+    const imgData = canvas.toDataURL('image/png');
+    win.document.write(`<!DOCTYPE html><html><head><title>In - ${drawing.name || 'WebCAD'}</title>
+      <style>@media print{body{margin:0}}body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#fff}
+      img{max-width:100%;max-height:100vh}</style></head>
+      <body><img src="${imgData}" onload="window.print();window.close()"></body></html>`);
+    win.document.close();
   }
 }

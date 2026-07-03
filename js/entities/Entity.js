@@ -4,11 +4,24 @@ class Entity {
     this.type = type;
     this.layerId = layerId;
     this.selected = false;
+    this.linetypeId = 'Continuous';
+    this.textStyleId = 'Standard';
+    this.dimStyleId = 'Standard';
     this.style = {
       color: null,
       lineWidth: 1,
       lineDash: []
     };
+  }
+
+  applyStroke(ctx, layerManager, styleManager) {
+    ctx.strokeStyle = this.getColor(layerManager);
+    ctx.lineWidth = this.style.lineWidth;
+    const dash = styleManager
+      ? styleManager.getLineDash(this.linetypeId, this.style.lineDash)
+      : this.style.lineDash;
+    if (dash && dash.length) ctx.setLineDash(dash);
+    else ctx.setLineDash([]);
   }
 
   getColor(layerManager) {
@@ -74,6 +87,9 @@ class Entity {
       id: this.id,
       type: this.type,
       layerId: this.layerId,
+      linetypeId: this.linetypeId,
+      textStyleId: this.textStyleId,
+      dimStyleId: this.dimStyleId,
       style: { ...this.style }
     };
   }

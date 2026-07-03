@@ -109,9 +109,9 @@ class Drawing {
     };
   }
 
-  toJSON(layerManager) {
+  toJSON(layerManager, blockManager, layoutManager, styleManager, xrefManager) {
     return {
-      version: '1.0',
+      version: '1.2',
       id: this.id,
       name: this.name,
       unit: this.unit,
@@ -119,12 +119,16 @@ class Drawing {
       layers: layerManager.toJSON(),
       entities2D: this.entities.map(e => e.toJSON()),
       entities3D: this.entities3D.map(e => e.toJSON()),
+      blocks: blockManager ? blockManager.toJSON() : [],
+      layouts: layoutManager ? layoutManager.toJSON() : null,
+      styles: styleManager ? styleManager.toJSON() : null,
+      xrefs: xrefManager ? xrefManager.toJSON() : [],
       view: { ...this.view },
       metadata: { ...this.metadata }
     };
   }
 
-  static fromJSON(data, layerManager) {
+  static fromJSON(data, layerManager, blockManager, layoutManager, styleManager, xrefManager) {
     const drawing = new Drawing();
     drawing.id = data.id || drawing.id;
     drawing.name = data.name || 'Untitled';
@@ -143,6 +147,22 @@ class Drawing {
 
     if (data.entities3D) {
       drawing.entities3D = data.entities3D.map(eData => Entity3DFactory.create(eData));
+    }
+
+    if (blockManager && data.blocks) {
+      blockManager.fromJSON(data.blocks);
+    }
+
+    if (layoutManager && data.layouts) {
+      layoutManager.fromJSON(data.layouts);
+    }
+
+    if (styleManager && data.styles) {
+      styleManager.fromJSON(data.styles);
+    }
+
+    if (xrefManager && data.xrefs) {
+      xrefManager.fromJSON(data.xrefs);
     }
 
     return drawing;
@@ -165,6 +185,7 @@ const EntityFactory = {
       case 'RECTANGLE': return RectangleEntity.fromJSON(data);
       case 'TEXT': return TextEntity.fromJSON(data);
       case 'DIMENSION': return DimensionEntity.fromJSON(data);
+      case 'HATCH': return HatchEntity.fromJSON(data);
       default: return null;
     }
   }

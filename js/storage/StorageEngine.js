@@ -22,8 +22,8 @@ class StorageEngine {
     });
   }
 
-  async save(drawing, layerManager) {
-    const data = drawing.toJSON(layerManager);
+  async save(drawing, layerManager, blockManager, layoutManager, styleManager, xrefManager) {
+    const data = drawing.toJSON(layerManager, blockManager, layoutManager, styleManager, xrefManager);
     return new Promise((resolve, reject) => {
       const tx = this.db.transaction(this.storeName, 'readwrite');
       const store = tx.objectStore(this.storeName);
@@ -66,15 +66,12 @@ class StorageEngine {
     });
   }
 
-  saveToFile(drawing, layerManager) {
-    const data = drawing.toJSON(layerManager);
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (drawing.name || 'drawing') + '.wcad';
-    a.click();
-    URL.revokeObjectURL(url);
+  saveToFile(drawing, layerManager, blockManager, layoutManager, styleManager, xrefManager) {
+    const data = drawing.toJSON(layerManager, blockManager, layoutManager, styleManager, xrefManager);
+    data.format = 'webcad-json';
+    data.formatVersion = data.version || '1.2';
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: FormatRegistry.formats.wcad.mime });
+    ExportEngine._downloadBlob(blob, FormatRegistry.filename(drawing.name, 'wcad'));
   }
 
   loadFromFile(file) {
@@ -92,9 +89,9 @@ class StorageEngine {
     });
   }
 
-  autosave(drawing, layerManager) {
+  autosave(drawing, layerManager, blockManager, layoutManager, styleManager, xrefManager) {
     try {
-      const data = drawing.toJSON(layerManager);
+      const data = drawing.toJSON(layerManager, blockManager, layoutManager, styleManager, xrefManager);
       localStorage.setItem('webcad_autosave', JSON.stringify(data));
     } catch (e) {
       console.warn('Autosave failed:', e);

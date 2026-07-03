@@ -13,16 +13,7 @@ class SelectTool extends Tool {
 
   onMouseDown(e, worldPos) {
     const tolerance = 5 / this.app.drawing.view.zoom;
-    const entities = this.app.drawing.getVisibleEntities(this.app.layerManager);
-    let hit = null;
-
-    for (let i = entities.length - 1; i >= 0; i--) {
-      if (this.app.layerManager.isLocked(entities[i].layerId)) continue;
-      if (entities[i].hitTest(worldPos.x, worldPos.y, tolerance)) {
-        hit = entities[i];
-        break;
-      }
-    }
+    const hit = this.app.cadCore.entities.hitTest(worldPos.x, worldPos.y, tolerance);
 
     if (hit) {
       if (e.shiftKey) {
@@ -32,7 +23,7 @@ class SelectTool extends Tool {
       }
       this.isDragging = true;
       this.dragStart = { ...worldPos };
-      this.dragOriginalStates = this.app.selectionManager.getSelected().map(e => e.toJSON());
+      this.dragOriginalStates = this.app.selectionManager.getSelected().map(ent => ent.toJSON());
     } else {
       if (!e.shiftKey) {
         this.app.selectionManager.clearSelection();

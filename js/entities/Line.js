@@ -5,14 +5,12 @@ class LineEntity extends Entity {
     this.end = { x: x2, y: y2 };
   }
 
-  draw(ctx, drawing, layerManager) {
+  draw(ctx, drawing, layerManager, styleManager) {
     const p1 = drawing.worldToScreen(this.start.x, this.start.y, ctx.canvas.width, ctx.canvas.height);
     const p2 = drawing.worldToScreen(this.end.x, this.end.y, ctx.canvas.width, ctx.canvas.height);
 
     ctx.save();
-    ctx.strokeStyle = this.getColor(layerManager);
-    ctx.lineWidth = this.style.lineWidth;
-    if (this.style.lineDash.length) ctx.setLineDash(this.style.lineDash);
+    this.applyStroke(ctx, layerManager, styleManager);
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
@@ -84,6 +82,7 @@ class LineEntity extends Entity {
     const line = new LineEntity(data.layerId, data.start.x, data.start.y, data.end.x, data.end.y);
     line.id = data.id;
     line.style = { ...line.style, ...data.style };
+    line.linetypeId = data.linetypeId || 'Continuous';
     return line;
   }
 }

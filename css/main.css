@@ -357,6 +357,33 @@ html, body {
   cursor: pointer;
 }
 
+.properties-content select {
+  max-width: 110px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.properties-content .prop-actions {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.properties-content .prop-actions button {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
 /* Snap options */
 .snap-options {
   display: flex;

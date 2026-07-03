@@ -16,5 +16,19 @@
     }
   ],
   "categories": ["productivity", "utilities"],
-  "lang": "vi"
+  "lang": "vi",
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "application/vnd.webcad+json": [".wcad.json", ".wcad"],
+        "application/json": [".json"],
+        "image/svg+xml": [".svg"],
+        "application/dxf": [".dxf"],
+        "model/obj": [".obj"],
+        "model/stl": [".stl"],
+        "model/gltf+json": [".gltf"]
+      }
+    }
+  ]
 }

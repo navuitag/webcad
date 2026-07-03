@@ -26,9 +26,9 @@ class LineTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
     } else {
       let end = this._applyOrtho(this.startPoint, snap);
-      const layerId = this.app.layerManager.currentLayerId;
-      const line = new LineEntity(layerId, this.startPoint.x, this.startPoint.y, end.x, end.y);
-      this._addEntity(line);
+      this._run('DRAW_LINE', {
+        x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
+      });
       this.startPoint = { x: end.x, y: end.y };
       this.app.updateToolInfo(this.getPrompt());
     }
@@ -38,8 +38,9 @@ class LineTool extends Tool {
     if (this.step === 1 && this.startPoint) {
       const snap = this._getSnappedPos(worldPos);
       let end = this._applyOrtho(this.startPoint, snap);
-      const layerId = this.app.layerManager.currentLayerId;
-      const preview = new LineEntity(layerId, this.startPoint.x, this.startPoint.y, end.x, end.y);
+      const preview = this.app.cadCore.entities.create('LINE', {
+        x1: this.startPoint.x, y1: this.startPoint.y, x2: end.x, y2: end.y
+      });
       this.app.renderer2D.setPreview(preview);
       this.app.requestRender();
     }
@@ -79,11 +80,9 @@ class CircleTool extends Tool {
       this.step = 1;
       this.app.updateToolInfo(this.getPrompt());
     } else {
-      const radius = GeometryEngine.distance(this.center.x, this.center.y, snap.x, snap.y);
+      const radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
       if (radius > 0) {
-        const layerId = this.app.layerManager.currentLayerId;
-        const circle = new CircleEntity(layerId, this.center.x, this.center.y, radius);
-        this._addEntity(circle);
+        this._run('DRAW_CIRCLE', { cx: this.center.x, cy: this.center.y, r: radius });
       }
       this.app.setTool('select');
     }
@@ -92,9 +91,10 @@ class CircleTool extends Tool {
   onMouseMove(e, worldPos) {
     if (this.step === 1 && this.center) {
       const snap = this._getSnappedPos(worldPos);
-      const radius = GeometryEngine.distance(this.center.x, this.center.y, snap.x, snap.y);
-      const layerId = this.app.layerManager.currentLayerId;
-      const preview = new CircleEntity(layerId, this.center.x, this.center.y, radius);
+      const radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
+      const preview = this.app.cadCore.entities.create('CIRCLE', {
+        cx: this.center.x, cy: this.center.y, r: radius
+      });
       this.app.renderer2D.setPreview(preview);
       this.app.requestRender();
     }
@@ -133,9 +133,9 @@ class RectangleTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
     } else {
       let end = this._applyOrtho(this.corner1, snap);
-      const layerId = this.app.layerManager.currentLayerId;
-      const rect = new RectangleEntity(layerId, this.corner1.x, this.corner1.y, end.x, end.y);
-      this._addEntity(rect);
+      this._run('DRAW_RECTANGLE', {
+        x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
+      });
       this.app.setTool('select');
     }
   }
@@ -144,8 +144,9 @@ class RectangleTool extends Tool {
     if (this.step === 1 && this.corner1) {
       const snap = this._getSnappedPos(worldPos);
       let end = this._applyOrtho(this.corner1, snap);
-      const layerId = this.app.layerManager.currentLayerId;
-      const preview = new RectangleEntity(layerId, this.corner1.x, this.corner1.y, end.x, end.y);
+      const preview = this.app.cadCore.entities.create('RECTANGLE', {
+        x1: this.corner1.x, y1: this.corner1.y, x2: end.x, y2: end.y
+      });
       this.app.renderer2D.setPreview(preview);
       this.app.requestRender();
     }
@@ -186,18 +187,16 @@ class ArcTool extends Tool {
       this.center = { x: snap.x, y: snap.y };
       this.step = 1;
     } else if (this.step === 1) {
-      this.radius = GeometryEngine.distance(this.center.x, this.center.y, snap.x, snap.y);
-      this.startAngle = GeometryEngine.angle(this.center.x, this.center.y, snap.x, snap.y);
+      this.radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
+      this.startAngle = GeometryKernel.angle(this.center.x, this.center.y, snap.x, snap.y);
       this.step = 2;
     } else {
-      const endAngle = GeometryEngine.angle(this.center.x, this.center.y, snap.x, snap.y);
+      const endAngle = GeometryKernel.angle(this.center.x, this.center.y, snap.x, snap.y);
       if (this.radius > 0) {
-        const layerId = this.app.layerManager.currentLayerId;
-        const arc = new ArcEntity(
-          layerId, this.center.x, this.center.y,
-          this.radius, this.startAngle, endAngle
-        );
-        this._addEntity(arc);
+        this._run('DRAW_ARC', {
+          cx: this.center.x, cy: this.center.y, r: this.radius,
+          startAngle: this.startAngle, endAngle
+        });
       }
       this.app.setTool('select');
     }
@@ -207,18 +206,16 @@ class ArcTool extends Tool {
   onMouseMove(e, worldPos) {
     if (this.step >= 1 && this.center) {
       const snap = this._getSnappedPos(worldPos);
-      const layerId = this.app.layerManager.currentLayerId;
+      const core = this.app.cadCore.entities;
       if (this.step === 1) {
-        const radius = GeometryEngine.distance(this.center.x, this.center.y, snap.x, snap.y);
-        const preview = new CircleEntity(layerId, this.center.x, this.center.y, radius);
-        this.app.renderer2D.setPreview(preview);
+        const radius = GeometryKernel.distance(this.center.x, this.center.y, snap.x, snap.y);
+        this.app.renderer2D.setPreview(core.create('CIRCLE', { cx: this.center.x, cy: this.center.y, r: radius }));
       } else if (this.step === 2) {
-        const endAngle = GeometryEngine.angle(this.center.x, this.center.y, snap.x, snap.y);
-        const preview = new ArcEntity(
-          layerId, this.center.x, this.center.y,
-          this.radius, this.startAngle, endAngle
-        );
-        this.app.renderer2D.setPreview(preview);
+        const endAngle = GeometryKernel.angle(this.center.x, this.center.y, snap.x, snap.y);
+        this.app.renderer2D.setPreview(core.create('ARC', {
+          cx: this.center.x, cy: this.center.y, r: this.radius,
+          startAngle: this.startAngle, endAngle
+        }));
       }
       this.app.requestRender();
     }
@@ -274,9 +271,7 @@ class PolylineTool extends Tool {
 
   _finish() {
     if (this.points.length >= 2) {
-      const layerId = this.app.layerManager.currentLayerId;
-      const pline = new PolylineEntity(layerId, [...this.points]);
-      this._addEntity(pline);
+      this._run('DRAW_POLYLINE', { points: [...this.points] });
     }
     this.app.setTool('select');
   }
@@ -308,9 +303,7 @@ class TextTool extends Tool {
       this.app.updateToolInfo(this.getPrompt());
       const text = prompt('Nhập văn bản:');
       if (text) {
-        const layerId = this.app.layerManager.currentLayerId;
-        const textEntity = new TextEntity(layerId, this.position.x, this.position.y, text);
-        this._addEntity(textEntity);
+        this._run('DRAW_TEXT', { x: this.position.x, y: this.position.y, text, height: 10 });
       }
       this.app.setTool('select');
     }

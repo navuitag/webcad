@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/toolbar.css">
   <link rel="stylesheet" href="css/panel.css">
+  <link rel="stylesheet" href="css/phase5.css">
 </head>
 <body>
   <div id="app">
@@ -31,13 +32,41 @@
             <button data-action="new">Mới</button>
             <button data-action="open">Mở...</button>
             <button data-action="save">Lưu</button>
-            <button data-action="save-as">Lưu thành...</button>
+            <button data-action="save-as">Lưu thành (.wcad.json)</button>
             <hr>
-            <button data-action="export-png">Xuất PNG</button>
-            <button data-action="export-svg">Xuất SVG</button>
-            <button data-action="export-pdf">Xuất PDF</button>
-            <button data-action="export-stl">Xuất STL</button>
-            <button data-action="export-obj">Xuất OBJ</button>
+            <button data-action="template-a4">Template A4-Metric</button>
+            <button data-action="template-a3">Template A3-Architectural</button>
+            <button data-action="attach-xref">Gắn Xref...</button>
+            <hr>
+            <button data-action="import-file">Nhập file...</button>
+            <button data-action="import-dxf">Nhập DXF (.dxf)</button>
+            <button data-action="import-3d">Nhập 3D (.obj/.stl/.gltf)</button>
+            <hr>
+            <button data-action="export-wcad">Xuất .wcad.json</button>
+            <button data-action="export-svg">Xuất SVG (.svg)</button>
+            <button data-action="export-png">Xuất PNG (.png)</button>
+            <button data-action="export-pdf">Xuất PDF (.pdf)</button>
+            <button data-action="export-dxf">Xuất DXF (.dxf)</button>
+            <button data-action="open-viewer">Mở CAD Viewer...</button>
+            <hr>
+            <button data-action="print">In bản vẽ (Ctrl+P)</button>
+            <button data-action="plot">Plot Layout...</button>
+            <hr>
+            <button data-action="export-stl">Xuất STL (.stl)</button>
+            <button data-action="export-obj">Xuất OBJ (.obj)</button>
+            <button data-action="export-gltf">Xuất GLTF (.gltf)</button>
+            <hr>
+            <button data-action="export-tech-pdf">Xuất hồ sơ PDF kỹ thuật</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="features">Tính năng</button>
+          <div class="dropdown-content" id="menu-features">
+            <button data-action="import-sketch">Import phác thảo (ảnh)</button>
+            <button data-action="auto-dimension">Tự động ghi kích thước</button>
+            <button data-action="qa-check">Kiểm tra lỗi bản vẽ</button>
+            <hr>
+            <button data-action="cloud-share">Chia sẻ qua link</button>
           </div>
         </div>
         <div class="menu-dropdown">
@@ -47,6 +76,23 @@
             <button data-action="redo">Làm lại</button>
             <hr>
             <button data-action="delete">Xóa</button>
+            <hr>
+            <button data-action="offset">Offset</button>
+            <button data-action="trim">Trim</button>
+            <button data-action="extend">Extend</button>
+            <button data-action="fillet">Fillet</button>
+            <button data-action="chamfer">Chamfer</button>
+            <button data-action="mirror">Mirror</button>
+            <button data-action="array">Array</button>
+            <button data-action="stretch">Stretch</button>
+            <button data-action="explode">Explode</button>
+            <button data-action="join">Join</button>
+            <button data-action="break">Break</button>
+            <button data-action="divide">Divide</button>
+            <button data-action="hatch">Hatch</button>
+            <hr>
+            <button data-action="block-create">Tạo Block</button>
+            <button data-action="block-insert">Chèn Block</button>
           </div>
         </div>
         <div class="menu-dropdown">
@@ -58,6 +104,30 @@
             <button data-action="toggle-grid">Lưới</button>
             <button data-action="toggle-ortho">Ortho</button>
             <button data-action="toggle-snap">Snap</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="cloud">Cloud</button>
+          <div class="dropdown-content" id="menu-cloud">
+            <button data-action="cloud-save">Lưu lên Cloud</button>
+            <button data-action="cloud-share">Tạo link chia sẻ</button>
+            <button data-action="cloud-sync">Đồng bộ ngay</button>
+            <hr>
+            <button data-action="cloud-settings">Cấu hình API...</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="collab">Collab</button>
+          <div class="dropdown-content" id="menu-collab">
+            <button data-action="collab-sync">Gửi bản vẽ cho tab khác</button>
+            <button data-action="collab-connect">Kết nối WebSocket...</button>
+            <button data-action="collab-disconnect">Ngắt kết nối</button>
+          </div>
+        </div>
+        <div class="menu-dropdown">
+          <button class="menu-btn" data-menu="plugins">Plugins</button>
+          <div class="dropdown-content" id="menu-plugins">
+            <button data-action="plugins-panel">Quản lý Plugins</button>
           </div>
         </div>
         <div class="menu-dropdown">
@@ -112,6 +182,60 @@
         <button class="tool-btn" data-tool="delete" title="Xóa (Del)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
+        <button class="tool-btn" data-tool="offset" title="Offset (O)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/><rect x="3" y="3" width="18" height="18"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="trim" title="Trim">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12L21 21"/><circle cx="6" cy="18" r="3"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="extend" title="Extend (EX)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="16" y2="12"/><polyline points="13,9 16,12 13,15"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="fillet" title="Fillet (F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V4h16"/><path d="M4 20c8-8 8-8 16-16"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="mirror" title="Mirror (MI)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 8c3 4 11 4 14 0"/><path d="M5 16c3-4 11-4 14 0"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="chamfer" title="Chamfer (CHA)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V4h12"/><line x1="4" y1="20" x2="16" y2="8"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="array" title="Array (AR)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6"/><rect x="11" y="3" width="6" height="6"/><rect x="19" y="3" width="2" height="6"/><rect x="3" y="11" width="6" height="6"/><rect x="11" y="11" width="6" height="6"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="stretch" title="Stretch (S)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="8" width="12" height="8" stroke-dasharray="4 2"/><polyline points="2,12 6,12"/><polyline points="18,12 22,12"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="explode" title="Explode (X)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="join" title="Join (J)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h6l2-4 4 8 2-4h6"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="break" title="Break (BR)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="20" y2="12"/><circle cx="12" cy="12" r="2"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="divide" title="Divide (DIV)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/><circle cx="8" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="hatch" title="Hatch (H)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg>
+        </button>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group" data-group="2d-extrude" id="toolbar-2d-extrude">
+        <button class="tool-btn" data-tool="extrude" title="Extrude 2D→3D (EXT)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="14" width="16" height="6"/><path d="M8 14V6h8v8"/><path d="M12 2v4"/></svg>
+        </button>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group" data-group="block">
+        <button class="tool-btn" data-tool="block-create" title="Tạo Block (B)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="block-insert" title="Chèn Block (I)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="13" height="13"/><path d="M4 16V4h12"/></svg>
+        </button>
       </div>
       <div class="tool-separator"></div>
       <div class="tool-group" data-group="measure">
@@ -120,6 +244,9 @@
         </button>
         <button class="tool-btn" data-tool="distance" title="Đo khoảng cách (DI)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 6H3"/><path d="M21 18H3"/><line x1="12" y1="6" x2="12" y2="18"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="measure" title="Measure (MEA)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M12 8v8"/><path d="M18 8v8"/></svg>
         </button>
       </div>
       <div class="tool-separator"></div>
@@ -145,6 +272,9 @@
         <button class="tool-btn" data-tool="cone3d" title="Hình nón">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg>
         </button>
+        <button class="tool-btn" data-tool="boolean3d" title="Boolean Union/Subtract/Intersect">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
+        </button>
       </div>
     </div>
 
@@ -157,6 +287,36 @@
           <div id="tool-info" class="tool-info">
             <p>Chọn công cụ từ thanh công cụ hoặc nhập lệnh.</p>
           </div>
+        </div>
+        <div class="panel-section">
+          <h3>AI Assistant</h3>
+          <div class="ai-panel" id="ai-panel">
+            <div class="ai-messages" id="ai-messages"></div>
+            <div class="ai-suggestions" id="ai-suggestions"></div>
+            <div class="ai-input-row">
+              <input type="text" id="ai-input" placeholder="Mặt bằng đất 5×20m 2 phòng ngủ...">
+              <button id="ai-send-btn" title="Gửi">AI</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section features-panel">
+          <h3>Tính năng nổi bật</h3>
+          <div class="feature-row">
+            <label>Rộng × Sâu (m)</label>
+            <div class="feature-dims">
+              <input type="number" id="land-width" value="8" min="3" step="0.5">
+              <span>×</span>
+              <input type="number" id="land-depth" value="12" min="3" step="0.5">
+            </div>
+            <button type="button" id="btn-floor-plan" class="feature-btn">Tạo mặt bằng</button>
+          </div>
+          <div class="feature-row">
+            <button type="button" class="feature-btn" data-action="import-sketch">Import phác thảo</button>
+            <button type="button" id="btn-qa-check" class="feature-btn">Kiểm tra lỗi</button>
+          </div>
+          <pre id="qa-report" class="qa-report"></pre>
+          <h4 class="feature-subtitle">Thư viện mẫu</h4>
+          <div id="template-library-grid" class="template-grid"></div>
         </div>
         <div class="panel-section">
           <h3>Thuộc tính</h3>
@@ -182,6 +342,55 @@
             <button class="icon-btn" id="add-layer-btn" title="Thêm layer">+</button>
           </div>
           <div id="layer-list" class="layer-list"></div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-header">
+            <h3>Layouts</h3>
+            <button class="icon-btn" id="add-layout-btn" title="Thêm layout">+</button>
+          </div>
+          <div id="layout-list" class="layer-list"></div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-header">
+            <h3>Blocks</h3>
+          </div>
+          <div id="block-list" class="layer-list"></div>
+        </div>
+        <div class="panel-section">
+          <h3>Cloud</h3>
+          <div class="cloud-actions">
+            <button id="cloud-save-btn">Lưu Cloud</button>
+            <button id="cloud-share-btn">Link chia sẻ</button>
+          </div>
+          <input type="text" id="share-link" class="share-link-input" readonly placeholder="Link chia sẻ...">
+          <div id="cloud-list" class="cloud-list"></div>
+        </div>
+        <div class="panel-section">
+          <h3>Collaboration</h3>
+          <div class="collab-status">
+            <span class="collab-dot" id="collab-dot"></span>
+            <span id="collab-status-text">Offline</span>
+          </div>
+          <input type="text" id="collab-username" class="settings-input" placeholder="Tên của bạn">
+          <input type="text" id="collab-ws-url" class="settings-input" placeholder="ws://server/collab (tùy chọn)">
+          <div class="cloud-actions">
+            <button id="collab-sync-btn">Sync tab khác</button>
+            <button id="collab-connect-btn">Kết nối WS</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <h3>Plugin Marketplace</h3>
+          <div id="plugin-list"></div>
+        </div>
+        <div class="panel-section">
+          <h3>3D Scene</h3>
+          <div id="panel-3d" class="properties-content">
+            <p class="empty-state">Chuyển sang chế độ 3D để cấu hình</p>
+          </div>
+        </div>
+        <div class="panel-section">
+          <h3>Styles</h3>
+          <div id="styles-panel" class="properties-content"></div>
         </div>
         <div class="panel-section">
           <h3>Snap</h3>
@@ -212,15 +421,30 @@
       <span id="status-snap">Snap: ON</span>
       <span id="status-ortho">Ortho: OFF</span>
       <span id="status-mode">2D</span>
+      <span id="status-3d-backend"></span>
+      <span id="status-collab">Collab: OFF</span>
+      <span id="offline-status">● Online</span>
       <span id="status-entities">Entities: 0</span>
     </footer>
   </div>
 
-  <input type="file" id="file-input" accept=".wcad,.json" style="display:none">
+  <input type="file" id="file-input" accept=".wcad.json,.wcad,.json" style="display:none">
+  <input type="file" id="dxf-input" accept=".dxf" style="display:none">
+  <input type="file" id="import-input" accept=".wcad.json,.wcad,.json,.dxf,.obj,.stl,.gltf,.glb" style="display:none">
+  <input type="file" id="viewer-input" accept=".dxf,.dwg,.wcad,.wcad.json,.json" style="display:none">
+  <input type="file" id="sketch-input" accept="image/*" style="display:none">
 
-  <!-- Three.js from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Three.js r170 (ES modules) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+      "three-bvh-csg": "https://cdn.jsdelivr.net/npm/three-bvh-csg@0.0.16/build/index.module.js"
+    }
+  }
+  </script>
+  <script type="module" src="js/core3d/three-bootstrap.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <!-- Core -->
@@ -229,9 +453,26 @@
   <script src="js/core/SelectionManager.js"></script>
   <script src="js/core/HistoryManager.js"></script>
   <script src="js/core/CommandManager.js"></script>
+  <script src="js/core/BlockManager.js"></script>
+  <script src="js/core/LayoutManager.js"></script>
 
-  <!-- Geometry -->
-  <script src="js/geometry/GeometryEngine.js"></script>
+  <!-- CAD Core Engine -->
+  <script src="js/core/cad/StyleManager.js"></script>
+  <script src="js/core/cad/XrefManager.js"></script>
+  <script src="js/core/cad/TemplateManager.js"></script>
+  <script src="js/core/cad/PlotEngine.js"></script>
+  <script src="js/core/cad/GeometryKernel.js"></script>
+  <script src="js/core/cad/LayerBlockManager.js"></script>
+  <script src="js/core/cad/EntitySystem.js"></script>
+  <script src="js/core/cad/ConstraintSolver.js"></script>
+  <script src="js/core/cad/ParametricEngine.js"></script>
+  <script src="js/core/cad/DimensionEngine.js"></script>
+  <script src="js/core/cad/FormatRegistry.js"></script>
+  <script src="js/core/cad/FileFormatEngine.js"></script>
+  <script src="js/core/cad/CommandSystem.js"></script>
+  <script src="js/core/cad/CadCore.js"></script>
+
+  <!-- Geometry (legacy path) -->
   <script src="js/geometry/SnapEngine.js"></script>
 
   <!-- Entities -->
@@ -243,7 +484,18 @@
   <script src="js/entities/Rectangle.js"></script>
   <script src="js/entities/Text.js"></script>
   <script src="js/entities/Dimension.js"></script>
+  <script src="js/entities/Hatch.js"></script>
   <script src="js/entities/Entity3D.js"></script>
+
+  <!-- 3D Core -->
+  <script src="js/core3d/MaterialManager3D.js"></script>
+  <script src="js/core3d/CameraManager3D.js"></script>
+  <script src="js/core3d/LightingManager3D.js"></script>
+  <script src="js/core3d/MeshFactory3D.js"></script>
+  <script src="js/core3d/ExtrudeEngine3D.js"></script>
+  <script src="js/core3d/BooleanEngine3D.js"></script>
+  <script src="js/core3d/SectionEngine3D.js"></script>
+  <script src="js/core3d/Viewer3D.js"></script>
 
   <!-- Renderers -->
   <script src="js/renderers/CanvasRenderer.js"></script>
@@ -257,10 +509,40 @@
   <script src="js/tools/MeasureTools.js"></script>
   <script src="js/tools/ViewTools.js"></script>
   <script src="js/tools/Tool3D.js"></script>
+  <script src="js/tools/Tools3D.js"></script>
+  <script src="js/tools/AdvancedTools.js"></script>
+  <script src="js/tools/ProTools.js"></script>
 
   <!-- Storage & Export -->
   <script src="js/storage/StorageEngine.js"></script>
+  <script src="js/storage/CloudStorageEngine.js"></script>
   <script src="js/exporters/ExportEngine.js"></script>
+  <script src="js/exporters/ImportEngine.js"></script>
+  <script src="js/exporters/DxfEngine.js"></script>
+  <script src="js/viewer/CadViewer.js"></script>
+  <script src="js/collab/CollaborationEngine.js"></script>
+  <script src="js/plugins/PluginManager.js"></script>
+  <script src="js/features/BlockLibrary.js"></script>
+  <script src="js/features/AutoDimensionEngine.js"></script>
+  <script src="js/features/DrawingQaEngine.js"></script>
+  <script src="js/features/FloorPlanGenerator.js"></script>
+  <script src="js/features/TechnicalPdfEngine.js"></script>
+  <script src="js/ai/AiDrawingEngine.js"></script>
+  <script src="js/ai/AiVisionEngine.js"></script>
+  <script src="js/features/FeaturesHub.js"></script>
+  <script src="js/ai/AiAssistant.js"></script>
+
+  <!-- Platform & Engine Layers -->
+  <script src="js/engine/cad/GeometryKernelWASM.js"></script>
+  <script src="js/engine/cad/CadEngine.js"></script>
+  <script src="js/engine/file/DwgAdapter.js"></script>
+  <script src="js/engine/file/FileEngine.js"></script>
+  <script src="js/engine/collab/WorkspaceEngine.js"></script>
+  <script src="js/engine/collab/VersionHistoryEngine.js"></script>
+  <script src="js/engine/collab/CommentEngine.js"></script>
+  <script src="js/engine/collab/CollabPlatform.js"></script>
+  <script src="js/plugins/PluginHost.js"></script>
+  <script src="js/platform/WebCADPlatform.js"></script>
 
   <!-- App -->
   <script src="js/app.js"></script>

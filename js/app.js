@@ -3,10 +3,20 @@ class WebCADApp {
     this.drawing = new Drawing();
     this.layerManager = new LayerManager();
     this.selectionManager = new SelectionManager();
+    this.selectionManager3D = { selected: null };
     this.history = new HistoryManager();
     this.snapEngine = new SnapEngine();
     this.storage = new StorageEngine();
+    this.blockManager = new BlockManager();
+    this.layoutManager = new LayoutManager();
     this.commandManager = new CommandManager(this);
+
+    this.cloudStorage = null;
+    this.collaboration = null;
+    this.pluginManager = null;
+    this.aiAssistant = null;
+    this.cadViewer = null;
+    this.toolbar = null;
 
     this.mode = '2d';
     this.currentTool = null;
@@ -22,15 +32,45 @@ class WebCADApp {
 
   async init() {
     await this.storage.init();
+    if (window.ThreeBootstrap?.ready) await window.ThreeBootstrap.ready;
+
+    this.cloudStorage = new CloudStorageEngine(this.storage);
+    await this.cloudStorage.init();
+    this.collaboration = new CollaborationEngine(this);
+    this.collaboration.init();
+    this.pluginManager = new PluginManager(this);
+    this.pluginManager.loadBuiltIn();
+    this.aiAssistant = new AiAssistant(this);
+    this.cadViewer = new CadViewer(this);
+    this.features = null;
 
     this.renderer2D = new CanvasRenderer(this.canvas);
     this.renderer3D = new ThreeRenderer(this.container3D);
+
+    this.platform = new WebCADPlatform(this);
+    await this.platform.boot();
+    this.platform.attachPlugins(this.pluginManager);
+    this.cadCore = this.platform.cad.core;
+    this.features = new FeaturesHub(this);
 
     this._resize();
     this._loadAutosave();
     this._startAutosave();
     this.setTool('select');
     this._updateLayerPanel();
+    this._updateBlockPanel();
+    this._updateLayoutPanel();
+    this._updateCloudPanel();
+    this._updatePluginPanel();
+    this._updateStylesPanel();
+    this._update3DPanel();
+    this._initAiPanel();
+    this._initFeaturesPanel();
+    this._updateOfflineStatus();
+    window.addEventListener('online', () => this._updateOfflineStatus());
+    window.addEventListener('offline', () => this._updateOfflineStatus());
+    this._checkShareLink();
+    this.updateCollabStatus();
     this.updateStatusBar();
     this.requestRender();
 
@@ -45,7 +85,13 @@ class WebCADApp {
     this.toolInfo = document.getElementById('tool-info');
     this.propertiesPanel = document.getElementById('properties-panel');
     this.layerList = document.getElementById('layer-list');
+    this.blockList = document.getElementById('block-list');
+    this.layoutList = document.getElementById('layout-list');
     this.fileInput = document.getElementById('file-input');
+    this.dxfInput = document.getElementById('dxf-input');
+    this.importInput = document.getElementById('import-input');
+    this.viewerInput = document.getElementById('viewer-input');
+    this.toolbar = document.getElementById('toolbar');
     this.crosshairH = document.getElementById('crosshair-h');
     this.crosshairV = document.getElementById('crosshair-v');
   }
@@ -71,7 +117,25 @@ class WebCADApp {
       box3d: new Tool3D(this, 'box3d'),
       sphere3d: new Tool3D(this, 'sphere3d'),
       cylinder3d: new Tool3D(this, 'cylinder3d'),
-      cone3d: new Tool3D(this, 'cone3d')
+      cone3d: new Tool3D(this, 'cone3d'),
+      extrude: new ExtrudeTool(this),
+      boolean3d: new BooleanTool3D(this),
+      offset: new OffsetTool(this),
+      trim: new TrimTool(this),
+      extend: new ExtendTool(this),
+      fillet: new FilletTool(this),
+      mirror: new MirrorTool(this),
+      'block-create': new BlockTool(this, 'create'),
+      'block-insert': new BlockTool(this, 'insert'),
+      chamfer: new ChamferTool(this),
+      array: new ArrayTool(this),
+      stretch: new StretchTool(this),
+      explode: new ExplodeTool(this),
+      join: new JoinTool(this),
+      break: new BreakTool(this),
+      divide: new DivideTool(this),
+      measure: new MeasureTool(this),
+      hatch: new HatchTool(this)
     };
   }
 
@@ -152,6 +216,52 @@ class WebCADApp {
       e.target.value = '';
     });
 
+    if (this.dxfInput) {
+      this.dxfInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) this._importFile(e.target.files[0]);
+        e.target.value = '';
+      });
+    }
+
+    if (this.importInput) {
+      this.importInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) this._importFile(e.target.files[0]);
+        e.target.value = '';
+      });
+    }
+
+    if (this.viewerInput) {
+      this.viewerInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) this.cadViewer.openFile(e.target.files[0]);
+        e.target.value = '';
+      });
+    }
+
+    document.getElementById('cloud-save-btn')?.addEventListener('click', () => this.saveToCloud());
+    document.getElementById('cloud-share-btn')?.addEventListener('click', () => this.createShareLink());
+    document.getElementById('collab-sync-btn')?.addEventListener('click', () => this.collaboration.broadcastFullSync());
+    document.getElementById('collab-connect-btn')?.addEventListener('click', () => {
+      const url = document.getElementById('collab-ws-url')?.value;
+      if (url) this.collaboration.connect(url);
+    });
+    document.getElementById('collab-username')?.addEventListener('change', (e) => {
+      this.collaboration.setUserName(e.target.value);
+    });
+    document.getElementById('ai-send-btn')?.addEventListener('click', () => this._sendAiMessage());
+    document.getElementById('ai-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this._sendAiMessage();
+    });
+
+    this.collaboration.onEvent(() => this.updateCollabStatus());
+
+    document.getElementById('add-layout-btn')?.addEventListener('click', () => {
+      const name = prompt('Tên layout:', `Layout${this.layoutManager.layouts.length}`);
+      if (name) {
+        this.layoutManager.addLayout(name);
+        this._updateLayoutPanel();
+      }
+    });
+
     this.selectionManager.onChange(() => {
       this.updatePropertiesPanel();
       this.requestRender();
@@ -169,20 +279,41 @@ class WebCADApp {
       'new': () => this.newDrawing(),
       'open': () => this.openDrawing(),
       'save': () => this.saveDrawing(),
-      'save-as': () => this.storage.saveToFile(this.drawing, this.layerManager),
-      'export-png': () => ExportEngine.exportPNG(this.canvas),
-      'export-svg': () => ExportEngine.exportSVG(this.drawing, this.layerManager, this.canvas.width, this.canvas.height),
-      'export-pdf': () => ExportEngine.exportPDF(this.canvas, this.drawing),
-      'export-stl': () => {
-        if (this.renderer3D.initialized) {
-          ExportEngine.exportSTL(this.renderer3D.getScene(), 'model.stl');
+      'save-as': () => this._exportFormat('wcad'),
+      'export-wcad': () => this._exportFormat('wcad'),
+      'export-png': () => this._exportFormat('png'),
+      'export-svg': () => this._exportFormat('svg'),
+      'export-pdf': () => this._exportFormat('pdf'),
+      'export-dxf': () => this._exportFormat('dxf'),
+      'import-dxf': () => this._openImportDialog(['dxf']),
+      'import-3d': () => this._openImportDialog(['obj', 'stl', 'gltf']),
+      'import-file': () => this._openImportDialog(),
+      'print': () => {
+        if (!this.layoutManager.isModelSpace()) {
+          this.cadCore.run('PLOT', {});
+        } else {
+          ExportEngine.print(this.canvas, this.drawing);
         }
       },
-      'export-obj': () => {
-        if (this.renderer3D.initialized) {
-          ExportEngine.exportOBJ(this.renderer3D.getScene(), 'model.obj');
-        }
+      'plot': () => this.cadCore.run('PLOT', {}),
+      'template-a4': () => this.cadCore.run('LOAD_TEMPLATE', { name: 'A4-Metric' }),
+      'template-a3': () => this.cadCore.run('LOAD_TEMPLATE', { name: 'A3-Architectural' }),
+      'attach-xref': () => this._attachXref(),
+      'export-stl': () => this._exportFormat('stl'),
+      'export-obj': () => this._exportFormat('obj'),
+      'export-gltf': () => this._exportFormat('gltf'),
+      'export-tech-pdf': () => this._exportTechnicalPdf(),
+      'auto-dimension': () => {
+        const r = this.features.autoDimension(true);
+        this.logCommand(`Auto DIM: ${r.count} kích thước.`);
       },
+      'qa-check': () => {
+        const r = this.features.aiCheck();
+        this.logCommand(r.message);
+        alert(r.message);
+      },
+      'import-sketch': () => document.getElementById('sketch-input')?.click(),
+      'share-link': () => this.createShareLink(),
       'undo': () => this.undo(),
       'redo': () => this.redo(),
       'delete': () => this.setTool('delete'),
@@ -193,12 +324,47 @@ class WebCADApp {
       'toggle-ortho': () => this.toggleOrtho(),
       'toggle-snap': () => this.toggleSnap(),
       'mode-2d': () => this.setMode('2d'),
-      'mode-3d': () => this.setMode('3d')
+      'mode-3d': () => this.setMode('3d'),
+      'block-create': () => this.setTool('block-create'),
+      'block-insert': () => this.setTool('block-insert'),
+      'offset': () => this.setTool('offset'),
+      'trim': () => this.setTool('trim'),
+      'extend': () => this.setTool('extend'),
+      'fillet': () => this.setTool('fillet'),
+      'chamfer': () => this.setTool('chamfer'),
+      'array': () => this.setTool('array'),
+      'stretch': () => this.setTool('stretch'),
+      'explode': () => this.setTool('explode'),
+      'join': () => this.setTool('join'),
+      'break': () => this.setTool('break'),
+      'divide': () => this.setTool('divide'),
+      'measure': () => this.setTool('measure'),
+      'hatch': () => this.setTool('hatch'),
+      'mirror': () => this.setTool('mirror'),
+      'open-viewer': () => this.viewerInput?.click(),
+      'cloud-save': () => this.saveToCloud(),
+      'cloud-share': () => this.createShareLink(),
+      'cloud-sync': () => this.saveToCloud(),
+      'cloud-settings': () => {
+        const url = prompt('Cloud API URL (để trống = chỉ local):', this.cloudStorage.apiUrl);
+        if (url !== null) this.cloudStorage.setApiUrl(url);
+      },
+      'collab-sync': () => this.collaboration.broadcastFullSync(),
+      'collab-connect': () => {
+        const url = prompt('WebSocket server URL:', document.getElementById('collab-ws-url')?.value || 'ws://localhost:8081');
+        if (url) this.collaboration.connect(url);
+      },
+      'collab-disconnect': () => this.collaboration.disconnect(),
+      'plugins-panel': () => this._updatePluginPanel()
     };
     if (actions[action]) actions[action]();
   }
 
   setTool(name) {
+    if (this.cadViewer?.isReadOnly() && !['pan', 'zoom', 'select'].includes(name)) {
+      this.logCommand('Viewer mode: chỉ Pan/Zoom.');
+      return;
+    }
     if (this.currentTool) {
       this.currentTool.deactivate();
     }
@@ -214,26 +380,103 @@ class WebCADApp {
       name === 'pan' ? 'grab' : name === 'select' ? 'default' : 'crosshair';
   }
 
-  setMode(mode) {
+  async setMode(mode) {
     this.mode = mode;
     const is2D = mode === '2d';
 
     this.canvas.style.display = is2D ? 'block' : 'none';
     this.container3D.style.display = is2D ? 'none' : 'block';
     document.getElementById('toolbar-3d').style.display = is2D ? 'none' : 'flex';
+    document.getElementById('toolbar-2d-extrude')?.style.setProperty('display', is2D ? 'flex' : 'none');
 
     document.querySelectorAll('[data-action="mode-2d"], [data-action="mode-3d"]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.action === `mode-${mode}`);
     });
 
     if (!is2D) {
-      this.renderer3D.init();
+      await this.renderer3D.init();
       this.renderer3D.syncEntities(this.drawing.entities3D);
+      this._bind3DEvents();
       this._resize();
+      this._update3DPanel();
+      if (this.drawing.entities3D.length > 0) this.renderer3D.fitView();
     }
 
     document.getElementById('status-mode').textContent = mode.toUpperCase();
+    const backend = this.renderer3D.initialized ? this.renderer3D.backend.toUpperCase() : '';
+    document.getElementById('status-3d-backend').textContent = backend ? `3D: ${backend}` : '';
     this.requestRender();
+  }
+
+  _bind3DEvents() {
+    if (this._3dEventsBound || !this.renderer3D.renderer) return;
+    const el = this.renderer3D.renderer.domElement;
+    el.addEventListener('mousedown', (e) => {
+      if (this.mode !== '3d' || e.button !== 0) return;
+      if (this.currentTool?.onMouseDown3D) {
+        this.currentTool.onMouseDown3D(e);
+      } else if (this.currentTool?.name === 'select') {
+        new SelectTool3D(this).onMouseDown3D(e);
+      }
+    });
+    this._3dEventsBound = true;
+  }
+
+  _update3DPanel() {
+    const panel = document.getElementById('panel-3d');
+    if (!panel || !this.renderer3D.initialized) return;
+    const r = this.renderer3D;
+    const st = r.getStatus();
+    panel.innerHTML = `
+      <div class="prop-row"><label>Renderer</label><span>${st.backend}</span></div>
+      <div class="prop-row"><label>Material</label>
+        <select id="3d-material">${r.materialManager.listPresets().map(p =>
+          `<option value="${p}">${p}</option>`).join('')}</select></div>
+      <div class="prop-row"><label>Lighting</label>
+        <select id="3d-lighting"><option value="studio">Studio</option><option value="outdoor">Outdoor</option><option value="flat">Flat</option></select></div>
+      <div class="prop-row"><label>Camera</label>
+        <select id="3d-camera"><option value="perspective">Perspective</option><option value="orthographic">Orthographic</option></select></div>
+      <div class="prop-row"><label>View</label>
+        <select id="3d-view-preset"><option value="home">Home</option><option value="top">Top</option><option value="front">Front</option><option value="right">Right</option><option value="iso">Iso</option></select></div>
+      <div class="prop-row"><label>Section</label>
+        <select id="3d-section-axis"><option value="x">X</option><option value="y" selected>Y</option><option value="z">Z</option></select></div>
+      <div class="prop-row"><label>Section offset</label><input type="range" id="3d-section-offset" min="-10" max="10" step="0.5" value="0"></div>
+      <div class="prop-row"><label>Section on</label><input type="checkbox" id="3d-section-enable"></div>
+      <div class="prop-actions"><button id="3d-fit-view">Fit View</button></div>
+    `;
+    document.getElementById('3d-material')?.addEventListener('change', (e) => {
+      r.setMaterialPreset(e.target.value);
+    });
+    document.getElementById('3d-lighting')?.addEventListener('change', (e) => {
+      r.setLightingPreset(e.target.value);
+      this.requestRender();
+    });
+    document.getElementById('3d-camera')?.addEventListener('change', (e) => {
+      r.setCameraMode(e.target.value);
+      this.requestRender();
+    });
+    document.getElementById('3d-view-preset')?.addEventListener('change', (e) => {
+      r.setCameraPreset(e.target.value);
+      this.requestRender();
+    });
+    document.getElementById('3d-section-axis')?.addEventListener('change', (e) => {
+      const off = parseFloat(document.getElementById('3d-section-offset').value);
+      r.setSection(e.target.value, off);
+      this.requestRender();
+    });
+    document.getElementById('3d-section-offset')?.addEventListener('input', (e) => {
+      const axis = document.getElementById('3d-section-axis').value;
+      r.setSection(axis, parseFloat(e.target.value));
+      this.requestRender();
+    });
+    document.getElementById('3d-section-enable')?.addEventListener('change', (e) => {
+      r.toggleSection(e.target.checked);
+      this.requestRender();
+    });
+    document.getElementById('3d-fit-view')?.addEventListener('click', () => {
+      r.fitView();
+      this.requestRender();
+    });
   }
 
   _getWorldPos(e) {
@@ -317,6 +560,12 @@ class WebCADApp {
       if (e.key === 'y') { e.preventDefault(); this.redo(); return; }
       if (e.key === 's') { e.preventDefault(); this.saveDrawing(); return; }
       if (e.key === 'o') { e.preventDefault(); this.openDrawing(); return; }
+      if (e.key === 'p') { e.preventDefault(); ExportEngine.print(this.canvas, this.drawing); return; }
+      if (e.key === '/' && this._aiShortcutEnabled !== false) {
+        e.preventDefault();
+        document.getElementById('ai-input')?.focus();
+        return;
+      }
     }
 
     if (shortcuts[e.key] || shortcuts[e.key.toLowerCase()]) {
@@ -391,21 +640,54 @@ class WebCADApp {
     }
   }
 
-  newDrawing() {
-    if (confirm('Tạo bản vẽ mới? Dữ liệu chưa lưu sẽ bị mất.')) {
-      this.drawing = new Drawing();
-      this.layerManager = new LayerManager();
-      this.selectionManager.clearSelection();
-      this.history.clear();
-      this._updateLayerPanel();
-      this.updateStatusBar();
-      this.requestRender();
-    }
+  newDrawing(skipConfirm = false) {
+    if (!skipConfirm && !confirm('Tạo bản vẽ mới? Dữ liệu chưa lưu sẽ bị mất.')) return;
+    this.drawing = new Drawing();
+    this.layerManager = new LayerManager();
+    this.blockManager = new BlockManager();
+    this.layoutManager = new LayoutManager();
+    this.cadCore.styles = new StyleManager();
+    this.cadCore.xrefs = new XrefManager();
+    this.cadCore.syncDrawing(this.drawing);
+    this.cadCore.syncManagers(this.layerManager, this.blockManager, this.layoutManager);
+    this.selectionManager.clearSelection();
+    this.history.clear();
+    this._updateLayerPanel();
+    this._updateBlockPanel();
+    this._updateLayoutPanel();
+    this._updateStylesPanel();
+    this.updateStatusBar();
+    this.requestRender();
+  }
+
+  async _attachXref() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.wcad.json,.wcad,.json';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      try {
+        const data = await this.storage.loadFromFile(file);
+        const name = prompt('Tên Xref:', file.name.replace(/\.[^.]+$/, ''));
+        if (!name) return;
+        this.cadCore.run('ATTACH_XREF', { name, data, insertPoint: { x: 0, y: 0 } });
+        this.logCommand(`Xref attached: ${name}`);
+      } catch (e) {
+        this.logCommand('Xref error: ' + e.message);
+      }
+    };
+    input.click();
   }
 
   async saveDrawing() {
     try {
-      await this.storage.save(this.drawing, this.layerManager);
+      await this.storage.save(
+        this.drawing, this.layerManager, this.blockManager, this.layoutManager,
+        this.cadCore.styles, this.cadCore.xrefs
+      );
+      this.platform?.collab?.onSave();
+      this.platform?.collab?.versions?.snapshot('Auto-save');
       this.logCommand('Đã lưu bản vẽ.');
     } catch (e) {
       this.logCommand('Lỗi khi lưu: ' + e.message);
@@ -413,25 +695,64 @@ class WebCADApp {
   }
 
   openDrawing() {
-    this.fileInput.click();
+    this.importInput.accept = FormatRegistry.importAccept();
+    this.importInput.click();
+  }
+
+  _exportFormat(formatId) {
+    const result = this.cadCore.fileFormat.exportFormat(this, formatId);
+    if (result.success) {
+      this.logCommand(`Xuất ${result.filename}`);
+    } else {
+      this.logCommand(`Lỗi xuất file: ${result.message}`);
+    }
+    return result;
+  }
+
+  _openImportDialog(formatIds) {
+    const input = this.importInput || this.fileInput;
+    if (formatIds && formatIds.length) {
+      input.accept = FormatRegistry.acceptAttribute(formatIds);
+    } else {
+      input.accept = FormatRegistry.importAccept();
+    }
+    input.click();
+  }
+
+  async _importFile(file) {
+    try {
+      const result = await this.cadCore.fileFormat.importFile(this, file);
+      if (result.success) {
+        const detail = result.entities != null ? ` (${result.entities} entities)` : '';
+        this.logCommand(`Đã nhập ${file.name}${detail}`);
+      } else {
+        this.logCommand(`Lỗi nhập file: ${result.message}`);
+      }
+    } catch (e) {
+      this.logCommand('Lỗi nhập file: ' + e.message);
+    }
   }
 
   async _loadFile(file) {
-    try {
-      const data = await this.storage.loadFromFile(file);
-      this._loadDrawingData(data);
-      this.logCommand(`Đã mở: ${file.name}`);
-    } catch (e) {
-      this.logCommand('Lỗi khi mở file: ' + e.message);
-    }
+    await this._importFile(file);
   }
 
   _loadDrawingData(data) {
     this.layerManager = new LayerManager();
-    this.drawing = Drawing.fromJSON(data, this.layerManager);
+    this.blockManager = new BlockManager();
+    this.layoutManager = new LayoutManager();
+    this.drawing = Drawing.fromJSON(
+      data, this.layerManager, this.blockManager, this.layoutManager,
+      this.cadCore.styles, this.cadCore.xrefs
+    );
+    this.cadCore.syncDrawing(this.drawing);
+    this.cadCore.syncManagers(this.layerManager, this.blockManager, this.layoutManager);
     this.selectionManager.clearSelection();
     this.history.clear();
     this._updateLayerPanel();
+    this._updateBlockPanel();
+    this._updateLayoutPanel();
+    this._updateStylesPanel();
     this.updateStatusBar();
     if (this.renderer3D.initialized) {
       this.renderer3D.syncEntities(this.drawing.entities3D);
@@ -448,8 +769,40 @@ class WebCADApp {
 
   _startAutosave() {
     this.autosaveInterval = setInterval(() => {
-      this.storage.autosave(this.drawing, this.layerManager);
+      this.storage.autosave(
+        this.drawing, this.layerManager, this.blockManager, this.layoutManager,
+        this.cadCore.styles, this.cadCore.xrefs
+      );
     }, 30000);
+  }
+
+  async _importDxf(file, replace = false) {
+    try {
+      const text = await file.text();
+      if (replace) {
+        this.drawing.entities = [];
+      }
+      const entities = DxfEngine.import(text, this.layerManager);
+      for (const entity of entities) {
+        this.drawing.addEntity(entity);
+      }
+      this._updateLayerPanel();
+      this.requestRender();
+      this.updateStatusBar();
+      this.logCommand(`DXF: Đã import ${entities.length} entities.`);
+    } catch (e) {
+      this.logCommand('Lỗi import DXF: ' + e.message);
+    }
+  }
+
+  switchLayout(layoutId) {
+    this.layoutManager.setCurrentLayout(layoutId);
+    this._updateLayoutPanel();
+    if (!this.layoutManager.isModelSpace()) {
+      const layout = this.layoutManager.getCurrentLayout();
+      this.logCommand(`Layout: ${layout.name} (${layout.width}x${layout.height}mm)`);
+    }
+    this.requestRender();
   }
 
   _addLayer() {
@@ -511,11 +864,279 @@ class WebCADApp {
     }
   }
 
+  _updateBlockPanel() {
+    if (!this.blockList) return;
+    this.blockList.innerHTML = '';
+    const blocks = this.blockManager.listBlocks();
+    if (blocks.length === 0) {
+      this.blockList.innerHTML = '<p class="empty-state">Chưa có block</p>';
+      return;
+    }
+    for (const block of blocks) {
+      const item = document.createElement('div');
+      item.className = 'layer-item';
+      item.innerHTML = `
+        <span class="layer-name">${block.name}</span>
+        <span class="layer-count">${block.entities.length}</span>
+      `;
+      item.addEventListener('dblclick', () => {
+        this.setTool('block-insert');
+        this.tools['block-insert'].blockName = block.name;
+        this.tools['block-insert'].step = 1;
+        this.updateToolInfo('INSERT: Chọn vị trí chèn.');
+      });
+      this.blockList.appendChild(item);
+    }
+  }
+
+  _updateLayoutPanel() {
+    if (!this.layoutList) return;
+    this.layoutList.innerHTML = '';
+    for (const layout of this.layoutManager.layouts) {
+      const item = document.createElement('div');
+      item.className = 'layer-item' + (layout.id === this.layoutManager.currentLayoutId ? ' active' : '');
+      item.innerHTML = `<span class="layer-name">${layout.name}</span><span class="layer-count">${layout.type}</span>`;
+      item.addEventListener('click', () => this.switchLayout(layout.id));
+      this.layoutList.appendChild(item);
+    }
+  }
+
+  async saveToCloud() {
+    try {
+      const result = await this.cloudStorage.saveToCloud(
+        this.drawing, this.layerManager, this.blockManager, this.layoutManager
+      );
+      let msg = 'Đã lưu lên Cloud (local).';
+      if (result.remote) msg += ' Đã sync remote.';
+      else if (result.error) msg += ` Remote lỗi: ${result.error}`;
+      this.logCommand(msg);
+      this._updateCloudPanel();
+    } catch (e) {
+      this.logCommand('Cloud lỗi: ' + e.message);
+    }
+  }
+
+  createShareLink() {
+    const link = this.cloudStorage.generateShareLink(
+      this.drawing, this.layerManager, this.blockManager, this.layoutManager
+    );
+    const input = document.getElementById('share-link');
+    if (input) {
+      input.value = link;
+      input.select();
+      navigator.clipboard?.writeText(link);
+    }
+    this.logCommand('Link chia sẻ đã tạo (copied).');
+  }
+
+  _exportTechnicalPdf() {
+    if (!this.features) return;
+    const r = this.features.exportTechnicalPdf();
+    this.logCommand(r.success ? `Đã xuất ${r.filename}` : r.message);
+  }
+
+  _initFeaturesPanel() {
+    const grid = document.getElementById('template-library-grid');
+    if (grid && this.features) {
+      grid.innerHTML = '';
+      for (const t of this.features.listTemplates()) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'feature-tile';
+        btn.textContent = t.name;
+        btn.title = t.name;
+        btn.addEventListener('click', () => {
+          this.features.insertTemplate(t.id);
+          this.logCommand(`Đã chèn mẫu: ${t.name}`);
+        });
+        grid.appendChild(btn);
+      }
+    }
+    document.querySelectorAll('.features-panel [data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => this._handleMenuAction(btn.dataset.action));
+    });
+    if (sketchInput) {
+      sketchInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const r = await this.features.importSketch(file);
+          this.logCommand(r.message || 'Đã import phác thảo.');
+        } catch (err) {
+          this.logCommand('Import phác thảo lỗi: ' + err.message);
+        }
+        e.target.value = '';
+      });
+    }
+    const floorBtn = document.getElementById('btn-floor-plan');
+    if (floorBtn) {
+      floorBtn.addEventListener('click', () => {
+        const w = parseFloat(document.getElementById('land-width')?.value || '8');
+        const d = parseFloat(document.getElementById('land-depth')?.value || '12');
+        const r = this.features.generateFloorPlan(w, d);
+        this.logCommand(r.message || `Mặt bằng ${w}×${d}m`);
+      });
+    }
+    const qaBtn = document.getElementById('btn-qa-check');
+    if (qaBtn) {
+      qaBtn.addEventListener('click', () => {
+        const r = this.features.aiCheck();
+        const out = document.getElementById('qa-report');
+        if (out) {
+          out.textContent = r.issues?.length
+            ? r.issues.map((i) => `[${i.severity}] ${i.message}`).join('\n')
+            : 'Không phát hiện lỗi.';
+        }
+        this.logCommand(r.message);
+      });
+    }
+  }
+
+  _updateOfflineStatus() {
+    const el = document.getElementById('offline-status');
+    if (!el) return;
+    const online = navigator.onLine;
+    el.textContent = online ? '● Online' : '● Offline (desktop)';
+    el.classList.toggle('is-offline', !online);
+  }
+
+  _checkShareLink() {
+    const data = this.cloudStorage.parseShareLink();
+    if (data) {
+      this._loadDrawingData(data);
+      this.cloudStorage.clearShareLink();
+      this.logCommand('Đã mở bản vẽ từ link chia sẻ.');
+    }
+  }
+
+  async _updateCloudPanel() {
+    const list = document.getElementById('cloud-list');
+    if (!list) return;
+    try {
+      const drawings = await this.cloudStorage.listCloudDrawings();
+      list.innerHTML = '';
+      if (drawings.length === 0) {
+        list.innerHTML = '<p class="empty-state">Chưa có bản vẽ cloud</p>';
+        return;
+      }
+      for (const d of drawings.slice(-5).reverse()) {
+        const item = document.createElement('div');
+        item.className = 'cloud-item';
+        item.innerHTML = `<span>${d.name || 'Untitled'}</span><span>${new Date(d.cloudSavedAt || d.metadata?.modifiedAt).toLocaleDateString()}</span>`;
+        item.addEventListener('click', async () => {
+          const data = await this.cloudStorage.loadFromCloud(d.id);
+          if (data) this._loadDrawingData(data);
+        });
+        list.appendChild(item);
+      }
+    } catch (_) {}
+  }
+
+  _updatePluginPanel() {
+    const list = document.getElementById('plugin-list');
+    if (!list) return;
+    list.innerHTML = '';
+    for (const plugin of this.pluginManager.list()) {
+      const item = document.createElement('div');
+      item.className = 'plugin-item';
+      const checked = this.pluginManager.isEnabled(plugin.id) ? 'checked' : '';
+      item.innerHTML = `
+        <input type="checkbox" id="plugin-${plugin.id}" ${checked}>
+        <div class="plugin-info">
+          <div class="plugin-name">${plugin.name} <span class="plugin-badge">${plugin.category}</span></div>
+          <div class="plugin-desc">${plugin.description}</div>
+        </div>
+      `;
+      item.querySelector('input').addEventListener('change', (e) => {
+        this.pluginManager.toggle(plugin.id);
+      });
+      list.appendChild(item);
+    }
+  }
+
+  _initAiPanel() {
+    const suggestions = document.getElementById('ai-suggestions');
+    if (!suggestions) return;
+    for (const s of this.aiAssistant.getSuggestions()) {
+      const chip = document.createElement('span');
+      chip.className = 'ai-chip';
+      chip.textContent = s;
+      chip.addEventListener('click', () => {
+        document.getElementById('ai-input').value = s;
+        this._sendAiMessage();
+      });
+      suggestions.appendChild(chip);
+    }
+  }
+
+  async _sendAiMessage() {
+    const input = document.getElementById('ai-input');
+    const messages = document.getElementById('ai-messages');
+    if (!input || !messages) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-msg user';
+    userMsg.textContent = text;
+    messages.appendChild(userMsg);
+    input.value = '';
+
+    const result = await this.aiAssistant.process(text);
+    const botMsg = document.createElement('div');
+    botMsg.className = 'ai-msg bot';
+    botMsg.textContent = result.message;
+    messages.appendChild(botMsg);
+    messages.scrollTop = messages.scrollHeight;
+    this.logCommand('AI: ' + result.message);
+  }
+
+  updateCollabStatus() {
+    const status = this.collaboration.getStatus();
+    const dot = document.getElementById('collab-dot');
+    const text = document.getElementById('collab-status-text');
+    const bar = document.getElementById('status-collab');
+    if (dot) dot.classList.toggle('active', status.connected);
+    if (text) text.textContent = status.wsActive ? 'WebSocket' : (status.connected ? 'Tab sync' : 'Offline');
+    if (bar) bar.textContent = `Collab: ${status.connected ? 'ON' : 'OFF'}`;
+  }
+
   updateToolInfo(text) {
     this.toolInfo.innerHTML = `<p>${text}</p>`;
   }
 
   updatePropertiesPanel() {
+    if (this.mode === '3d') {
+      const entity = this.selectionManager3D?.selected
+        || (this.drawing.entities3D.length > 0 ? this.drawing.entities3D[this.drawing.entities3D.length - 1] : null);
+      if (!entity) {
+        this.propertiesPanel.innerHTML = '<p class="empty-state">Chọn solid 3D hoặc dùng công cụ tạo mới</p>';
+        return;
+      }
+      this.propertiesPanel.innerHTML = `
+        <div class="prop-row"><label>Loại 3D</label><span>${entity.type}</span></div>
+        <div class="prop-row"><label>Tên</label><span>${entity.name}</span></div>
+        <div class="prop-row"><label>Màu</label><input type="color" id="mat-color" value="${entity.material.color}"></div>
+        <div class="prop-row"><label>Metalness</label><input type="range" id="mat-metal" min="0" max="1" step="0.05" value="${entity.material.metalness ?? 0.1}"></div>
+        <div class="prop-row"><label>Roughness</label><input type="range" id="mat-rough" min="0" max="1" step="0.05" value="${entity.material.roughness ?? 0.6}"></div>
+        <div class="prop-row"><label>Opacity</label><input type="range" id="mat-opacity" min="0.1" max="1" step="0.1" value="${entity.material.opacity}"></div>
+      `;
+      const sync = () => {
+        entity.markDirty();
+        this.renderer3D.syncEntities(this.drawing.entities3D);
+        this.requestRender();
+      };
+      document.getElementById('mat-color')?.addEventListener('input', (e) => { entity.material.color = e.target.value; sync(); });
+      document.getElementById('mat-metal')?.addEventListener('input', (e) => { entity.material.metalness = parseFloat(e.target.value); sync(); });
+      document.getElementById('mat-rough')?.addEventListener('input', (e) => { entity.material.roughness = parseFloat(e.target.value); sync(); });
+      document.getElementById('mat-opacity')?.addEventListener('input', (e) => {
+        entity.material.opacity = parseFloat(e.target.value);
+        entity.material.transparent = entity.material.opacity < 1;
+        sync();
+      });
+      return;
+    }
+
     const selected = this.selectionManager.getSelected();
     if (selected.length === 0) {
       this.propertiesPanel.innerHTML = '<p class="empty-state">Chọn đối tượng để xem thuộc tính</p>';
@@ -523,20 +1144,46 @@ class WebCADApp {
     }
 
     const entity = selected[0];
+    const styles = this.cadCore.styles;
+    const layer = this.layerManager.getLayer(entity.layerId);
+    const color = entity.style.color || layer?.color || '#ffffff';
+
     let html = `<div class="prop-row"><label>Loại</label><span>${entity.type}</span></div>`;
-    html += `<div class="prop-row"><label>Layer</label><span>${this.layerManager.getLayer(entity.layerId)?.name || '-'}</span></div>`;
+    html += `<div class="prop-row"><label>Layer</label>
+      <select id="prop-layer">${this.layerManager.layers.map(l =>
+        `<option value="${l.id}" ${l.id === entity.layerId ? 'selected' : ''}>${l.name}</option>`
+      ).join('')}</select></div>`;
+    html += `<div class="prop-row"><label>Linetype</label>
+      <select id="prop-linetype">${styles.listLinetypes().map(lt =>
+        `<option value="${lt.id}" ${lt.id === (entity.linetypeId || 'Continuous') ? 'selected' : ''}>${lt.name}</option>`
+      ).join('')}</select></div>`;
+    html += `<div class="prop-row"><label>Màu</label><input type="color" id="prop-color" value="${color}"></div>`;
+    html += `<div class="prop-row"><label>Line width</label><input type="number" id="prop-linewidth" min="0.1" step="0.5" value="${entity.style.lineWidth || 1}"></div>`;
+
+    if (entity.type === 'TEXT') {
+      html += `<div class="prop-row"><label>Text Style</label>
+        <select id="prop-textstyle">${styles.listTextStyles().map(ts =>
+          `<option value="${ts.id}" ${ts.id === (entity.textStyleId || 'Standard') ? 'selected' : ''}>${ts.name}</option>`
+        ).join('')}</select></div>`;
+    }
+    if (entity.type === 'DIMENSION') {
+      html += `<div class="prop-row"><label>Dim Style</label>
+        <select id="prop-dimstyle">${styles.listDimStyles().map(ds =>
+          `<option value="${ds.id}" ${ds.id === (entity.dimStyleId || 'Standard') ? 'selected' : ''}>${ds.name}</option>`
+        ).join('')}</select></div>`;
+    }
+    if (entity.type === 'HATCH') {
+      html += `<div class="prop-row"><label>Pattern</label>
+        <select id="prop-hatch">${['SOLID', 'ANSI31', 'CROSS', 'DOTS'].map(p =>
+          `<option value="${p}" ${p === entity.pattern ? 'selected' : ''}>${p}</option>`
+        ).join('')}</select></div>`;
+    }
 
     switch (entity.type) {
       case 'LINE':
-        html += `<div class="prop-row"><label>Start X</label><span>${entity.start.x.toFixed(2)}</span></div>`;
-        html += `<div class="prop-row"><label>Start Y</label><span>${entity.start.y.toFixed(2)}</span></div>`;
-        html += `<div class="prop-row"><label>End X</label><span>${entity.end.x.toFixed(2)}</span></div>`;
-        html += `<div class="prop-row"><label>End Y</label><span>${entity.end.y.toFixed(2)}</span></div>`;
         html += `<div class="prop-row"><label>Length</label><span>${GeometryEngine.formatDistance(GeometryEngine.distance(entity.start.x, entity.start.y, entity.end.x, entity.end.y))}</span></div>`;
         break;
       case 'CIRCLE':
-        html += `<div class="prop-row"><label>Center X</label><span>${entity.center.x.toFixed(2)}</span></div>`;
-        html += `<div class="prop-row"><label>Center Y</label><span>${entity.center.y.toFixed(2)}</span></div>`;
         html += `<div class="prop-row"><label>Radius</label><span>${entity.radius.toFixed(2)}</span></div>`;
         break;
       case 'RECTANGLE': {
@@ -546,14 +1193,63 @@ class WebCADApp {
         break;
       }
       case 'TEXT':
-        html += `<div class="prop-row"><label>Text</label><span>${entity.text}</span></div>`;
+        html += `<div class="prop-row"><label>Text</label><input type="text" id="prop-text" value="${entity.text}"></div>`;
         break;
       case 'DIMENSION':
         html += `<div class="prop-row"><label>Distance</label><span>${GeometryEngine.formatDistance(entity.getDistance())}</span></div>`;
         break;
     }
 
+    html += `<div class="prop-actions"><button id="prop-constraint-btn">Ràng buộc cố định</button></div>`;
+
     this.propertiesPanel.innerHTML = html;
+
+    const setProp = (key, value) => {
+      this.cadCore.run('SET_PROPERTY', { entities: selected, key, value });
+      this.requestRender();
+    };
+
+    document.getElementById('prop-layer')?.addEventListener('change', (e) => setProp('layerId', e.target.value));
+    document.getElementById('prop-linetype')?.addEventListener('change', (e) => setProp('linetypeId', e.target.value));
+    document.getElementById('prop-color')?.addEventListener('input', (e) => setProp('color', e.target.value));
+    document.getElementById('prop-linewidth')?.addEventListener('change', (e) => setProp('lineWidth', e.target.value));
+    document.getElementById('prop-textstyle')?.addEventListener('change', (e) => setProp('textStyleId', e.target.value));
+    document.getElementById('prop-dimstyle')?.addEventListener('change', (e) => setProp('dimStyleId', e.target.value));
+    document.getElementById('prop-hatch')?.addEventListener('change', (e) => setProp('pattern', e.target.value));
+    document.getElementById('prop-text')?.addEventListener('change', (e) => setProp('text', e.target.value));
+    document.getElementById('prop-constraint-btn')?.addEventListener('click', () => {
+      this.cadCore.run('ADD_CONSTRAINT', { type: 'FIXED', entityIds: [entity.id], params: {} });
+      this.logCommand('Constraint FIXED added.');
+    });
+  }
+
+  _updateStylesPanel() {
+    const panel = document.getElementById('styles-panel');
+    if (!panel) return;
+    const s = this.cadCore.styles;
+    panel.innerHTML = `
+      <div class="prop-row"><label>Linetype</label>
+        <select id="global-linetype">${s.listLinetypes().map(lt =>
+          `<option value="${lt.id}" ${lt.id === s.currentLinetypeId ? 'selected' : ''}>${lt.name}</option>`
+        ).join('')}</select></div>
+      <div class="prop-row"><label>Text Style</label>
+        <select id="global-textstyle">${s.listTextStyles().map(ts =>
+          `<option value="${ts.id}" ${ts.id === s.currentTextStyleId ? 'selected' : ''}>${ts.name}</option>`
+        ).join('')}</select></div>
+      <div class="prop-row"><label>Dim Style</label>
+        <select id="global-dimstyle">${s.listDimStyles().map(ds =>
+          `<option value="${ds.id}" ${ds.id === s.currentDimStyleId ? 'selected' : ''}>${ds.name}</option>`
+        ).join('')}</select></div>
+    `;
+    document.getElementById('global-linetype')?.addEventListener('change', (e) => {
+      s.currentLinetypeId = e.target.value;
+    });
+    document.getElementById('global-textstyle')?.addEventListener('change', (e) => {
+      s.currentTextStyleId = e.target.value;
+    });
+    document.getElementById('global-dimstyle')?.addEventListener('change', (e) => {
+      s.currentDimStyleId = e.target.value;
+    });
   }
 
   updateStatusBar() {
@@ -583,7 +1279,8 @@ class WebCADApp {
       if (this.mode === '2d') {
         this.renderer2D.render(
           this.drawing, this.layerManager,
-          this.selectionManager, this.snapEngine
+          this.selectionManager, this.snapEngine,
+          this.layoutManager, this.cadCore.styles
         );
       } else if (this.renderer3D.initialized) {
         this.renderer3D.render();
