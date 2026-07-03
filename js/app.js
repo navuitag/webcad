@@ -58,6 +58,9 @@ class WebCADApp {
 
     this._resize();
     this._loadAutosave();
+    if (typeof AutoDimensionEngine !== 'undefined') {
+      AutoDimensionEngine.purgeAutoDimensions(this);
+    }
     this._startAutosave();
     this.setTool('select');
     this._updateLayerPanel();

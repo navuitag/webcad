@@ -43,6 +43,10 @@ class CanvasRenderer {
       entity.draw(this.ctx, drawing, layerManager, styleManager);
     }
 
+    if (drawing.view.showDimensions && typeof EntityDimensionOverlay !== 'undefined') {
+      this._drawEntityDimensionLabels(drawing, layerManager);
+    }
+
     if (this.previewEntity) {
       this.ctx.save();
       this.ctx.globalAlpha = 0.6;
@@ -189,6 +193,28 @@ class CanvasRenderer {
     this.ctx.fillRect(x - w / 2, y - h, w, h);
     this.ctx.fillStyle = '#ffa726';
     this.ctx.fillText(text, x, y - padY);
+  }
+
+  _drawEntityDimensionLabels(drawing, layerManager) {
+    const labels = EntityDimensionOverlay.collect(drawing, layerManager, null);
+    const color = DimensionEngine.COLOR;
+    for (const item of labels) {
+      const p = drawing.worldToScreen(item.x, item.y, this.canvas.width, this.canvas.height);
+      this.ctx.save();
+      this.ctx.font = '12px sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      const padX = 6;
+      const padY = 4;
+      const metrics = this.ctx.measureText(item.text);
+      const w = metrics.width + padX * 2;
+      const h = 14 + padY * 2;
+      this.ctx.fillStyle = 'rgba(13, 17, 23, 0.82)';
+      this.ctx.fillRect(p.x - w / 2, p.y - h / 2, w, h);
+      this.ctx.fillStyle = color;
+      this.ctx.fillText(item.text, p.x, p.y);
+      this.ctx.restore();
+    }
   }
 
   _drawLiveMeasures(drawing) {
