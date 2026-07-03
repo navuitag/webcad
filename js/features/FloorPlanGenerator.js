@@ -2,6 +2,13 @@
  * FloorPlanGenerator — tự động mặt bằng từ kích thước đất
  */
 class FloorPlanGenerator {
+  /** Chiều cao chữ nhãn phòng (đơn vị m) — tỉ lệ theo kích thước phòng */
+  static _roomLabelHeight(w, h) {
+    const minSide = Math.min(w, h);
+    const area = w * h;
+    return Math.max(0.12, Math.min(minSide * 0.07, Math.sqrt(area) * 0.045, 0.22));
+  }
+
   static generate(app, landWidth, landDepth, preset = '2bed') {
     const layerId = app.layerManager.currentLayerId;
     const margin = 0.5;
@@ -33,9 +40,17 @@ class FloorPlanGenerator {
       app.cadCore.run('DRAW_RECTANGLE', {
         x1: room.x, y1: room.y, x2: room.x + room.w, y2: room.y + room.h
       });
-      app.cadCore.run('DRAW_TEXT', {
-        x: room.x + room.w / 2 - 8, y: room.y + room.h / 2, text: room.name, height: 2.5
+      const labelH = FloorPlanGenerator._roomLabelHeight(room.w, room.h);
+      const textResult = app.cadCore.run('DRAW_TEXT', {
+        x: room.x + room.w / 2,
+        y: room.y + room.h / 2,
+        text: room.name,
+        height: labelH
       });
+      if (textResult.entity) {
+        textResult.entity.centered = true;
+        textResult.entity.textStyleId = 'RoomLabel';
+      }
       const doorX = room.x + room.w / 2;
       app.cadCore.run('DRAW_LINE', { x1: doorX - 0.45, y1: room.y, x2: doorX + 0.45, y2: room.y });
     }
