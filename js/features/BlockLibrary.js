@@ -11,7 +11,8 @@ class BlockLibrary {
     kitchen: { label: 'Bếp & tủ', icon: '🍳' },
     bath: { label: 'Phòng tắm', icon: '🚿' },
     stair: { label: 'Cầu thang', icon: '🪜' },
-    mep: { label: 'Điện nước', icon: '⚡' }
+    mep: { label: 'Điện nước', icon: '⚡' },
+    landscape: { label: 'Cảnh quan', icon: '🌳' }
   };
 
   static templates = {
@@ -361,6 +362,116 @@ class BlockLibrary {
         BlockLibrary._line(3, 3, 47, 3),
         { type: 'CIRCLE', cx: 47, cy: 3, r: 3 }
       ]
+    },
+    'tree-deciduous': {
+      category: 'landscape', name: 'Cây lá rộng Ø100', icon: '🌳', width: 100, height: 100,
+      entities: () => [
+        { type: 'CIRCLE', cx: 50, cy: 50, r: 50 },
+        { type: 'CIRCLE', cx: 50, cy: 50, r: 8 }
+      ]
+    },
+    'tree-palm': {
+      category: 'landscape', name: 'Cây cọ', icon: '🌴', width: 80, height: 80,
+      entities: () => [
+        { type: 'CIRCLE', cx: 40, cy: 40, r: 18 },
+        BlockLibrary._line(40, 40, 10, 10),
+        BlockLibrary._line(40, 40, 70, 10),
+        BlockLibrary._line(40, 40, 70, 70),
+        BlockLibrary._line(40, 40, 10, 70),
+        BlockLibrary._line(40, 40, 40, 5)
+      ]
+    },
+    'bush-round': {
+      category: 'landscape', name: 'Bụi cây Ø50', icon: '🌿', width: 50, height: 50,
+      entities: () => [{ type: 'CIRCLE', cx: 25, cy: 25, r: 25 }]
+    },
+    'pool-rect': {
+      category: 'landscape', name: 'Hồ bơi 400×800', icon: '🏊', width: 400, height: 800,
+      entities: () => [
+        {
+          type: 'HATCH',
+          boundary: [{ x: 0, y: 0 }, { x: 400, y: 0 }, { x: 400, y: 800 }, { x: 0, y: 800 }],
+          pattern: 'SOLID'
+        },
+        BlockLibrary._rect(0, 0, 400, 800)
+      ]
+    },
+    'pool-round': {
+      category: 'landscape', name: 'Hồ tròn Ø400', icon: '🏊', width: 400, height: 400,
+      entities: () => [{ type: 'CIRCLE', cx: 200, cy: 200, r: 200 }]
+    },
+    'path-stone': {
+      category: 'landscape', name: 'Lối đi đá 120', icon: '🛤️', width: 120, height: 60,
+      entities: () => [BlockLibrary._rect(0, 0, 120, 60)]
+    },
+    'lawn-patch': {
+      category: 'landscape', name: 'Thảm cỏ 200×200', icon: '🟩', width: 200, height: 200,
+      entities: () => [BlockLibrary._rect(0, 0, 200, 200)]
+    },
+    'flower-bed': {
+      category: 'landscape', name: 'Luống hoa 200×80', icon: '🌸', width: 200, height: 80,
+      entities: () => [
+        BlockLibrary._rect(0, 0, 200, 80),
+        { type: 'CIRCLE', cx: 40, cy: 40, r: 12 },
+        { type: 'CIRCLE', cx: 100, cy: 40, r: 12 },
+        { type: 'CIRCLE', cx: 160, cy: 40, r: 12 }
+      ]
+    },
+    'bench-park': {
+      category: 'landscape', name: 'Ghế công viên', icon: '🪑', width: 120, height: 45,
+      entities: () => [
+        BlockLibrary._rect(0, 0, 120, 45),
+        BlockLibrary._rect(5, 5, 115, 25)
+      ]
+    },
+    'pergola': {
+      category: 'landscape', name: 'Pergola 300×300', icon: '⛺', width: 300, height: 300,
+      entities: () => [
+        BlockLibrary._rect(0, 0, 300, 300),
+        BlockLibrary._rect(20, 20, 280, 280),
+        BlockLibrary._line(20, 20, 280, 280),
+        BlockLibrary._line(280, 20, 20, 280)
+      ]
+    },
+    'fountain-round': {
+      category: 'landscape', name: 'Đài phun Ø120', icon: '⛲', width: 120, height: 120,
+      entities: () => [
+        { type: 'CIRCLE', cx: 60, cy: 60, r: 60 },
+        { type: 'CIRCLE', cx: 60, cy: 60, r: 20 },
+        BlockLibrary._line(60, 10, 60, 40),
+        BlockLibrary._line(60, 80, 60, 110),
+        BlockLibrary._line(10, 60, 40, 60),
+        BlockLibrary._line(80, 60, 110, 60)
+      ]
+    },
+    'fence-segment': {
+      category: 'landscape', name: 'Hàng rào 180', icon: '🚧', width: 180, height: 8,
+      entities: () => [
+        BlockLibrary._line(0, 0, 180, 0),
+        BlockLibrary._line(0, 8, 180, 8),
+        BlockLibrary._line(30, 0, 30, 8),
+        BlockLibrary._line(60, 0, 60, 8),
+        BlockLibrary._line(90, 0, 90, 8),
+        BlockLibrary._line(120, 0, 120, 8),
+        BlockLibrary._line(150, 0, 150, 8)
+      ]
+    },
+    'outdoor-table': {
+      category: 'landscape', name: 'Bàn ngoài trời', icon: '☂️', width: 120, height: 120,
+      entities: () => [
+        { type: 'CIRCLE', cx: 60, cy: 60, r: 40 },
+        BlockLibrary._rect(10, 10, 25, 25),
+        BlockLibrary._rect(95, 10, 110, 25),
+        BlockLibrary._rect(10, 95, 25, 110),
+        BlockLibrary._rect(95, 95, 110, 110)
+      ]
+    },
+    'gazebo': {
+      category: 'landscape', name: 'Gazebo 350×350', icon: '🛖', width: 350, height: 350,
+      entities: () => [
+        { type: 'CIRCLE', cx: 175, cy: 175, r: 175 },
+        BlockLibrary._rect(155, 155, 195, 195)
+      ]
     }
   };
 
@@ -542,7 +653,20 @@ class BlockLibrary {
       { re: /cau\s*thang|stairs/, id: 'stairs' },
       { re: /o\s*cam|dien|outlet/, id: 'outlet' },
       { re: /cong\s*tac|switch/, id: 'switch' },
-      { re: /ong\s*nuoc|pipe/, id: 'pipe' }
+      { re: /ong\s*nuoc|pipe/, id: 'pipe' },
+      { re: /cay\s*(la\s*rong|tron)|tree/, id: 'tree-deciduous' },
+      { re: /cay\s*co|palm/, id: 'tree-palm' },
+      { re: /bui\s*cay|bush/, id: 'bush-round' },
+      { re: /ho\s*boi|pool/, id: 'pool-rect' },
+      { re: /loi\s*di|path|duong\s*di/, id: 'path-stone' },
+      { re: /tham\s*co|lawn|co/, id: 'lawn-patch' },
+      { re: /vuon\s*hoa|flower|luong\s*hoa/, id: 'flower-bed' },
+      { re: /ghe\s*cong\s*vien|bench/, id: 'bench-park' },
+      { re: /pergola|mai\s*che/, id: 'pergola' },
+      { re: /dai\s*phun|fountain/, id: 'fountain-round' },
+      { re: /hang\s*rao|fence/, id: 'fence-segment' },
+      { re: /ban\s*ngoai\s*troi|outdoor/, id: 'outdoor-table' },
+      { re: /gazebo|chòi/, id: 'gazebo' }
     ];
     for (const { re, id } of rules) {
       if (re.test(s)) return id;
