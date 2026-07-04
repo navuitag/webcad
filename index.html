@@ -409,6 +409,24 @@
             <button type="button" id="btn-export-quotation" class="feature-btn">Báo giá PDF</button>
             <button type="button" id="btn-export-bim-json" class="feature-btn">Xuất BIM JSON</button>
           </div>
+          <h4 class="feature-subtitle">Studio Cloud (Phase 5)</h4>
+          <p class="feature-hint">Marketplace plugin, Cloud Library, collab realtime & tài sản thương mại</p>
+          <div id="interior-marketplace-tabs" class="template-tabs"></div>
+          <div id="interior-marketplace-grid" class="template-grid interior-marketplace-grid"></div>
+          <div class="feature-row">
+            <label>Cloud Library</label>
+            <select id="interior-cloud-select" class="feature-select">
+              <option value="">— Chọn scene đã lưu —</option>
+            </select>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-save-interior-cloud" class="feature-btn">Lưu scene</button>
+            <button type="button" id="btn-load-interior-cloud" class="feature-btn">Tải scene</button>
+            <button type="button" id="btn-share-interior-cloud" class="feature-btn">Chia sẻ</button>
+          </div>
+          <label class="feature-check"><input type="checkbox" id="interior-collab-enabled"> Collab nội thất realtime</label>
+          <p class="feature-hint">Tài sản thương mại (đã cài plugin)</p>
+          <div id="interior-commercial-grid" class="template-grid"></div>
           <div id="interior-asset-tabs" class="template-tabs"></div>
           <div id="interior-asset-grid" class="template-grid"></div>
           <h4 class="feature-subtitle">Vẽ nhanh kiến trúc</h4>
@@ -679,6 +697,10 @@
   <script src="js/features/interior/InteriorMaintenanceEngine.js"></script>
   <script src="js/features/interior/InteriorBimEngine.js"></script>
   <script src="js/features/interior/InteriorBoqEngine.js"></script>
+  <script src="js/features/interior/InteriorCommercialAssets.js"></script>
+  <script src="js/features/interior/InteriorMarketplace.js"></script>
+  <script src="js/features/interior/InteriorCloudLibrary.js"></script>
+  <script src="js/features/interior/InteriorCollabEngine.js"></script>
   <script src="js/features/EntityDimensionOverlay.js"></script>
   <script src="js/features/EntityDimensionEngine.js"></script>
   <script src="js/features/AutoDimensionEngine.js"></script>

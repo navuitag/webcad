@@ -113,6 +113,11 @@ class CollaborationEngine {
           this.app.logCommand(`Collab: Đồng bộ từ ${data.userName || 'peer'}`);
         }
         break;
+      case 'INTERIOR_ACTION':
+        if (typeof InteriorCollabEngine !== 'undefined') {
+          InteriorCollabEngine.applyRemote(this.app, data.payload, data.userName);
+        }
+        break;
     }
     this._notify(data);
   }

@@ -40,15 +40,21 @@ class FeaturesHub {
   listInteriorAssetCategories() { return InteriorAssetManager.categories(); }
 
   applyInteriorStyle(styleId, roomId) {
-    return InteriorSceneGenerator.applyStyle(this.app, styleId, roomId);
+    const r = InteriorSceneGenerator.applyStyle(this.app, styleId, roomId);
+    InteriorCollabEngine.broadcast(this.app, 'applyStyle', { styleId, roomId });
+    return r;
   }
 
   furnishRoom(roomId, styleId) {
-    return InteriorSceneGenerator.furnishRoom(this.app, roomId, styleId);
+    const r = InteriorSceneGenerator.furnishRoom(this.app, roomId, styleId);
+    InteriorCollabEngine.broadcast(this.app, 'furnishAll', { styleId, roomId });
+    return r;
   }
 
   furnishAllRooms(styleId) {
-    return InteriorSceneGenerator.furnishAll(this.app, styleId);
+    const r = InteriorSceneGenerator.furnishAll(this.app, styleId);
+    InteriorCollabEngine.broadcast(this.app, 'furnishAll', { styleId });
+    return r;
   }
 
   estimateInteriorCost(styleId) {
@@ -63,12 +69,17 @@ class FeaturesHub {
   listInteriorLightingPresets() { return InteriorLightingEngine.list(); }
   applyInteriorLighting(presetId) {
     const r = InteriorLightingEngine.apply(this.app, presetId);
+    InteriorCollabEngine.broadcast(this.app, 'applyLighting', { presetId });
     return { ...r, message: `Ánh sáng: ${r.preset}` };
   }
 
   listDecorTemplates(category) { return InteriorDecorTemplates.list(category); }
   listDecorTemplateCategories() { return InteriorDecorTemplates.categories; }
-  applyDecorTemplate(id) { return InteriorDecorTemplates.apply(this.app, id); }
+  applyDecorTemplate(id) {
+    const r = InteriorDecorTemplates.apply(this.app, id);
+    InteriorCollabEngine.broadcast(this.app, 'applyDecorTemplate', { templateId: id });
+    return r;
+  }
 
   /** Phase 3 — AI Designer & Smart Decorator */
   designInteriorFromPrompt(text) {
@@ -89,7 +100,9 @@ class FeaturesHub {
 
   /** Phase 4 — BIM-lite, BOQ nâng cao, NCC, bảo trì */
   scanInteriorBim() {
-    return InteriorBimEngine.scanDrawing(this.app);
+    const r = InteriorBimEngine.scanDrawing(this.app);
+    InteriorCollabEngine.broadcast(this.app, 'scanBim', {});
+    return r;
   }
 
   listInteriorSuppliers(category) {
@@ -129,6 +142,58 @@ class FeaturesHub {
       return InteriorBimEngine.buildRecord(entity, this.app);
     }
     return null;
+  }
+
+  /** Phase 5 — Marketplace, Cloud Library, Collab, Commercial */
+  listMarketplacePlugins(category) {
+    return InteriorMarketplace.list(category);
+  }
+
+  listMarketplaceCategories() {
+    return InteriorMarketplace.categories();
+  }
+
+  installMarketplacePlugin(pluginId) {
+    return InteriorMarketplace.install(this.app, pluginId);
+  }
+
+  listCommercialAssets(filter) {
+    return InteriorCommercialAssets.listInstalledAssets(filter);
+  }
+
+  insertCommercialAsset(commercialId, point, options) {
+    return InteriorCommercialAssets.insert(this.app, commercialId, point, options);
+  }
+
+  saveInteriorCloud(name) {
+    const r = InteriorCloudLibrary.saveScene(this.app, name);
+    InteriorCollabEngine.broadcast(this.app, 'saveCloud', { name: r.pack?.name });
+    return r;
+  }
+
+  listInteriorCloudScenes() {
+    return InteriorCloudLibrary.list();
+  }
+
+  loadInteriorCloud(packId) {
+    return InteriorCloudLibrary.loadScene(this.app, packId);
+  }
+
+  shareInteriorCloud(packId) {
+    return InteriorCloudLibrary.generateShareLink(packId);
+  }
+
+  deleteInteriorCloud(packId) {
+    return InteriorCloudLibrary.deleteScene(packId);
+  }
+
+  getInteriorCollabStatus() {
+    return InteriorCollabEngine.getStatus(this.app);
+  }
+
+  setInteriorCollabEnabled(on) {
+    InteriorCollabEngine.setEnabled(on);
+    return { success: true, enabled: on, message: on ? 'Đã bật collab nội thất realtime.' : 'Đã tắt collab nội thất.' };
   }
 
   startInsertInteriorAsset(id) { this.app.startInsertTemplate(id); }

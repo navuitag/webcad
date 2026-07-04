@@ -41,6 +41,7 @@ class WebCADApp {
     await this.cloudStorage.init();
     this.collaboration = new CollaborationEngine(this);
     this.collaboration.init();
+    if (typeof InteriorCollabEngine !== 'undefined') InteriorCollabEngine.init(this);
     this._initCollabUI();
     this.pluginManager = new PluginManager(this);
     this.pluginManager.loadBuiltIn();
@@ -1323,6 +1324,7 @@ class WebCADApp {
 
   _initInteriorPanel() {
     if (!this.features || typeof InteriorStyleEngine === 'undefined') return;
+    this._interiorMarketplaceCategory = 'all';
 
     const styleSel = document.getElementById('interior-style-select');
     const spaceSel = document.getElementById('interior-space-preset');
@@ -1529,6 +1531,51 @@ class WebCADApp {
       this.logCommand(r.message);
     });
 
+    const collabChk = document.getElementById('interior-collab-enabled');
+    if (collabChk) {
+      collabChk.checked = InteriorCollabEngine.isEnabled();
+      collabChk.addEventListener('change', () => {
+        const r = this.features.setInteriorCollabEnabled(collabChk.checked);
+        this.logCommand(r.message);
+      });
+    }
+
+    document.getElementById('btn-save-interior-cloud')?.addEventListener('click', () => {
+      const name = prompt('Tên scene nội thất:', this.drawing.name || 'My Interior');
+      if (name === null) return;
+      const r = this.features.saveInteriorCloud(name);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this._updateInteriorCloudSelect();
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-load-interior-cloud')?.addEventListener('click', () => {
+      const id = document.getElementById('interior-cloud-select')?.value;
+      if (!id) return;
+      const r = this.features.loadInteriorCloud(id);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-share-interior-cloud')?.addEventListener('click', () => {
+      const id = document.getElementById('interior-cloud-select')?.value;
+      if (!id) { this.logCommand('Chọn scene trong Cloud Library trước.'); return; }
+      const r = this.features.shareInteriorCloud(id);
+      if (r.link) {
+        navigator.clipboard?.writeText(r.link);
+        const out = document.getElementById('interior-report');
+        if (out) out.textContent = r.link;
+      }
+      this.logCommand(r.message);
+    });
+
+    this._renderInteriorMarketplace();
+    this._updateInteriorCloudSelect();
+    this._renderCommercialAssetGrid();
+
     this._renderInteriorAssetGrid();
   }
 
@@ -1596,18 +1643,107 @@ class WebCADApp {
     const styleId = document.getElementById('interior-style-select')?.value;
     grid.innerHTML = '';
     const filter = { category: this._interiorAssetCategory === 'all' ? null : this._interiorAssetCategory, style: styleId };
-    for (const a of this.features.listInteriorAssets(filter)) {
+    const assets = [
+      ...this.features.listInteriorAssets(filter),
+      ...this.features.listCommercialAssets(filter)
+    ];
+    for (const a of assets) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'feature-tile';
-      btn.innerHTML = `<span class="feature-tile-icon">${a.icon || '📦'}</span><span class="feature-tile-name">${a.name}</span>`;
-      btn.title = `${a.name} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
+      btn.className = 'feature-tile' + (a.isCommercial ? ' feature-tile-pro' : '');
+      const badge = a.isCommercial ? ' ⭐' : '';
+      btn.innerHTML = `<span class="feature-tile-icon">${a.icon || '📦'}</span><span class="feature-tile-name">${a.name}${badge}</span>`;
+      btn.title = `${a.name}${a.brand ? ' — ' + a.brand : ''} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
       btn.addEventListener('click', () => {
-        this.features.startInsertInteriorAsset(a.id);
+        if (a.isCommercial && a.commercialId) {
+          this.features.startInsertTemplate(a.id);
+          this._pendingCommercialId = a.commercialId;
+        } else {
+          this.features.startInsertInteriorAsset(a.id);
+        }
         this.logCommand(`Chèn nội thất: ${a.name} (R = xoay)`);
       });
       grid.appendChild(btn);
     }
+  }
+
+  _renderInteriorMarketplace() {
+    const tabsEl = document.getElementById('interior-marketplace-tabs');
+    const grid = document.getElementById('interior-marketplace-grid');
+    if (!grid || !this.features?.listMarketplaceCategories) return;
+
+    if (tabsEl) {
+      tabsEl.innerHTML = '';
+      for (const cat of this.features.listMarketplaceCategories()) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'template-tab' + (cat.id === this._interiorMarketplaceCategory ? ' active' : '');
+        tab.textContent = cat.label;
+        tab.addEventListener('click', () => {
+          this._interiorMarketplaceCategory = cat.id;
+          this._renderInteriorMarketplace();
+        });
+        tabsEl.appendChild(tab);
+      }
+    }
+
+    grid.innerHTML = '';
+    for (const p of this.features.listMarketplacePlugins(this._interiorMarketplaceCategory)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'feature-tile' + (p.installed ? ' feature-tile-installed' : '');
+      btn.innerHTML = `<span class="feature-tile-icon">${p.icon}</span><span class="feature-tile-name">${p.name}${p.installed ? ' ✓' : ''}</span>`;
+      btn.title = `${p.description}\n${p.author} v${p.version}`;
+      btn.addEventListener('click', () => {
+        const r = this.features.installMarketplacePlugin(p.id);
+        const out = document.getElementById('interior-report');
+        if (out) out.textContent = r.message;
+        this._renderInteriorMarketplace();
+        this._renderCommercialAssetGrid();
+        this._renderInteriorAssetGrid();
+        this._updatePluginPanel?.();
+        this.logCommand(r.message);
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  _renderCommercialAssetGrid() {
+    const grid = document.getElementById('interior-commercial-grid');
+    if (!grid || !this.features?.listCommercialAssets) return;
+    const styleId = document.getElementById('interior-style-select')?.value;
+    const items = this.features.listCommercialAssets({ style: styleId });
+    grid.innerHTML = '';
+    if (!items.length) {
+      grid.innerHTML = '<p class="feature-hint">Cài plugin Marketplace để mở khóa tài sản thương mại.</p>';
+      return;
+    }
+    for (const a of items) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'feature-tile feature-tile-pro';
+      btn.innerHTML = `<span class="feature-tile-icon">${a.icon}</span><span class="feature-tile-name">${a.name}</span>`;
+      btn.title = `${a.brand} — ${a.license} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
+      btn.addEventListener('click', () => {
+        this.features.startInsertInteriorAsset(a.id);
+        this.logCommand(`Chèn thương mại: ${a.name}`);
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  _updateInteriorCloudSelect() {
+    const sel = document.getElementById('interior-cloud-select');
+    if (!sel || !this.features?.listInteriorCloudScenes) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Chọn scene đã lưu —</option>';
+    for (const p of this.features.listInteriorCloudScenes()) {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.name} (${p.roomCount || 0} phòng, ${p.interiorStyle || '?'})`;
+      sel.appendChild(opt);
+    }
+    if (current && sel.querySelector(`option[value="${current}"]`)) sel.value = current;
   }
 
   _updateOfflineStatus() {
@@ -1619,6 +1755,21 @@ class WebCADApp {
   }
 
   _checkShareLink() {
+    const interiorPack = typeof InteriorCloudLibrary !== 'undefined'
+      ? InteriorCloudLibrary.parseShareLink() : null;
+    if (interiorPack?.drawing) {
+      const r = InteriorCloudLibrary.applyPack(this, interiorPack);
+      InteriorCloudLibrary.clearShareLink();
+      const packs = InteriorCloudLibrary.list();
+      if (!packs.find(p => p.id === interiorPack.id)) {
+        const all = InteriorCloudLibrary._loadAll();
+        all.unshift(interiorPack);
+        InteriorCloudLibrary._saveAll(all);
+      }
+      this._updateInteriorCloudSelect();
+      this.logCommand(r.message || `Đã mở scene "${interiorPack.name}" từ link.`);
+      return;
+    }
     const data = this.cloudStorage.parseShareLink();
     if (data) {
       this._loadDrawingData(data);

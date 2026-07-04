@@ -345,6 +345,24 @@
   cursor: pointer;
 }
 
+.feature-tile-pro {
+  border-color: rgba(255, 193, 7, 0.45) !important;
+}
+
+.feature-tile-pro .feature-tile-name {
+  color: #ffc107;
+}
+
+.feature-tile-installed {
+  opacity: 0.72;
+}
+
+.interior-marketplace-grid {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 6px;
+}
+
 .template-tabs {
   display: flex;
   flex-wrap: wrap;

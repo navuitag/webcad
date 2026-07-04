@@ -130,6 +130,37 @@ class AiDrawingEngine {
       return { success: r.success, message: r.message };
     }
 
+    // Phase 5 — Marketplace, Cloud, Collab, Commercial
+    if (s.match(/marketplace|cai\s*plugin|install\s*plugin/)) {
+      const m = s.match(/furniture|kitchen|landscape|lighting|decor|renderer|bim|ai|studio/);
+      const plugin = m ? InteriorMarketplace.catalog.find(p =>
+        p.category.toLowerCase() === m[0] || p.id.includes(m[0])
+      ) : InteriorMarketplace.catalog[0];
+      if (plugin) {
+        const r = InteriorMarketplace.install(app, plugin.id);
+        return { success: r.success, message: r.message };
+      }
+    }
+    if (s.match(/luu\s*scene|save\s*cloud|cloud\s*library/)) {
+      const r = InteriorCloudLibrary.saveScene(app);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/tai\s*scene|load\s*cloud/)) {
+      const packs = InteriorCloudLibrary.list();
+      if (!packs.length) return { success: false, message: 'Cloud Library trống.' };
+      const r = InteriorCloudLibrary.loadScene(app, packs[0].id);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/collab\s*noi\s*that|interior\s*collab/)) {
+      InteriorCollabEngine.setEnabled(true);
+      return { success: true, message: 'Đã bật collab nội thất realtime.' };
+    }
+    if (s.match(/tai\s*san\s*thuong\s*mai|commercial/)) {
+      InteriorMarketplace.install(app, 'plugin-studio-all');
+      const items = InteriorCommercialAssets.listInstalledAssets();
+      return { success: items.length > 0, message: `Studio All Access: ${items.length} tài sản thương mại.` };
+    }
+
     // Interior Design Module
     if (s.match(/(?:phat\s*hien|detect)\s*phong/)) {
       const r = InteriorEngine.detectRooms(app);
@@ -189,6 +220,9 @@ class AiDrawingEngine {
       'Báo giá PDF nội thất',
       'Vòng đời sản phẩm',
       'Lịch bảo trì hàng năm',
+      'Cài Furniture Plugin Marketplace',
+      'Lưu scene Cloud Library',
+      'Bật collab nội thất',
       'Phát hiện phòng',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
