@@ -29,7 +29,7 @@ class InteriorPlacementEngine {
       if (scale !== 1) InteriorPlacementEngine._scaleEntity(e, scale);
       e.move(insertPoint.x, insertPoint.y);
       ArchPlanStyle.styleBlockEntity(e, templateId);
-      InteriorPlacementEngine._tagEntity(e, templateId, groupId, asset, options.styleId);
+      InteriorPlacementEngine._tagEntity(e, templateId, groupId, asset, options.styleId, app);
       app.drawing.addEntity(e);
       entities.push(e);
     }
@@ -57,12 +57,15 @@ class InteriorPlacementEngine {
     entity.scale(0, 0, factor);
   }
 
-  static _tagEntity(entity, assetId, groupId, asset, styleId) {
+  static _tagEntity(entity, assetId, groupId, asset, styleId, app) {
     entity.interiorAssetId = assetId;
     entity.interiorGroupId = groupId;
     entity.interiorCategory = asset?.category || null;
     entity.blockTemplateId = assetId;
     if (styleId) entity.interiorStyleId = styleId;
+    if (typeof InteriorBimEngine !== 'undefined' && app) {
+      InteriorBimEngine.attachToEntity(entity, app);
+    }
   }
 
   static restoreTags(entity, data) {
@@ -71,6 +74,7 @@ class InteriorPlacementEngine {
     if (data.interiorCategory) entity.interiorCategory = data.interiorCategory;
     if (data.interiorStyleId) entity.interiorStyleId = data.interiorStyleId;
     if (data.interiorMaterialId) entity.interiorMaterialId = data.interiorMaterialId;
+    if (typeof InteriorBimEngine !== 'undefined') InteriorBimEngine.restoreTags(entity, data);
   }
 
   static patchJSON(entity, json) {
@@ -79,6 +83,7 @@ class InteriorPlacementEngine {
     if (entity.interiorCategory) json.interiorCategory = entity.interiorCategory;
     if (entity.interiorStyleId) json.interiorStyleId = entity.interiorStyleId;
     if (entity.interiorMaterialId) json.interiorMaterialId = entity.interiorMaterialId;
+    if (typeof InteriorBimEngine !== 'undefined') InteriorBimEngine.patchJSON(entity, json);
     return json;
   }
 }

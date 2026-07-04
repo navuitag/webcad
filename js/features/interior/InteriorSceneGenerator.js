@@ -13,6 +13,9 @@ class InteriorSceneGenerator {
     for (const room of rooms) {
       InteriorSceneGenerator.applyMaterialsToRoom(app, room, style);
       updated++;
+      if (typeof InteriorBimEngine !== 'undefined' && room.entity) {
+        InteriorBimEngine.attachToEntity(room.entity, app);
+      }
     }
 
     InteriorLightingEngine.apply(app, style.lightingPreset || InteriorLightingEngine._mapLegacy(style.lighting));

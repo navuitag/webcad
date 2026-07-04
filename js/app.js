@@ -1489,6 +1489,46 @@ class WebCADApp {
       this.logCommand(r.message?.split('\n')[0] || 'Trang trí tự động');
     });
 
+    document.getElementById('btn-scan-bim')?.addEventListener('click', () => {
+      const r = this.features.scanInteriorBim();
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-bim-lifecycle')?.addEventListener('click', () => {
+      this.features.scanInteriorBim();
+      const r = this.features.getInteriorLifecycleReport();
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.report || r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-bim-maintenance')?.addEventListener('click', () => {
+      this.features.scanInteriorBim();
+      const r = this.features.getInteriorMaintenancePlan();
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.report || r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-export-boq-p4')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.exportInteriorBoqPhase4('csv', styleId);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-export-quotation')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.exportInteriorQuotationPdf(styleId);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-export-bim-json')?.addEventListener('click', () => {
+      const r = this.features.exportInteriorBimJson();
+      this.logCommand(r.message);
+    });
+
     this._renderInteriorAssetGrid();
   }
 
@@ -1877,6 +1917,21 @@ class WebCADApp {
       case 'DIMENSION':
         html += `<div class="prop-row"><label>Distance</label><span>${this.formatDistance(entity.getDistance())}</span></div>`;
         break;
+    }
+
+    if (typeof InteriorBimEngine !== 'undefined' && (entity.interiorAssetId || entity.interiorMaterialId || entity.bimData)) {
+      const bim = entity.bimData || this.features?.getEntityBim(entity);
+      if (bim) {
+        html += `<div class="prop-section"><h4 class="prop-section-title">BIM-lite</h4>`;
+        html += `<div class="prop-row"><label>Sản phẩm</label><span>${bim.object?.name || '—'}</span></div>`;
+        html += `<div class="prop-row"><label>Vật liệu</label><span>${bim.material?.name || '—'}</span></div>`;
+        html += `<div class="prop-row"><label>NCC</label><span>${bim.supplier?.name || '—'}</span></div>`;
+        html += `<div class="prop-row"><label>Giá</label><span>${bim.price?.formatted || '—'}</span></div>`;
+        html += `<div class="prop-row"><label>Bảo hành</label><span>${bim.lifecycle?.warrantyYears || 0} năm</span></div>`;
+        html += `<div class="prop-row"><label>Thay thế</label><span>${bim.lifecycle?.replacementDate || '—'}</span></div>`;
+        html += `<div class="prop-row"><label>Bảo trì</label><span>${bim.maintenance?.task || '—'}</span></div>`;
+        html += `</div>`;
+      }
     }
 
     html += `<div class="prop-actions"><button id="prop-constraint-btn">Ràng buộc cố định</button></div>`;

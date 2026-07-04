@@ -87,6 +87,50 @@ class FeaturesHub {
     return InteriorSketchEngine.fromSketch(this.app, opts);
   }
 
+  /** Phase 4 — BIM-lite, BOQ nâng cao, NCC, bảo trì */
+  scanInteriorBim() {
+    return InteriorBimEngine.scanDrawing(this.app);
+  }
+
+  listInteriorSuppliers(category) {
+    return InteriorSupplierLibrary.list(category);
+  }
+
+  buildInteriorBoq(styleId) {
+    const r = InteriorBoqEngine.build(this.app, styleId);
+    return { ...r, report: InteriorBoqEngine.formatReport(r) };
+  }
+
+  getInteriorLifecycleReport() {
+    const r = InteriorLifecycleEngine.projectReport(this.app);
+    return { ...r, report: InteriorLifecycleEngine.formatReport(r) };
+  }
+
+  getInteriorMaintenancePlan() {
+    const r = InteriorMaintenanceEngine.annualPlan(this.app);
+    return { ...r, report: InteriorMaintenanceEngine.formatReport(r) };
+  }
+
+  exportInteriorBimJson() {
+    return InteriorBimEngine.downloadBimJson(this.app);
+  }
+
+  exportInteriorBoqPhase4(format = 'csv', styleId) {
+    return InteriorBoqEngine.downloadBoq(this.app, styleId, format);
+  }
+
+  exportInteriorQuotationPdf(styleId) {
+    return InteriorBoqEngine.downloadQuotationPdf(this.app, styleId);
+  }
+
+  getEntityBim(entity) {
+    if (entity?.bimData) return entity.bimData;
+    if (entity && typeof InteriorBimEngine !== 'undefined') {
+      return InteriorBimEngine.buildRecord(entity, this.app);
+    }
+    return null;
+  }
+
   startInsertInteriorAsset(id) { this.app.startInsertTemplate(id); }
 
   // Tự động

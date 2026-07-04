@@ -397,6 +397,18 @@
             <button type="button" id="btn-auto-decorate" class="feature-btn">Trang trí tự động</button>
           </div>
           <label class="feature-check"><input type="checkbox" id="sketch-to-interior"> Sketch → Nội thất khi import ảnh</label>
+          <h4 class="feature-subtitle">BIM-lite (Phase 4)</h4>
+          <p class="feature-hint">Metadata vật liệu, NCC, vòng đời, bảo trì & báo giá</p>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-scan-bim" class="feature-btn">Quét BIM-lite</button>
+            <button type="button" id="btn-bim-lifecycle" class="feature-btn">Vòng đời</button>
+            <button type="button" id="btn-bim-maintenance" class="feature-btn">Bảo trì/năm</button>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-export-boq-p4" class="feature-btn">BOQ + NCC</button>
+            <button type="button" id="btn-export-quotation" class="feature-btn">Báo giá PDF</button>
+            <button type="button" id="btn-export-bim-json" class="feature-btn">Xuất BIM JSON</button>
+          </div>
           <div id="interior-asset-tabs" class="template-tabs"></div>
           <div id="interior-asset-grid" class="template-grid"></div>
           <h4 class="feature-subtitle">Vẽ nhanh kiến trúc</h4>
@@ -662,6 +674,11 @@
   <script src="js/features/interior/InteriorAiDesigner.js"></script>
   <script src="js/features/interior/InteriorAutoDecorator.js"></script>
   <script src="js/features/interior/InteriorSketchEngine.js"></script>
+  <script src="js/features/interior/InteriorSupplierLibrary.js"></script>
+  <script src="js/features/interior/InteriorLifecycleEngine.js"></script>
+  <script src="js/features/interior/InteriorMaintenanceEngine.js"></script>
+  <script src="js/features/interior/InteriorBimEngine.js"></script>
+  <script src="js/features/interior/InteriorBoqEngine.js"></script>
   <script src="js/features/EntityDimensionOverlay.js"></script>
   <script src="js/features/EntityDimensionEngine.js"></script>
   <script src="js/features/AutoDimensionEngine.js"></script>

@@ -102,6 +102,34 @@ class AiDrawingEngine {
       return { success: r.success, message: r.message };
     }
 
+    // Phase 4 — BIM-lite
+    if (s.match(/(?:quet|scan)\s*bim|bim\s*lite/)) {
+      const r = InteriorBimEngine.scanDrawing(app);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/vong\s*doi|lifecycle/)) {
+      InteriorBimEngine.scanDrawing(app);
+      const r = InteriorLifecycleEngine.projectReport(app);
+      return { success: r.success, message: r.message + '\n' + InteriorLifecycleEngine.formatReport(r) };
+    }
+    if (s.match(/bao\s*tri|maintenance/)) {
+      InteriorBimEngine.scanDrawing(app);
+      const r = InteriorMaintenanceEngine.annualPlan(app);
+      return { success: r.success, message: r.message + '\n' + InteriorMaintenanceEngine.formatReport(r) };
+    }
+    if (s.match(/bao\s*gia|quotation|cost\s*sheet/)) {
+      const r = InteriorBoqEngine.downloadQuotationPdf(app);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/xuat\s*bim|export\s*bim/)) {
+      const r = InteriorBimEngine.downloadBimJson(app);
+      return { success: true, message: r.message };
+    }
+    if (s.match(/boq\s*ncc|boq\s*nang\s*cao|nha\s*cung\s*cap/)) {
+      const r = InteriorBoqEngine.downloadBoq(app);
+      return { success: r.success, message: r.message };
+    }
+
     // Interior Design Module
     if (s.match(/(?:phat\s*hien|detect)\s*phong/)) {
       const r = InteriorEngine.detectRooms(app);
@@ -157,6 +185,10 @@ class AiDrawingEngine {
       'Thiết kế homestay Indochine 6×25m, 15 phòng, ngân sách 5 tỷ',
       'Smart Decorator: căn hộ 65m² 2 phòng ngủ Japandi ngân sách 500 triệu',
       'Trang trí tự động phong cách Modern',
+      'Quét BIM-lite',
+      'Báo giá PDF nội thất',
+      'Vòng đời sản phẩm',
+      'Lịch bảo trì hàng năm',
       'Phát hiện phòng',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
