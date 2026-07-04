@@ -21,15 +21,17 @@ class FeaturesHub {
   listTemplateCategories() { return BlockLibrary.categories; }
 
   // Interior Design Module (SDD Interior_Design_Module)
-  detectRooms() {
-    const rooms = InteriorEngine.detectRooms(this.app);
+  detectRooms(options = {}) {
+    const rooms = typeof PlannerRoomDetector !== 'undefined'
+      ? PlannerRoomDetector.detectAll(this.app, { scanPolylines: true, createRooms: false, ...options })
+      : InteriorEngine.detectRooms(this.app);
     return {
       success: rooms.length > 0,
       rooms,
       count: rooms.length,
       message: rooms.length
         ? `Phát hiện ${rooms.length} phòng trên bản vẽ.`
-        : 'Không phát hiện phòng — dùng công cụ Phòng hoặc mẫu kiến trúc.'
+        : 'Không phát hiện phòng — vẽ phòng, polyline kín, hoặc tạo mặt bằng.'
     };
   }
 
@@ -200,21 +202,12 @@ class FeaturesHub {
     return PlannerEngine.analyzeSemantic(this.app);
   }
 
-  detectPlannerRooms(options) {
-    return PlannerEngine.detectRooms(this.app, options);
-  }
-
   enterPlannerMode() {
     return PlannerEngine.enterPlannerMode(this.app);
   }
 
   async enterPlannerRenderMode(styleId) {
     return PlannerEngine.enterRenderMode(this.app, styleId);
-  }
-
-  getPlannerWorkflow() {
-    const wf = PlannerEngine.getWorkflow(this.app);
-    return { ...wf, report: PlannerEngine.formatWorkflow(wf) };
   }
 
   setInteriorCollabEnabled(on) {

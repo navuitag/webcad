@@ -51,7 +51,6 @@
             <button data-action="import-dxf">Nhập DXF (.dxf)</button>
             <button data-action="import-3d">Nhập 3D (.obj/.stl/.gltf)</button>
             <hr>
-            <button data-action="export-wcad">Xuất .wcad.json</button>
             <button data-action="export-svg">Xuất SVG (.svg)</button>
             <button data-action="export-png">Xuất PNG (.png)</button>
             <button data-action="export-pdf">Xuất PDF (.pdf)</button>
@@ -74,8 +73,6 @@
             <button data-action="import-sketch">Import phác thảo (ảnh)</button>
             <button data-action="auto-dimension">Tự động ghi kích thước</button>
             <button data-action="qa-check">Kiểm tra lỗi bản vẽ</button>
-            <hr>
-            <button data-action="cloud-share">Chia sẻ qua link</button>
           </div>
         </div>
         <div class="menu-dropdown">
@@ -122,7 +119,6 @@
           <div class="dropdown-content" id="menu-cloud">
             <button data-action="cloud-save">Lưu lên Cloud</button>
             <button data-action="cloud-share">Tạo link chia sẻ</button>
-            <button data-action="cloud-sync">Đồng bộ ngay</button>
             <hr>
             <button data-action="cloud-settings">Cấu hình API...</button>
           </div>
@@ -325,9 +321,9 @@
         <div class="panel-section features-panel">
           <h3>Tính năng nổi bật</h3>
           <h4 class="feature-subtitle">CAD → Planner</h4>
-          <p class="feature-hint">Chuyển bản vẽ CAD sang không gian thiết kế nội thất (Planner 5D / Homestyler)</p>
+          <p class="feature-hint">Chuyển bản vẽ CAD sang không gian thiết kế nội thất</p>
           <div class="feature-row">
-            <label>Loại dự án</label>
+            <label>Loại dự án / không gian</label>
             <select id="planner-space-type" class="feature-select">
               <option value="apartment">Căn hộ</option>
               <option value="homestay">Homestay</option>
@@ -341,9 +337,6 @@
           <div class="feature-row feature-row-btns">
             <button type="button" id="btn-convert-planner" class="feature-btn feature-btn-accent">Chuyển sang Planner</button>
             <button type="button" id="btn-planner-semantic" class="feature-btn">Phân tích Semantic</button>
-          </div>
-          <div class="feature-row feature-row-btns">
-            <button type="button" id="btn-planner-mode" class="feature-btn">Chế độ Planner</button>
             <button type="button" id="btn-planner-render" class="feature-btn">Render 3D</button>
           </div>
           <pre id="planner-report" class="qa-report"></pre>
@@ -358,9 +351,6 @@
           </div>
           <div class="feature-row">
             <button type="button" class="feature-btn" data-action="convert-plan-view">Chuyển Plan view</button>
-            <button type="button" class="feature-btn" data-action="mode-3d">Xem 3D</button>
-          </div>
-          <div class="feature-row">
             <button type="button" class="feature-btn" data-action="import-sketch">Import phác thảo</button>
             <button type="button" id="btn-qa-check" class="feature-btn">Kiểm tra lỗi</button>
           </div>
@@ -374,11 +364,7 @@
           <div id="template-library-tabs" class="template-tabs"></div>
           <div id="template-library-grid" class="template-grid"></div>
           <h4 class="feature-subtitle">Thiết kế nội thất</h4>
-          <p class="feature-hint">Phát hiện phòng → chọn phong cách → trang trí & ước tính chi phí</p>
-          <div class="feature-row">
-            <label>Loại không gian</label>
-            <select id="interior-space-preset" class="feature-select"></select>
-          </div>
+          <p class="feature-hint">Phát hiện phòng → phong cách → trang trí & BOQ (dùng loại dự án ở trên)</p>
           <div class="feature-row">
             <label>Phong cách</label>
             <select id="interior-style-select" class="feature-select"></select>
@@ -411,35 +397,27 @@
             <button type="button" id="btn-furnish-all" class="feature-btn">Trang trí tất cả</button>
           </div>
           <div class="feature-row">
-            <button type="button" id="btn-estimate-interior" class="feature-btn">Ước tính chi phí (BOQ)</button>
-          </div>
-          <div class="feature-row feature-row-btns">
-            <button type="button" id="btn-export-boq-csv" class="feature-btn">Xuất BOQ CSV</button>
-            <button type="button" id="btn-export-boq-json" class="feature-btn">Xuất BOQ JSON</button>
+            <button type="button" id="btn-estimate-interior" class="feature-btn">Ước tính chi phí</button>
+            <select id="boq-export-format" class="feature-select">
+              <option value="csv">BOQ CSV</option>
+              <option value="json">BOQ JSON</option>
+              <option value="ncc">BOQ + NCC</option>
+              <option value="quotation">Báo giá PDF</option>
+            </select>
+            <button type="button" id="btn-export-boq" class="feature-btn">Xuất</button>
           </div>
           <pre id="interior-report" class="qa-report"></pre>
-          <h4 class="feature-subtitle">AI Designer (Phase 3)</h4>
-          <p class="feature-hint">Mô tả không gian → mặt bằng, nội thất, ánh sáng, cảnh quan, BOQ</p>
-          <textarea id="interior-ai-prompt" class="feature-textarea" rows="3" placeholder="Thiết kế homestay Indochine 6×25m, 15 phòng, cafe sân thượng, hồ Koi, ngân sách 5 tỷ"></textarea>
-          <div class="feature-row feature-row-btns">
-            <button type="button" id="btn-ai-design-interior" class="feature-btn">Thiết kế từ mô tả</button>
-            <button type="button" id="btn-smart-decorator" class="feature-btn">Smart Decorator</button>
-            <button type="button" id="btn-auto-decorate" class="feature-btn">Trang trí tự động</button>
-          </div>
+          <p class="feature-hint">Thiết kế AI: dùng ô AI Assistant phía trên (vd. "Thiết kế homestay Indochine 6×25m")</p>
           <label class="feature-check"><input type="checkbox" id="sketch-to-interior"> Sketch → Nội thất khi import ảnh</label>
-          <h4 class="feature-subtitle">BIM-lite (Phase 4)</h4>
+          <h4 class="feature-subtitle">BIM-lite</h4>
           <p class="feature-hint">Metadata vật liệu, NCC, vòng đời, bảo trì & báo giá</p>
           <div class="feature-row feature-row-btns">
             <button type="button" id="btn-scan-bim" class="feature-btn">Quét BIM-lite</button>
             <button type="button" id="btn-bim-lifecycle" class="feature-btn">Vòng đời</button>
             <button type="button" id="btn-bim-maintenance" class="feature-btn">Bảo trì/năm</button>
-          </div>
-          <div class="feature-row feature-row-btns">
-            <button type="button" id="btn-export-boq-p4" class="feature-btn">BOQ + NCC</button>
-            <button type="button" id="btn-export-quotation" class="feature-btn">Báo giá PDF</button>
             <button type="button" id="btn-export-bim-json" class="feature-btn">Xuất BIM JSON</button>
           </div>
-          <h4 class="feature-subtitle">Studio Cloud (Phase 5)</h4>
+          <h4 class="feature-subtitle">Studio Cloud</h4>
           <p class="feature-hint">Marketplace plugin, Cloud Library, collab realtime & tài sản thương mại</p>
           <div id="interior-marketplace-tabs" class="template-tabs"></div>
           <div id="interior-marketplace-grid" class="template-grid interior-marketplace-grid"></div>
@@ -458,11 +436,6 @@
           <label class="feature-check"><input type="checkbox" id="interior-collab-enabled"> Collab nội thất realtime</label>
           <p class="feature-hint">Tài sản thương mại (đã cài plugin)</p>
           <div id="interior-commercial-grid" class="template-grid"></div>
-          <div id="interior-asset-tabs" class="template-tabs"></div>
-          <div id="interior-asset-grid" class="template-grid"></div>
-          <h4 class="feature-subtitle">Vẽ nhanh kiến trúc</h4>
-          <p class="feature-hint">Phòng/sàn/trần tự ghi diện tích (m²) tại tâm vùng</p>
-          <div id="arch-draw-grid" class="template-grid arch-draw-grid"></div>
         </div>
         <div class="panel-section">
           <h3>Thuộc tính</h3>

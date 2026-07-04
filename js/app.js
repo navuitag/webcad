@@ -402,7 +402,6 @@ class WebCADApp {
       'save': () => this.saveDrawing(),
       'save-as': () => this._exportFormat('wcad'),
       'rename-drawing': () => this.renameDrawing(),
-      'export-wcad': () => this._exportFormat('wcad'),
       'export-png': () => this._exportFormat('png'),
       'export-svg': () => this._exportFormat('svg'),
       'export-pdf': () => this._exportFormat('pdf'),
@@ -431,8 +430,13 @@ class WebCADApp {
       },
       'qa-check': () => {
         const r = this.features.aiCheck();
+        const out = document.getElementById('qa-report');
+        if (out) {
+          out.textContent = r.issues?.length
+            ? r.issues.map((i) => `[${i.severity}] ${i.message}`).join('\n')
+            : 'Không phát hiện lỗi.';
+        }
         this.logCommand(r.message);
-        alert(r.message);
       },
       'import-sketch': () => document.getElementById('sketch-input')?.click(),
       'convert-plan-view': () => {
@@ -474,7 +478,6 @@ class WebCADApp {
       'open-viewer': () => this.viewerInput?.click(),
       'cloud-save': () => this.saveToCloud(),
       'cloud-share': () => this.createShareLink(),
-      'cloud-sync': () => this.saveToCloud(),
       'cloud-settings': () => {
         const url = prompt('Cloud API URL (để trống = chỉ local):', this.cloudStorage.apiUrl);
         if (url !== null) this.cloudStorage.setApiUrl(url);
@@ -1187,10 +1190,9 @@ class WebCADApp {
   }
 
   _initFeaturesPanel() {
-    this._interiorAssetCategory = 'all';
+    this._interiorMarketplaceCategory = 'all';
     this._renderTemplateLibrary();
     this._renderArchTemplateLibrary();
-    this._renderArchDrawGrid();
     this._initInteriorPanel();
     this._initPlannerPanel();
     const sketchInput = document.getElementById('sketch-input');
@@ -1208,7 +1210,7 @@ class WebCADApp {
             if (out && r.estimate) {
               out.textContent = r.message + '\n\n' + (InteriorEstimationEngine.formatReport(r.estimate) || '');
             } else if (out) out.textContent = r.message || '';
-            this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+            this._updateInteriorRoomSelect(this.features.detectRooms().rooms);
           }
         } catch (err) {
           this.logCommand('Import phác thảo lỗi: ' + err.message);
@@ -1238,6 +1240,10 @@ class WebCADApp {
         this.logCommand(r.message);
       });
     }
+  }
+
+  _getSpaceType() {
+    return document.getElementById('planner-space-type')?.value || 'apartment';
   }
 
   _renderTemplateLibrary() {
@@ -1311,39 +1317,12 @@ class WebCADApp {
     }
   }
 
-  _renderArchDrawGrid() {
-    const grid = document.getElementById('arch-draw-grid');
-    if (!grid) return;
-    const tools = [
-      { id: 'wall', icon: '🧱', name: 'Tường' },
-      { id: 'room', icon: '📐', name: 'Phòng + diện tích' },
-      { id: 'column', icon: '⬛', name: 'Cột vuông' },
-      { id: 'round-column', icon: '⭕', name: 'Cột tròn' },
-      { id: 'open-wall', icon: '〰️', name: 'Tường mở' },
-      { id: 'open-floor', icon: '🟩', name: 'Sàn mở + S=' },
-      { id: 'open-ceiling', icon: '🟪', name: 'Trần mở + T=' }
-    ];
-    grid.innerHTML = '';
-    for (const t of tools) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'feature-tile';
-      btn.innerHTML = `<span class="feature-tile-icon">${t.icon}</span><span class="feature-tile-name">${t.name}</span>`;
-      btn.title = t.name;
-      btn.addEventListener('click', () => {
-        this.setTool(t.id);
-        this.logCommand(`Công cụ: ${t.name}`);
-      });
-      grid.appendChild(btn);
-    }
-  }
-
   _initInteriorPanel() {
     if (!this.features || typeof InteriorStyleEngine === 'undefined') return;
     this._interiorMarketplaceCategory = 'all';
 
     const styleSel = document.getElementById('interior-style-select');
-    const spaceSel = document.getElementById('interior-space-preset');
+    const spaceSel = document.getElementById('planner-space-type');
     if (styleSel) {
       styleSel.innerHTML = '';
       for (const st of this.features.listInteriorStyles()) {
@@ -1354,13 +1333,6 @@ class WebCADApp {
       }
     }
     if (spaceSel) {
-      spaceSel.innerHTML = '';
-      for (const p of this.features.listInteriorDecorPresets()) {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.label;
-        spaceSel.appendChild(opt);
-      }
       spaceSel.addEventListener('change', () => {
         const preset = InteriorStyleEngine.decorPresets[spaceSel.value];
         if (preset?.styles?.[0] && styleSel) {
@@ -1371,8 +1343,11 @@ class WebCADApp {
       });
       styleSel?.addEventListener('change', () => {
         this._updateInteriorPalette(styleSel.value);
-        this._renderInteriorAssetGrid();
+        this._renderCommercialAssetGrid();
       });
+      if (spaceSel.value) {
+        this._filterDecorTemplatesBySpace(spaceSel.value);
+      }
     }
 
     const decorSel = document.getElementById('interior-decor-template');
@@ -1405,7 +1380,7 @@ class WebCADApp {
       const r = this.features.applyDecorTemplate(id);
       const out = document.getElementById('interior-report');
       if (out) out.textContent = r.message;
-      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+      this._updateInteriorRoomSelect(this.features.detectRooms().rooms);
       if (styleSel && r.style) styleSel.value = r.style;
       this.logCommand(r.message);
     });
@@ -1418,15 +1393,17 @@ class WebCADApp {
       this.logCommand(r.message);
     });
 
-    document.getElementById('btn-export-boq-csv')?.addEventListener('click', () => {
+    document.getElementById('btn-export-boq')?.addEventListener('click', () => {
       const styleId = styleSel?.value || 'modern';
-      const r = this.features.exportInteriorBoq('csv', styleId);
-      this.logCommand(r.message);
-    });
-
-    document.getElementById('btn-export-boq-json')?.addEventListener('click', () => {
-      const styleId = styleSel?.value || 'modern';
-      const r = this.features.exportInteriorBoq('json', styleId);
+      const fmt = document.getElementById('boq-export-format')?.value || 'csv';
+      let r;
+      if (fmt === 'quotation') {
+        r = this.features.exportInteriorQuotationPdf(styleId);
+      } else if (fmt === 'ncc') {
+        r = this.features.exportInteriorBoqPhase4('csv', styleId);
+      } else {
+        r = this.features.exportInteriorBoq(fmt, styleId);
+      }
       this.logCommand(r.message);
     });
 
@@ -1436,7 +1413,7 @@ class WebCADApp {
       const out = document.getElementById('interior-report');
       if (out) {
         out.textContent = r.rooms?.length
-          ? r.rooms.map(room => `${room.name} (${room.type}) — ${room.area.toFixed(1)} đv²`).join('\n')
+          ? r.rooms.map(room => `${room.name} (${room.type}) — ${(room.areaM2 ?? room.area)?.toFixed?.(1) ?? room.area} m²`).join('\n')
           : r.message;
       }
       this.logCommand(r.message);
@@ -1476,37 +1453,6 @@ class WebCADApp {
       this.logCommand(r.message);
     });
 
-    document.getElementById('btn-ai-design-interior')?.addEventListener('click', () => {
-      const text = document.getElementById('interior-ai-prompt')?.value?.trim()
-        || 'Thiết kế homestay Indochine 6×25m';
-      const r = this.features.designInteriorFromPrompt(text);
-      const out = document.getElementById('interior-report');
-      if (out) out.textContent = r.message;
-      if (r.styleId && styleSel) styleSel.value = r.styleId;
-      if (r.styleId) this._updateInteriorPalette(r.styleId);
-      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
-      this.logCommand(r.message?.split('\n')[0] || 'AI Designer');
-    });
-
-    document.getElementById('btn-smart-decorator')?.addEventListener('click', () => {
-      const text = document.getElementById('interior-ai-prompt')?.value?.trim()
-        || 'Căn hộ 65m² 2 phòng ngủ Japandi ngân sách 500 triệu';
-      const r = this.features.smartDecorator(text);
-      const out = document.getElementById('interior-report');
-      if (out) out.textContent = r.message;
-      if (r.styleId && styleSel) styleSel.value = r.styleId;
-      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
-      this.logCommand(r.message?.split('\n')[0] || 'Smart Decorator');
-    });
-
-    document.getElementById('btn-auto-decorate')?.addEventListener('click', () => {
-      const styleId = styleSel?.value || 'modern';
-      const r = this.features.autoDecorateInterior({ styleId });
-      const out = document.getElementById('interior-report');
-      if (out) out.textContent = r.message;
-      this.logCommand(r.message?.split('\n')[0] || 'Trang trí tự động');
-    });
-
     document.getElementById('btn-scan-bim')?.addEventListener('click', () => {
       const r = this.features.scanInteriorBim();
       const out = document.getElementById('interior-report');
@@ -1527,18 +1473,6 @@ class WebCADApp {
       const r = this.features.getInteriorMaintenancePlan();
       const out = document.getElementById('interior-report');
       if (out) out.textContent = r.report || r.message;
-      this.logCommand(r.message);
-    });
-
-    document.getElementById('btn-export-boq-p4')?.addEventListener('click', () => {
-      const styleId = styleSel?.value || 'modern';
-      const r = this.features.exportInteriorBoqPhase4('csv', styleId);
-      this.logCommand(r.message);
-    });
-
-    document.getElementById('btn-export-quotation')?.addEventListener('click', () => {
-      const styleId = styleSel?.value || 'modern';
-      const r = this.features.exportInteriorQuotationPdf(styleId);
       this.logCommand(r.message);
     });
 
@@ -1573,7 +1507,7 @@ class WebCADApp {
       const r = this.features.loadInteriorCloud(id);
       const out = document.getElementById('interior-report');
       if (out) out.textContent = r.message;
-      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+      this._updateInteriorRoomSelect(this.features.detectRooms().rooms);
       this.logCommand(r.message);
     });
 
@@ -1603,8 +1537,6 @@ class WebCADApp {
     this._renderInteriorMarketplace();
     this._updateInteriorCloudSelect();
     this._renderCommercialAssetGrid();
-
-    this._renderInteriorAssetGrid();
   }
 
   _updateInteriorPalette(styleId) {
@@ -1639,8 +1571,12 @@ class WebCADApp {
   _initPlannerPanel() {
     if (!this.features || typeof PlannerEngine === 'undefined') return;
 
+    document.getElementById('planner-space-type')?.addEventListener('change', () => {
+      this._filterDecorTemplatesBySpace(this._getSpaceType());
+    });
+
     document.getElementById('btn-convert-planner')?.addEventListener('click', () => {
-      const spaceType = document.getElementById('planner-space-type')?.value || 'apartment';
+      const spaceType = this._getSpaceType();
       const w = parseFloat(document.getElementById('land-width')?.value) || 8;
       const d = parseFloat(document.getElementById('land-depth')?.value) || 12;
       const r = this.features.convertToPlanner({
@@ -1669,11 +1605,6 @@ class WebCADApp {
       this.logCommand('Phân tích semantic CAD.');
     });
 
-    document.getElementById('btn-planner-mode')?.addEventListener('click', () => {
-      const r = this.features.enterPlannerMode();
-      this.logCommand(r.message);
-    });
-
     document.getElementById('btn-planner-render')?.addEventListener('click', async () => {
       const styleId = document.getElementById('interior-style-select')?.value;
       const r = await this.features.enterPlannerRenderMode(styleId);
@@ -1690,50 +1621,6 @@ class WebCADApp {
       opt.value = room.id;
       opt.textContent = `${room.name} (${room.type})`;
       sel.appendChild(opt);
-    }
-  }
-
-  _renderInteriorAssetGrid() {
-    const tabsEl = document.getElementById('interior-asset-tabs');
-    const grid = document.getElementById('interior-asset-grid');
-    if (!grid || !this.features) return;
-
-    if (tabsEl) {
-      tabsEl.innerHTML = '';
-      for (const cat of this.features.listInteriorAssetCategories()) {
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'template-tab' + (cat.id === this._interiorAssetCategory ? ' active' : '');
-        tab.textContent = `${cat.icon} ${cat.label}`;
-        tab.addEventListener('click', () => {
-          this._interiorAssetCategory = cat.id;
-          this._renderInteriorAssetGrid();
-        });
-        tabsEl.appendChild(tab);
-      }
-    }
-
-    const styleId = document.getElementById('interior-style-select')?.value;
-    grid.innerHTML = '';
-    const filter = { category: this._interiorAssetCategory === 'all' ? null : this._interiorAssetCategory, style: styleId };
-    const commercial = this.features.listCommercialAssets(filter);
-    const commercialBlockIds = new Set(commercial.map(a => a.id));
-    const assets = [
-      ...this.features.listInteriorAssets(filter).filter(a => !commercialBlockIds.has(a.id)),
-      ...commercial
-    ];
-    for (const a of assets) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'feature-tile' + (a.isCommercial ? ' feature-tile-pro' : '');
-      const badge = a.isCommercial ? ' ⭐' : '';
-      btn.innerHTML = `<span class="feature-tile-icon">${a.icon || '📦'}</span><span class="feature-tile-name">${a.name}${badge}</span>`;
-      btn.title = `${a.name}${a.brand ? ' — ' + a.brand : ''} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
-      btn.addEventListener('click', () => {
-        this.startInsertTemplate(a.id, a.isCommercial ? a.commercialId : null);
-        this.logCommand(`Chèn nội thất: ${a.name} (R = xoay)`);
-      });
-      grid.appendChild(btn);
     }
   }
 
@@ -1770,7 +1657,6 @@ class WebCADApp {
         if (out) out.textContent = r.message;
         this._renderInteriorMarketplace();
         this._renderCommercialAssetGrid();
-        this._renderInteriorAssetGrid();
         this._updatePluginPanel?.();
         this.logCommand(r.message);
       });

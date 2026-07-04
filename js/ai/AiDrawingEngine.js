@@ -212,8 +212,11 @@ class AiDrawingEngine {
 
     // Interior Design Module
     if (s.match(/(?:phat\s*hien|detect)\s*phong/)) {
-      const r = InteriorEngine.detectRooms(app);
-      return { success: r.length > 0, message: r.length ? `Phát hiện ${r.length} phòng.` : 'Không có phòng.' };
+      const r = typeof PlannerEngine !== 'undefined'
+        ? PlannerEngine.detectRooms(app)
+        : { success: InteriorEngine.detectRooms(app).length > 0, rooms: InteriorEngine.detectRooms(app), message: '' };
+      const rooms = r.rooms || [];
+      return { success: rooms.length > 0, message: rooms.length ? `Phát hiện ${rooms.length} phòng.` : (r.message || 'Không có phòng.') };
     }
     if (s.match(/trang\s*tri|decor|noi\s*that/)) {
       const styleMatch = s.match(/indochine|japandi|scandinavian|minimalist|modern|tropical|wabi|luxury/);
@@ -252,31 +255,20 @@ class AiDrawingEngine {
   static getSuggestions() {
     return [
       'Mặt bằng đất 5×20m 2 phòng ngủ',
-      'Thêm sofa 3 chỗ',
+      'Chuyển sang Planner',
+      'Thiết kế homestay Indochine 6×25m, ngân sách 5 tỷ',
+      'Trang trí phòng Japandi',
+      'Phát hiện phòng',
+      'Ước tính chi phí nội thất',
+      'Quét BIM-lite',
       'Vẽ phòng',
       'Vẽ tường',
-      'Vẽ sàn mở',
-      'Thêm giường đôi',
-      'Trang trí phòng Japandi',
-      'Áp phong cách Indochine',
-      'Ước tính chi phí nội thất',
-      'Xuất BOQ CSV',
-      'Mẫu trang trí Indochine Homestay',
-      'Thiết kế homestay Indochine 6×25m, 15 phòng, ngân sách 5 tỷ',
-      'Smart Decorator: căn hộ 65m² 2 phòng ngủ Japandi ngân sách 500 triệu',
-      'Trang trí tự động phong cách Modern',
-      'Quét BIM-lite',
-      'Báo giá PDF nội thất',
-      'Vòng đời sản phẩm',
-      'Lịch bảo trì hàng năm',
-      'Cài Furniture Plugin Marketplace',
-      'Lưu scene Cloud Library',
-      'Bật collab nội thất',
-      'Chuyển sang Planner',
-      'Phân tích semantic',
-      'Chèn cửa sổ lùa',
+      'Thêm sofa 3 chỗ',
+      'Chuyển Plan view',
       'Tự động ghi kích thước',
       'Kiểm tra lỗi bản vẽ',
+      'Render 3D',
+      'Lưu scene Cloud Library',
       'Đổi tên bản vẽ Nhà An',
       'Xóa tất cả đối tượng'
     ];

@@ -10,6 +10,9 @@ class InteriorAiDesigner {
 
   static isInteriorPrompt(input) {
     const s = InteriorAiDesigner.normalize(input);
+    if (/(?:mat\s*bang|thua\s*dat)\s*\d/.test(s) && !/(?:thiet\s*ke|ngan\s*sach|budget|smart\s*decor|ai\s*design)/.test(s)) {
+      return false;
+    }
     return /(?:thiet\s*ke|ai\s*design|prompt\s*to\s*interior|homestay|can\s*ho|apartment|ngan\s*sach|budget|indochine|japandi|\d+\s*phong|\d+\s*m2|\d+\s*[x×]\s*\d+|cafe\s*san|ho\s*(ca\s*)?koi|smart\s*decor)/.test(s);
   }
 
