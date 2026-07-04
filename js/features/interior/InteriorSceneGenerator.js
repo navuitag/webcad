@@ -1,5 +1,5 @@
 /**
- * InteriorSceneGenerator — trang trí phòng & áp phong cách (SDD §18)
+ * InteriorSceneGenerator — trang trí phòng & áp phong cách (SDD §18, Phase 2)
  */
 class InteriorSceneGenerator {
   static applyStyle(app, styleId, roomId) {
@@ -15,9 +15,7 @@ class InteriorSceneGenerator {
       updated++;
     }
 
-    if (app.renderer3D?.initialized) {
-      app.renderer3D.setLightingPreset(style.lighting || 'studio');
-    }
+    InteriorLightingEngine.apply(app, style.lightingPreset || InteriorLightingEngine._mapLegacy(style.lighting));
 
     app.requestRender();
     return {
@@ -55,7 +53,41 @@ class InteriorSceneGenerator {
         e.style.color = ceilMat.color;
         e.interiorMaterialId = ceilMat.id;
       }
+      if (e.interiorAssetId && InteriorEngine.entityInRoom(e, room)) {
+        InteriorStyleEngine.applyPaletteToEntity(e, style);
+      }
     }
+  }
+
+  static applyDecorations(app, room, styleId) {
+    const style = InteriorStyleEngine.get(styleId);
+    const decors = InteriorStyleEngine.decorationsForRoom(room.type, styleId);
+    const r = room.bounds;
+    const margin = InteriorPlacementEngine.worldFromCm(25, app);
+    const cx = (r.minX + r.maxX) / 2;
+    const cy = (r.minY + r.maxY) / 2;
+    let count = 0;
+    const slots = [
+      { x: r.minX + margin, y: r.maxY - margin, role: 'wall' },
+      { x: r.maxX - margin, y: r.maxY - margin, role: 'wall' },
+      { x: cx, y: cy, role: 'center' },
+      { x: r.minX + margin, y: r.minY + margin, role: 'corner' }
+    ];
+
+    for (let i = 0; i < decors.length && i < slots.length; i++) {
+      const assetId = decors[i];
+      const meta = InteriorAssetManager.get(assetId);
+      if (!meta) continue;
+      const aw = InteriorPlacementEngine.worldFromCm(meta.width, app);
+      const ah = InteriorPlacementEngine.worldFromCm(meta.depth, app);
+      const slot = slots[i];
+      let px = slot.x - (slot.role === 'center' ? aw / 2 : 0);
+      let py = slot.y - (slot.role === 'wall' ? ah : 0);
+      if (slot.role === 'corner') { px = slot.x; py = slot.y; }
+      const ins = InteriorPlacementEngine.insert(app, assetId, { x: px, y: py }, { styleId: style.id });
+      if (ins.success) count += ins.entities.length;
+    }
+    return count;
   }
 
   static furnishRoom(app, roomId, styleId) {
@@ -97,16 +129,18 @@ class InteriorSceneGenerator {
       }
     }
 
+    const decorCount = InteriorSceneGenerator.applyDecorations(app, room, style.id);
     app.requestRender();
     const circ = InteriorEngine.analyzeCirculation(app, room);
+    const total = placed.length + decorCount;
     return {
-      success: placed.length > 0,
-      placed: placed.length,
+      success: total > 0,
+      placed: total,
       room: room.name,
       style: style.name,
       walkableRatio: Math.round(circ.walkableRatio * 100),
-      message: placed.length
-        ? `Đã trang trí "${room.name}" (${style.name}): ${placed.length} chi tiết. Diện tích đi lại ~${Math.round(circ.walkableRatio * 100)}%.`
+      message: total
+        ? `Đã trang trí "${room.name}" (${style.name}): ${total} chi tiết. Diện tích đi lại ~${Math.round(circ.walkableRatio * 100)}%.`
         : 'Không đặt được nội thất — phòng quá nhỏ hoặc thiếu mẫu.'
     };
   }

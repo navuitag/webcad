@@ -1336,9 +1336,72 @@ class WebCADApp {
       }
       spaceSel.addEventListener('change', () => {
         const preset = InteriorStyleEngine.decorPresets[spaceSel.value];
-        if (preset?.styles?.[0] && styleSel) styleSel.value = preset.styles[0];
+        if (preset?.styles?.[0] && styleSel) {
+          styleSel.value = preset.styles[0];
+          this._updateInteriorPalette(preset.styles[0]);
+          this._filterDecorTemplatesBySpace(spaceSel.value);
+        }
+      });
+      styleSel?.addEventListener('change', () => {
+        this._updateInteriorPalette(styleSel.value);
+        this._renderInteriorAssetGrid();
       });
     }
+
+    const decorSel = document.getElementById('interior-decor-template');
+    if (decorSel) {
+      decorSel.innerHTML = '';
+      for (const t of this.features.listDecorTemplates()) {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.icon} ${t.name}`;
+        decorSel.appendChild(opt);
+      }
+    }
+
+    const lightSel = document.getElementById('interior-lighting-select');
+    if (lightSel) {
+      lightSel.innerHTML = '';
+      for (const lp of this.features.listInteriorLightingPresets()) {
+        const opt = document.createElement('option');
+        opt.value = lp.id;
+        opt.textContent = `${lp.icon} ${lp.name}`;
+        lightSel.appendChild(opt);
+      }
+    }
+
+    this._updateInteriorPalette(styleSel?.value || 'modern');
+
+    document.getElementById('btn-apply-decor-template')?.addEventListener('click', () => {
+      const id = decorSel?.value;
+      if (!id) return;
+      const r = this.features.applyDecorTemplate(id);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+      if (styleSel && r.style) styleSel.value = r.style;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-apply-lighting')?.addEventListener('click', () => {
+      const id = lightSel?.value || 'warm-white';
+      const r = this.features.applyInteriorLighting(id);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-export-boq-csv')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.exportInteriorBoq('csv', styleId);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-export-boq-json')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.exportInteriorBoq('json', styleId);
+      this.logCommand(r.message);
+    });
 
     document.getElementById('btn-detect-rooms')?.addEventListener('click', () => {
       const r = this.features.detectRooms();
@@ -1387,6 +1450,35 @@ class WebCADApp {
     });
 
     this._renderInteriorAssetGrid();
+  }
+
+  _updateInteriorPalette(styleId) {
+    const el = document.getElementById('interior-palette');
+    if (!el || typeof InteriorStyleEngine === 'undefined') return;
+    const style = InteriorStyleEngine.get(styleId);
+    el.innerHTML = '';
+    for (const color of style.palette || []) {
+      const sw = document.createElement('span');
+      sw.style.background = color;
+      sw.title = color;
+      el.appendChild(sw);
+    }
+  }
+
+  _filterDecorTemplatesBySpace(spaceId) {
+    const decorSel = document.getElementById('interior-decor-template');
+    if (!decorSel || !this.features) return;
+    const current = decorSel.value;
+    decorSel.innerHTML = '';
+    for (const t of this.features.listDecorTemplates(spaceId)) {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = `${t.icon} ${t.name}`;
+      decorSel.appendChild(opt);
+    }
+    if (current && decorSel.querySelector(`option[value="${current}"]`)) {
+      decorSel.value = current;
+    }
   }
 
   _updateInteriorRoomSelect(rooms = []) {

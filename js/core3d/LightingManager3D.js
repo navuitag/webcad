@@ -34,6 +34,21 @@ class LightingManager3D {
     this.lights.directional.intensity = this.settings.directionalIntensity;
     this.lights.hemisphere.intensity = this.settings.hemisphereIntensity;
     this.lights.directional.castShadow = !!this.settings.shadows;
+    if (this.settings.fillIntensity != null && this.lights.fill) {
+      this.lights.fill.intensity = this.settings.fillIntensity;
+    }
+  }
+
+  applyInteriorPreset(preset) {
+    if (!preset) return;
+    this.applySettings(preset);
+    if (preset.ambientColor != null) this.lights.ambient.color.setHex(preset.ambientColor);
+    if (preset.directionalColor != null) this.lights.directional.color.setHex(preset.directionalColor);
+    if (preset.hemisphereSky != null) this.lights.hemisphere.color.setHex(preset.hemisphereSky);
+    if (preset.hemisphereGround != null) this.lights.hemisphere.groundColor.setHex(preset.hemisphereGround);
+    if (preset.fillIntensity != null && this.lights.fill) {
+      this.lights.fill.intensity = preset.fillIntensity;
+    }
   }
 
   setPreset(preset) {

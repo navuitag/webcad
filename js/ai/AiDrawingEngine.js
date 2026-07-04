@@ -104,6 +104,20 @@ class AiDrawingEngine {
       const r = InteriorEstimationEngine.estimate(app);
       return { success: true, message: r.message + '\n' + InteriorEstimationEngine.formatReport(r) };
     }
+    if (s.match(/xuat\s*boq|export\s*boq/)) {
+      const r = InteriorEstimationEngine.downloadBoq(app, app.drawing.metadata?.interiorStyle, s.includes('json') ? 'json' : 'csv');
+      return { success: true, message: r.message };
+    }
+    const decorMatch = s.match(/mau\s*trang\s*tri|decor\s*template|homestay|apartment|showroom|cafe|tea\s*house/);
+    if (decorMatch) {
+      const tplId = InteriorDecorTemplates.list().find(t =>
+        s.includes(t.category) || s.includes(t.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
+      )?.id;
+      if (tplId) {
+        const r = InteriorDecorTemplates.apply(app, tplId);
+        return { success: r.success, message: r.message };
+      }
+    }
 
     return null;
   }
@@ -119,6 +133,8 @@ class AiDrawingEngine {
       'Trang trí phòng Japandi',
       'Áp phong cách Indochine',
       'Ước tính chi phí nội thất',
+      'Xuất BOQ CSV',
+      'Mẫu trang trí Indochine Homestay',
       'Phát hiện phòng',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',

@@ -56,6 +56,20 @@ class FeaturesHub {
     return { ...r, report: InteriorEstimationEngine.formatReport(r) };
   }
 
+  exportInteriorBoq(format = 'csv', styleId) {
+    return InteriorEstimationEngine.downloadBoq(this.app, styleId, format);
+  }
+
+  listInteriorLightingPresets() { return InteriorLightingEngine.list(); }
+  applyInteriorLighting(presetId) {
+    const r = InteriorLightingEngine.apply(this.app, presetId);
+    return { ...r, message: `Ánh sáng: ${r.preset}` };
+  }
+
+  listDecorTemplates(category) { return InteriorDecorTemplates.list(category); }
+  listDecorTemplateCategories() { return InteriorDecorTemplates.categories; }
+  applyDecorTemplate(id) { return InteriorDecorTemplates.apply(this.app, id); }
+
   startInsertInteriorAsset(id) { this.app.startInsertTemplate(id); }
 
   // Tự động

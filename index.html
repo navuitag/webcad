@@ -359,6 +359,19 @@
               <option value="">— Tất cả / tự chọn —</option>
             </select>
           </div>
+          <div class="feature-row">
+            <label>Mẫu trang trí (Decor Template)</label>
+            <select id="interior-decor-template" class="feature-select"></select>
+          </div>
+          <div class="feature-row">
+            <label>Preset ánh sáng</label>
+            <select id="interior-lighting-select" class="feature-select"></select>
+          </div>
+          <div id="interior-palette" class="interior-palette" aria-label="Bảng màu phong cách"></div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-apply-decor-template" class="feature-btn">Áp mẫu trang trí</button>
+            <button type="button" id="btn-apply-lighting" class="feature-btn">Áp ánh sáng</button>
+          </div>
           <div class="feature-row feature-row-btns">
             <button type="button" id="btn-detect-rooms" class="feature-btn">Phát hiện phòng</button>
             <button type="button" id="btn-apply-interior-style" class="feature-btn">Áp phong cách</button>
@@ -368,7 +381,11 @@
             <button type="button" id="btn-furnish-all" class="feature-btn">Trang trí tất cả</button>
           </div>
           <div class="feature-row">
-            <button type="button" id="btn-estimate-interior" class="feature-btn">Ước tính chi phí</button>
+            <button type="button" id="btn-estimate-interior" class="feature-btn">Ước tính chi phí (BOQ)</button>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-export-boq-csv" class="feature-btn">Xuất BOQ CSV</button>
+            <button type="button" id="btn-export-boq-json" class="feature-btn">Xuất BOQ JSON</button>
           </div>
           <pre id="interior-report" class="qa-report"></pre>
           <div id="interior-asset-tabs" class="template-tabs"></div>
@@ -631,6 +648,8 @@
   <script src="js/features/interior/InteriorEngine.js"></script>
   <script src="js/features/interior/InteriorEstimationEngine.js"></script>
   <script src="js/features/interior/InteriorSceneGenerator.js"></script>
+  <script src="js/features/interior/InteriorLightingEngine.js"></script>
+  <script src="js/features/interior/InteriorDecorTemplates.js"></script>
   <script src="js/features/EntityDimensionOverlay.js"></script>
   <script src="js/features/EntityDimensionEngine.js"></script>
   <script src="js/features/AutoDimensionEngine.js"></script>

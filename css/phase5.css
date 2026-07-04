@@ -277,6 +277,20 @@
   min-width: 120px;
 }
 
+.interior-palette {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  min-height: 24px;
+}
+
+.interior-palette span {
+  flex: 1;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid var(--border-color);
+}
+
 .feature-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
