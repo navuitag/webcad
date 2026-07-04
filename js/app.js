@@ -1182,8 +1182,17 @@ class WebCADApp {
         const file = e.target.files?.[0];
         if (!file) return;
         try {
-          const r = await this.features.importSketch(file);
+          const toInterior = document.getElementById('sketch-to-interior')?.checked;
+          const styleId = document.getElementById('interior-style-select')?.value;
+          const r = await this.features.importSketch(file, { toInterior, styleId });
           this.logCommand(r.message || 'Đã import phác thảo.');
+          if (toInterior) {
+            const out = document.getElementById('interior-report');
+            if (out && r.estimate) {
+              out.textContent = r.message + '\n\n' + (InteriorEstimationEngine.formatReport(r.estimate) || '');
+            } else if (out) out.textContent = r.message || '';
+            this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+          }
         } catch (err) {
           this.logCommand('Import phác thảo lỗi: ' + err.message);
         }
@@ -1447,6 +1456,37 @@ class WebCADApp {
       const out = document.getElementById('interior-report');
       if (out) out.textContent = r.report || r.message;
       this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-ai-design-interior')?.addEventListener('click', () => {
+      const text = document.getElementById('interior-ai-prompt')?.value?.trim()
+        || 'Thiết kế homestay Indochine 6×25m';
+      const r = this.features.designInteriorFromPrompt(text);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      if (r.styleId && styleSel) styleSel.value = r.styleId;
+      if (r.styleId) this._updateInteriorPalette(r.styleId);
+      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+      this.logCommand(r.message?.split('\n')[0] || 'AI Designer');
+    });
+
+    document.getElementById('btn-smart-decorator')?.addEventListener('click', () => {
+      const text = document.getElementById('interior-ai-prompt')?.value?.trim()
+        || 'Căn hộ 65m² 2 phòng ngủ Japandi ngân sách 500 triệu';
+      const r = this.features.smartDecorator(text);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      if (r.styleId && styleSel) styleSel.value = r.styleId;
+      this._updateInteriorRoomSelect(InteriorEngine.detectRooms(this));
+      this.logCommand(r.message?.split('\n')[0] || 'Smart Decorator');
+    });
+
+    document.getElementById('btn-auto-decorate')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.autoDecorateInterior({ styleId });
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this.logCommand(r.message?.split('\n')[0] || 'Trang trí tự động');
     });
 
     this._renderInteriorAssetGrid();

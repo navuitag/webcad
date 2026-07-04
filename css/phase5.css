@@ -320,6 +320,31 @@
   opacity: 0.85;
 }
 
+.feature-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 56px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.feature-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin: 4px 0 8px;
+  cursor: pointer;
+}
+
 .template-tabs {
   display: flex;
   flex-wrap: wrap;

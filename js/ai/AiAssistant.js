@@ -17,6 +17,12 @@ class AiAssistant {
 
     this.history.push({ role: 'user', content: trimmed });
 
+    if (typeof InteriorAiDesigner !== 'undefined' && InteriorAiDesigner.isInteriorPrompt(trimmed)) {
+      const r = InteriorAiDesigner.designFromPrompt(this.app, trimmed);
+      this.history.push({ role: 'assistant', content: r.message });
+      return { success: r.success, message: r.message };
+    }
+
     const local = AiDrawingEngine.parse(this.app, trimmed) || await this._parseLocal(trimmed);
     if (local) {
       this.history.push({ role: 'assistant', content: local.message });

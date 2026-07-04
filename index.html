@@ -388,6 +388,15 @@
             <button type="button" id="btn-export-boq-json" class="feature-btn">Xuất BOQ JSON</button>
           </div>
           <pre id="interior-report" class="qa-report"></pre>
+          <h4 class="feature-subtitle">AI Designer (Phase 3)</h4>
+          <p class="feature-hint">Mô tả không gian → mặt bằng, nội thất, ánh sáng, cảnh quan, BOQ</p>
+          <textarea id="interior-ai-prompt" class="feature-textarea" rows="3" placeholder="Thiết kế homestay Indochine 6×25m, 15 phòng, cafe sân thượng, hồ Koi, ngân sách 5 tỷ"></textarea>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-ai-design-interior" class="feature-btn">Thiết kế từ mô tả</button>
+            <button type="button" id="btn-smart-decorator" class="feature-btn">Smart Decorator</button>
+            <button type="button" id="btn-auto-decorate" class="feature-btn">Trang trí tự động</button>
+          </div>
+          <label class="feature-check"><input type="checkbox" id="sketch-to-interior"> Sketch → Nội thất khi import ảnh</label>
           <div id="interior-asset-tabs" class="template-tabs"></div>
           <div id="interior-asset-grid" class="template-grid"></div>
           <h4 class="feature-subtitle">Vẽ nhanh kiến trúc</h4>
@@ -650,6 +659,9 @@
   <script src="js/features/interior/InteriorSceneGenerator.js"></script>
   <script src="js/features/interior/InteriorLightingEngine.js"></script>
   <script src="js/features/interior/InteriorDecorTemplates.js"></script>
+  <script src="js/features/interior/InteriorAiDesigner.js"></script>
+  <script src="js/features/interior/InteriorAutoDecorator.js"></script>
+  <script src="js/features/interior/InteriorSketchEngine.js"></script>
   <script src="js/features/EntityDimensionOverlay.js"></script>
   <script src="js/features/EntityDimensionEngine.js"></script>
   <script src="js/features/AutoDimensionEngine.js"></script>

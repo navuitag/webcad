@@ -83,6 +83,25 @@ class AiDrawingEngine {
       return { success: true, message: `Đã vẽ phòng ${w}×${h}.` };
     }
 
+    // Interior Design Module — Phase 3 AI Designer
+    if (typeof InteriorAiDesigner !== 'undefined' && InteriorAiDesigner.isInteriorPrompt(input)) {
+      if (s.match(/smart\s*decor|can\s*ho\s*\d+\s*m2|\d+\s*m2.*\d+\s*phong\s*ngu|apartment.*budget|ngan\s*sach\s*\d+/)) {
+        const r = InteriorAiDesigner.smartDecorator(app, input);
+        return { success: r.success, message: r.message };
+      }
+      const r = InteriorAiDesigner.designFromPrompt(app, input);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/trang\s*tri\s*tu\s*dong|auto\s*decor|automatic\s*decoration/)) {
+      const styleMatch = s.match(/indochine|japandi|scandinavian|minimalist|modern|tropical|wabi|luxury/);
+      const r = InteriorAutoDecorator.run(app, { styleId: styleMatch?.[0] });
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/sketch\s*(?:to|->|→)\s*(?:noi\s*that|interior)/)) {
+      const r = InteriorSketchEngine.fromSketch(app, {});
+      return { success: r.success, message: r.message };
+    }
+
     // Interior Design Module
     if (s.match(/(?:phat\s*hien|detect)\s*phong/)) {
       const r = InteriorEngine.detectRooms(app);
@@ -135,6 +154,9 @@ class AiDrawingEngine {
       'Ước tính chi phí nội thất',
       'Xuất BOQ CSV',
       'Mẫu trang trí Indochine Homestay',
+      'Thiết kế homestay Indochine 6×25m, 15 phòng, ngân sách 5 tỷ',
+      'Smart Decorator: căn hộ 65m² 2 phòng ngủ Japandi ngân sách 500 triệu',
+      'Trang trí tự động phong cách Modern',
       'Phát hiện phòng',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',

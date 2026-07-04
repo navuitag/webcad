@@ -70,6 +70,23 @@ class FeaturesHub {
   listDecorTemplateCategories() { return InteriorDecorTemplates.categories; }
   applyDecorTemplate(id) { return InteriorDecorTemplates.apply(this.app, id); }
 
+  /** Phase 3 — AI Designer & Smart Decorator */
+  designInteriorFromPrompt(text) {
+    return InteriorAiDesigner.designFromPrompt(this.app, text);
+  }
+
+  smartDecorator(text) {
+    return InteriorAiDesigner.smartDecorator(this.app, text);
+  }
+
+  autoDecorateInterior(opts) {
+    return InteriorAutoDecorator.run(this.app, opts);
+  }
+
+  sketchToInterior(opts) {
+    return InteriorSketchEngine.fromSketch(this.app, opts);
+  }
+
   startInsertInteriorAsset(id) { this.app.startInsertTemplate(id); }
 
   // Tự động
@@ -85,6 +102,9 @@ class FeaturesHub {
 
   async importSketch(file, opts = {}) {
     await this.vision.loadImage(file);
+    if (opts.toInterior) {
+      return InteriorSketchEngine.fromSketch(this.app, opts);
+    }
     const apiKey = this.app.aiAssistant?.apiKey;
     if (opts.useAi && apiKey) {
       return this.vision.analyzeWithAI(file, apiKey, this.app.aiAssistant?.apiUrl);
