@@ -56,7 +56,8 @@ class LightingManager3D {
     const presets = {
       studio: { ambientIntensity: 0.72, directionalIntensity: 1.0, hemisphereIntensity: 0.55, fillIntensity: 0.5, shadows: false },
       outdoor: { ambientIntensity: 0.78, directionalIntensity: 1.15, hemisphereIntensity: 0.65, fillIntensity: 0.4, shadows: true },
-      flat: { ambientIntensity: 0.92, directionalIntensity: 0.55, hemisphereIntensity: 0.45, fillIntensity: 0.35, shadows: false }
+      flat: { ambientIntensity: 0.92, directionalIntensity: 0.55, hemisphereIntensity: 0.45, fillIntensity: 0.35, shadows: false },
+      dark: { ambientIntensity: 0.9, directionalIntensity: 1.25, hemisphereIntensity: 0.28, fillIntensity: 0.8, shadows: false }
     };
     this.applySettings(presets[preset] || presets.studio);
   }

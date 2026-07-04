@@ -34,7 +34,7 @@ class ThreeRenderer {
     const height = this.container.clientHeight || 600;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xeceff1);
+    this.scene.background = new THREE.Color(0x000000);
 
     this.materialManager = new MaterialManager3D();
     this.cameraManager = new CameraManager3D(this.container);
@@ -53,12 +53,13 @@ class ThreeRenderer {
     this.section = new SectionEngine3D(this.renderer, this.scene);
     this.viewer = new Viewer3D(this);
 
-    this.gridHelper = new THREE.GridHelper(30, 30, 0x90caf9, 0xcfd8dc);
-    this.gridHelper.material.opacity = 0.45;
+    this.gridHelper = new THREE.GridHelper(30, 30, 0x90caf9, 0x263238);
+    this.gridHelper.material.opacity = 0.28;
     this.gridHelper.material.transparent = true;
     this.scene.add(this.gridHelper);
 
     const axesHelper = new THREE.AxesHelper(4);
+    axesHelper.material.depthTest = false;
     this.scene.add(axesHelper);
 
     this.initialized = true;

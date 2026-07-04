@@ -557,7 +557,8 @@ class WebCADApp {
         this.logCommand('2D→3D: Không có hình kín để extrude (hatch, rectangle, polyline đóng, circle).');
       }
       await this.renderer3D.init();
-      this.renderer3D.setLightingPreset('studio');
+      this.renderer3D.setMaterialPreset('Standard');
+      this.renderer3D.setLightingPreset('dark');
       this.renderer3D.setCameraMode('perspective');
       this.renderer3D.setCameraPreset('iso');
       this.renderer3D.syncEntities(this.drawing.entities3D);
