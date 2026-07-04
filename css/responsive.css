@@ -294,6 +294,12 @@
     max-height: 160px;
   }
 
+  .feature-module-tab {
+    font-size: 9px;
+    padding: 4px 2px;
+    min-width: 42px;
+  }
+
   .layer-dialog {
     min-width: min(300px, 92vw);
     margin: 12px;

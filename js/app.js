@@ -1191,6 +1191,7 @@ class WebCADApp {
 
   _initFeaturesPanel() {
     this._interiorMarketplaceCategory = 'all';
+    this._initFeatureTabs();
     this._renderTemplateLibrary();
     this._renderArchTemplateLibrary();
     this._initInteriorPanel();
@@ -1244,6 +1245,35 @@ class WebCADApp {
 
   _getSpaceType() {
     return document.getElementById('planner-space-type')?.value || 'apartment';
+  }
+
+  _initFeatureTabs() {
+    const tabs = document.querySelectorAll('.feature-module-tab');
+    const panels = document.querySelectorAll('.feature-tab-panel');
+    if (!tabs.length) return;
+
+    const activate = (tabId) => {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.featureTab === tabId;
+        tab.classList.toggle('active', on);
+        tab.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      panels.forEach((panel) => {
+        const on = panel.dataset.featurePanel === tabId;
+        panel.classList.toggle('active', on);
+        panel.hidden = !on;
+      });
+      try { localStorage.setItem('webcad_feature_tab', tabId); } catch (_) {}
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => activate(tab.dataset.featureTab));
+    });
+
+    let saved = 'planner';
+    try { saved = localStorage.getItem('webcad_feature_tab') || 'planner'; } catch (_) {}
+    if (!document.querySelector(`.feature-tab-panel[data-feature-panel="${saved}"]`)) saved = 'planner';
+    activate(saved);
   }
 
   _renderTemplateLibrary() {
@@ -1455,7 +1485,7 @@ class WebCADApp {
 
     document.getElementById('btn-scan-bim')?.addEventListener('click', () => {
       const r = this.features.scanInteriorBim();
-      const out = document.getElementById('interior-report');
+      const out = document.getElementById('bim-report');
       if (out) out.textContent = r.message;
       this.logCommand(r.message);
     });
@@ -1463,7 +1493,7 @@ class WebCADApp {
     document.getElementById('btn-bim-lifecycle')?.addEventListener('click', () => {
       this.features.scanInteriorBim();
       const r = this.features.getInteriorLifecycleReport();
-      const out = document.getElementById('interior-report');
+      const out = document.getElementById('bim-report');
       if (out) out.textContent = r.report || r.message;
       this.logCommand(r.message);
     });
@@ -1471,7 +1501,7 @@ class WebCADApp {
     document.getElementById('btn-bim-maintenance')?.addEventListener('click', () => {
       this.features.scanInteriorBim();
       const r = this.features.getInteriorMaintenancePlan();
-      const out = document.getElementById('interior-report');
+      const out = document.getElementById('bim-report');
       if (out) out.textContent = r.report || r.message;
       this.logCommand(r.message);
     });
@@ -1595,6 +1625,7 @@ class WebCADApp {
       if (r.success) {
         this.features.enterPlannerMode();
         if (r.rooms?.length) this._updateInteriorRoomSelect(r.rooms);
+        document.querySelector('.feature-module-tab[data-feature-tab="interior"]')?.click();
       }
     });
 
