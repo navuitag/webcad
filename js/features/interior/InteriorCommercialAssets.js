@@ -34,6 +34,38 @@ class InteriorCommercialAssets {
       id: 'planter-designer-pro', blockId: 'planter-round', name: 'Chậu Designer Pro', icon: '🪴',
       category: 'plant', license: 'commercial', tier: 'studio', brand: 'Green Atelier',
       price: 3200000, styles: ['japandi', 'tropical', 'scandinavian']
+    },
+
+    // landscape pro
+    'tree-palm-signature': {
+      id: 'tree-palm-signature', blockId: 'tree-palm', name: 'Palm Signature', icon: '🌴',
+      category: 'tree', license: 'commercial', tier: 'pro', brand: 'Green Atelier',
+      price: 7200000, styles: ['tropical', 'resort']
+    },
+    'fountain-royale': {
+      id: 'fountain-royale', blockId: 'fountain-round', name: 'Fountain Royale', icon: '⛲',
+      category: 'fountain', license: 'commercial', tier: 'studio', brand: 'Aqua Form',
+      price: 28500000, styles: ['classic', 'luxury']
+    },
+    'gazebo-resort-pro': {
+      id: 'gazebo-resort-pro', blockId: 'gazebo', name: 'Gazebo Resort Pro', icon: '🛖',
+      category: 'gazebo', license: 'commercial', tier: 'pro', brand: 'Landscape Craft',
+      price: 46800000, styles: ['resort', 'tropical']
+    },
+    'pool-round-luxe': {
+      id: 'pool-round-luxe', blockId: 'pool-round', name: 'Pool Round Luxe', icon: '🏊',
+      category: 'pool', license: 'commercial', tier: 'studio', brand: 'Aqua Form',
+      price: 125000000, styles: ['luxury', 'resort']
+    },
+    'pergola-wood-pro': {
+      id: 'pergola-wood-pro', blockId: 'pergola', name: 'Pergola Wood Pro', icon: '⛺',
+      category: 'pergola', license: 'commercial', tier: 'pro', brand: 'Landscape Craft',
+      price: 33800000, styles: ['tropical', 'classic', 'resort']
+    },
+    'outdoor-dining-pro': {
+      id: 'outdoor-dining-pro', blockId: 'outdoor-table', name: 'Outdoor Dining Pro', icon: '☂️',
+      category: 'outdoor', license: 'commercial', tier: 'pro', brand: 'Patio VN',
+      price: 12800000, styles: ['modern', 'resort']
     }
   };
 
@@ -42,6 +74,10 @@ class InteriorCommercialAssets {
     'lighting-pro': { label: 'Lighting Pro Pack', assetIds: ['pendant-gold-pro'] },
     'kitchen-pro': { label: 'Kitchen Pro Pack', assetIds: ['kitchen-premium-pro'] },
     'decor-pro': { label: 'Decor Pro Pack', assetIds: ['planter-designer-pro', 'pendant-gold-pro'] },
+    'landscape-pro': {
+      label: 'Landscape Pro Pack',
+      assetIds: ['tree-palm-signature', 'fountain-royale', 'gazebo-resort-pro', 'pool-round-luxe', 'pergola-wood-pro', 'outdoor-dining-pro']
+    },
     'studio-all': { label: 'Studio All Access', assetIds: Object.keys(InteriorCommercialAssets.catalog) }
   };
 
