@@ -73,14 +73,17 @@ class ModifyTool extends Tool {
   }
 
   _restoreOriginal() {
+    if (!this.originalStates.length) return;
     for (let i = 0; i < this.entities.length; i++) {
       const restored = EntityFactory.create(this.originalStates[i]);
-      Object.assign(this.entities[i], restored);
+      if (restored) Object.assign(this.entities[i], restored);
     }
   }
 
   _applyModify(target) {
-    this._restoreOriginal();
+    if (this.name !== 'copy') {
+      this._restoreOriginal();
+    }
     const dx = target.x - this.basePoint.x;
     const dy = target.y - this.basePoint.y;
 
