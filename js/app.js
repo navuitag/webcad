@@ -537,6 +537,7 @@ class WebCADApp {
     this.mode = mode;
     const is2DView = this._is2DView();
     const is3D = mode === '3d';
+    const isPlanner = mode === 'planner';
 
     this.canvas.style.display = is2DView ? 'block' : 'none';
     this.container3D.style.display = is3D ? 'block' : 'none';
@@ -557,6 +558,8 @@ class WebCADApp {
       }
       await this.renderer3D.init();
       this.renderer3D.setLightingPreset('studio');
+      this.renderer3D.setCameraMode('perspective');
+      this.renderer3D.setCameraPreset('iso');
       this.renderer3D.syncEntities(this.drawing.entities3D);
       this._bind3DEvents();
       this.renderer3D.setLoopActive(true);
@@ -566,12 +569,22 @@ class WebCADApp {
       this._update3DSelectionHighlight();
     } else if (is2DView) {
       this.renderer3D.setLoopActive(false);
+      if (isPlanner && this.currentTool?.name === 'select') {
+        this.updateToolInfo('PLANNER: Thiết kế nội thất trên mặt bằng 2D. Chọn thư viện và đặt đồ trực tiếp trên canvas.');
+      }
       const sync = ModeConversionEngine.onEnter2D(this);
       if (sync.created || sync.updated) {
         this.logCommand(`3D→2D: ${sync.created} mới, ${sync.updated} cập nhật.`);
       }
       this._updateLayerPanel();
       this.requestRender();
+    }
+
+    if (is3D) {
+      const camSel = document.getElementById('3d-camera');
+      if (camSel) camSel.value = 'perspective';
+      const presetSel = document.getElementById('3d-view-preset');
+      if (presetSel) presetSel.value = 'iso';
     }
 
     const statusLabel = mode === 'planner' ? 'PLANNER' : mode.toUpperCase();
