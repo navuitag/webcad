@@ -444,6 +444,7 @@ class WebCADApp {
       'undo': () => this.undo(),
       'redo': () => this.redo(),
       'delete': () => this.setTool('delete'),
+      'delete-all': () => this.deleteAllEntities(),
       'zoom-in': () => this.zoomAt(this.canvas.width / 2, this.canvas.height / 2, 1.25),
       'zoom-out': () => this.zoomAt(this.canvas.width / 2, this.canvas.height / 2, 0.8),
       'zoom-extents': () => this.zoomExtents(),
@@ -1938,6 +1939,35 @@ class WebCADApp {
     this.updatePropertiesPanel();
     this.updateStatusBar();
     this.logCommand(`Đã xóa ${selected.length} đối tượng.`);
+    return true;
+  }
+
+  deleteAllEntities(skipConfirm = false) {
+    if (!this._ready) return false;
+    const count2d = this.drawing.entities.length;
+    const count3d = this.drawing.entities3D.length;
+    if (count2d === 0 && count3d === 0) {
+      this.logCommand('Không có đối tượng để xóa.');
+      return false;
+    }
+    const total = count2d + count3d;
+    if (!skipConfirm && !confirm(`Xóa tất cả ${total} đối tượng (${count2d} 2D, ${count3d} 3D)?`)) {
+      return false;
+    }
+
+    this.drawing.entities = [];
+    this.drawing.entities3D = [];
+    this.drawing.metadata.modifiedAt = new Date().toISOString();
+    this.selectionManager.clearSelection();
+    this.selectionManager3D.clearSelection();
+    if (this.renderer3D?.initialized) {
+      this.renderer3D.syncEntities(this.drawing.entities3D);
+      this._update3DSelectionHighlight();
+    }
+    this.updatePropertiesPanel();
+    this.updateStatusBar();
+    this.requestRender();
+    this.logCommand(`Đã xóa tất cả ${total} đối tượng.`);
     return true;
   }
 

@@ -6,7 +6,7 @@ class AiDrawingEngine {
     const s = input.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-    if (s.match(/doi\s*ten|rename\s*drawing|ten\s*ban\s*ve/)) {
+    if (s.match(/(?:doi\s*ten|rename\s*drawing|ten\s*ban\s*ve)/)) {
       const m = input.match(/(?:doi\s*ten|rename|ten\s*ban\s*ve)\s*[:\s]+(.+)/i);
       const name = m?.[1]?.trim();
       if (name && app.setDrawingName?.(name)) {
@@ -14,6 +14,14 @@ class AiDrawingEngine {
       }
       app.renameDrawing?.();
       return { success: true, message: 'Chỉnh tên trên thanh menu (WebCAD / tên bản vẽ).' };
+    }
+
+    if (s.match(/(?:xoa|delete|erase)\s*(?:tat\s*ca|all|het)/)) {
+      const ok = app.deleteAllEntities();
+      return {
+        success: ok,
+        message: ok ? 'Đã xóa tất cả đối tượng trên bản vẽ.' : 'Không có đối tượng để xóa.'
+      };
     }
 
     // Mặt bằng: "mat bang dat 5x20", "thua dat 4x15m 2 phong ngu"
@@ -237,7 +245,8 @@ class AiDrawingEngine {
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
       'Kiểm tra lỗi bản vẽ',
-      'Đổi tên bản vẽ Nhà An'
+      'Đổi tên bản vẽ Nhà An',
+      'Xóa tất cả đối tượng'
     ];
   }
 }

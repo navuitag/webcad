@@ -65,11 +65,10 @@ class AiAssistant {
         fn: () => { this.app.zoomExtents(); return 'Đã zoom vừa khung.'; }
       },
       {
-        re: /(?:xoa|delete|erase)\s*(?:tat\s*ca|all)/,
+        re: /(?:xoa|delete|erase)\s*(?:tat\s*ca|all|het)/,
         fn: () => {
-          this.app.drawing.entities = [];
-          this.app.requestRender();
-          return 'Đã xóa tất cả entities.';
+          const ok = this.app.deleteAllEntities();
+          return ok ? 'Đã xóa tất cả đối tượng.' : 'Không có đối tượng để xóa.';
         }
       },
       {
