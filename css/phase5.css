@@ -255,7 +255,26 @@
   color: var(--text-primary);
   padding: 4px 6px;
   border-radius: 3px;
+}
+
+.feature-select {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: 3px;
   font-size: 12px;
+}
+
+.feature-row-btns {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.feature-row-btns .feature-btn {
+  flex: 1;
+  min-width: 120px;
 }
 
 .feature-btn {

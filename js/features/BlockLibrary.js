@@ -12,7 +12,8 @@ class BlockLibrary {
     bath: { label: 'Phòng tắm', icon: '🚿' },
     stair: { label: 'Cầu thang', icon: '🪜' },
     mep: { label: 'Điện nước', icon: '⚡' },
-    landscape: { label: 'Cảnh quan', icon: '🌳' }
+    landscape: { label: 'Cảnh quan', icon: '🌳' },
+    decor: { label: 'Trang trí', icon: '🖼️' }
   };
 
   static templates = {
@@ -472,6 +473,52 @@ class BlockLibrary {
         { type: 'CIRCLE', cx: 175, cy: 175, r: 175 },
         BlockLibrary._rect(155, 155, 195, 195)
       ]
+    },
+    'curtain-panel': {
+      category: 'decor', name: 'Rèm cửa', icon: '🪟', width: 180, height: 8,
+      entities: () => [
+        BlockLibrary._rect(0, 0, 180, 8),
+        BlockLibrary._line(0, 0, 180, 0),
+        BlockLibrary._line(45, 0, 45, 8),
+        BlockLibrary._line(90, 0, 90, 8),
+        BlockLibrary._line(135, 0, 135, 8)
+      ]
+    },
+    'carpet-area': {
+      category: 'decor', name: 'Thảm trải sàn', icon: '🟫', width: 200, height: 140,
+      entities: () => [
+        BlockLibrary._rect(0, 0, 200, 140),
+        BlockLibrary._rect(15, 15, 185, 125)
+      ]
+    },
+    'floor-lamp': {
+      category: 'decor', name: 'Đèn sàn', icon: '💡', width: 35, height: 35,
+      entities: () => [
+        { type: 'CIRCLE', cx: 17, cy: 17, r: 12 },
+        BlockLibrary._line(17, 17, 17, 32),
+        BlockLibrary._line(10, 32, 24, 32)
+      ]
+    },
+    'pendant-lamp': {
+      category: 'decor', name: 'Đèn thả', icon: '🔆', width: 40, height: 40,
+      entities: () => [
+        BlockLibrary._line(20, 0, 20, 15),
+        { type: 'CIRCLE', cx: 20, cy: 28, r: 12 }
+      ]
+    },
+    'painting-frame': {
+      category: 'decor', name: 'Tranh treo tường', icon: '🖼️', width: 80, height: 60,
+      entities: () => [
+        BlockLibrary._rect(0, 0, 80, 60),
+        BlockLibrary._rect(8, 8, 72, 52)
+      ]
+    },
+    'planter-round': {
+      category: 'decor', name: 'Chậu cây tròn', icon: '🪴', width: 50, height: 50,
+      entities: () => [
+        { type: 'CIRCLE', cx: 25, cy: 30, r: 18 },
+        { type: 'CIRCLE', cx: 25, cy: 18, r: 14 }
+      ]
     }
   };
 
@@ -666,7 +713,13 @@ class BlockLibrary {
       { re: /dai\s*phun|fountain/, id: 'fountain-round' },
       { re: /hang\s*rao|fence/, id: 'fence-segment' },
       { re: /ban\s*ngoai\s*troi|outdoor/, id: 'outdoor-table' },
-      { re: /gazebo|chòi/, id: 'gazebo' }
+      { re: /gazebo|chòi/, id: 'gazebo' },
+      { re: /rem\s*cua|rem/, id: 'curtain-panel' },
+      { re: /tham|carpet/, id: 'carpet-area' },
+      { re: /den\s*san|den\s*floor/, id: 'floor-lamp' },
+      { re: /den\s*tha|pendant/, id: 'pendant-lamp' },
+      { re: /tranh|khung/, id: 'painting-frame' },
+      { re: /chau\s*cay|planter/, id: 'planter-round' }
     ];
     for (const { re, id } of rules) {
       if (re.test(s)) return id;
@@ -674,7 +727,10 @@ class BlockLibrary {
     return null;
   }
 
-  static insert(app, templateId, insertPoint = { x: 0, y: 0 }) {
+  static insert(app, templateId, insertPoint = { x: 0, y: 0 }, options = {}) {
+    if (typeof InteriorPlacementEngine !== 'undefined') {
+      return InteriorPlacementEngine.insert(app, templateId, insertPoint, options);
+    }
     const tpl = this.templates[templateId];
     if (!tpl) return { success: false, message: 'Template not found' };
 
@@ -731,20 +787,24 @@ class InsertTemplateTool extends Tool {
     super(app);
     this.name = 'insert-template';
     this.templateId = null;
+    this.rotation = 0;
   }
 
   setTemplate(id) {
     this.templateId = id;
+    this.rotation = 0;
   }
 
   activate() {
     super.activate();
+    this.rotation = 0;
     this.app.updateToolInfo(this.getPrompt());
   }
 
   getPrompt() {
     const name = BlockLibrary.templates[this.templateId]?.name || 'mẫu';
-    return `CHÈN: Click vị trí đặt "${name}". Esc = hủy.`;
+    const deg = Math.round((this.rotation * 180) / Math.PI) % 360;
+    return `CHÈN: Click đặt "${name}". R = xoay 90° (${deg}°). Esc = hủy.`;
   }
 
   onMouseMove(e, worldPos) {
@@ -752,11 +812,15 @@ class InsertTemplateTool extends Tool {
     const tpl = BlockLibrary.templates[this.templateId];
     if (!tpl) return;
     const snap = this._getSnappedPos(worldPos);
-    const w = tpl.width || 60;
-    const h = tpl.height || 60;
+    const scale = typeof InteriorPlacementEngine !== 'undefined'
+      ? InteriorPlacementEngine.worldScale(this.app) : 1;
+    const w = (tpl.width || 60) * scale;
+    const h = (tpl.height || 60) * scale;
     const layerId = this.app.layerManager.currentLayerId;
     const preview = new RectangleEntity(layerId, snap.x, snap.y, snap.x + w, snap.y + h);
     preview.style.lineDash = [6, 4];
+    preview.style.color = '#4fc3f7';
+    if (this.rotation) preview.rotate(snap.x, snap.y, this.rotation);
     this.app.renderer2D.setPreview(preview);
     this.app.requestRender();
   }
@@ -767,12 +831,19 @@ class InsertTemplateTool extends Tool {
       return;
     }
     const snap = this._getSnappedPos(worldPos);
-    const r = BlockLibrary.insert(this.app, this.templateId, { x: snap.x, y: snap.y });
+    const r = BlockLibrary.insert(this.app, this.templateId, { x: snap.x, y: snap.y }, {
+      rotation: this.rotation
+    });
     if (r.success) this.app.logCommand(`Đã chèn: ${r.name}`);
     this.app.setTool('select');
   }
 
   onKeyDown(e) {
     if (e.key === 'Escape') this.app.setTool('select');
+    if (e.key === 'r' || e.key === 'R') {
+      this.rotation = (this.rotation + Math.PI / 2) % (Math.PI * 2);
+      this.app.updateToolInfo(this.getPrompt());
+      this.app.requestRender();
+    }
   }
 }

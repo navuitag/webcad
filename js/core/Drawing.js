@@ -182,17 +182,22 @@ class Drawing {
 
 const EntityFactory = {
   create(data) {
+    let entity = null;
     switch (data.type) {
-      case 'LINE': return LineEntity.fromJSON(data);
-      case 'CIRCLE': return CircleEntity.fromJSON(data);
-      case 'ARC': return ArcEntity.fromJSON(data);
-      case 'POLYLINE': return PolylineEntity.fromJSON(data);
-      case 'RECTANGLE': return RectangleEntity.fromJSON(data);
-      case 'TEXT': return TextEntity.fromJSON(data);
-      case 'DIMENSION': return DimensionEntity.fromJSON(data);
-      case 'HATCH': return HatchEntity.fromJSON(data);
+      case 'LINE': entity = LineEntity.fromJSON(data); break;
+      case 'CIRCLE': entity = CircleEntity.fromJSON(data); break;
+      case 'ARC': entity = ArcEntity.fromJSON(data); break;
+      case 'POLYLINE': entity = PolylineEntity.fromJSON(data); break;
+      case 'RECTANGLE': entity = RectangleEntity.fromJSON(data); break;
+      case 'TEXT': entity = TextEntity.fromJSON(data); break;
+      case 'DIMENSION': entity = DimensionEntity.fromJSON(data); break;
+      case 'HATCH': entity = HatchEntity.fromJSON(data); break;
       default: return null;
     }
+    if (entity && typeof InteriorPlacementEngine !== 'undefined') {
+      InteriorPlacementEngine.restoreTags(entity, data);
+    }
+    return entity;
   }
 };
 

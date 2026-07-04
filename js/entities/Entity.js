@@ -83,7 +83,7 @@ class Entity {
   }
 
   toJSON() {
-    return {
+    const json = {
       id: this.id,
       type: this.type,
       layerId: this.layerId,
@@ -92,5 +92,9 @@ class Entity {
       dimStyleId: this.dimStyleId,
       style: { ...this.style }
     };
+    if (typeof InteriorPlacementEngine !== 'undefined') {
+      InteriorPlacementEngine.patchJSON(this, json);
+    }
+    return json;
   }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v40';
+const CACHE_NAME = 'webcad-v41';
 const ASSETS = [
   './',
   './index.html',
@@ -90,6 +90,13 @@ const ASSETS = [
   './docs/ARCHITECTURE.md',
   './js/ai/AiAssistant.js',
   './js/features/BlockLibrary.js',
+  './js/features/interior/InteriorMaterialLibrary.js',
+  './js/features/interior/InteriorStyleEngine.js',
+  './js/features/interior/InteriorAssetManager.js',
+  './js/features/interior/InteriorPlacementEngine.js',
+  './js/features/interior/InteriorEngine.js',
+  './js/features/interior/InteriorEstimationEngine.js',
+  './js/features/interior/InteriorSceneGenerator.js',
   './js/features/EntityDimensionOverlay.js',
   './js/features/EntityDimensionEngine.js',
   './js/features/AutoDimensionEngine.js',

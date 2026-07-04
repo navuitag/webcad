@@ -343,6 +343,36 @@
           <p class="feature-hint">Click mẫu → click canvas để đặt (đơn vị cm)</p>
           <div id="template-library-tabs" class="template-tabs"></div>
           <div id="template-library-grid" class="template-grid"></div>
+          <h4 class="feature-subtitle">Thiết kế nội thất</h4>
+          <p class="feature-hint">Phát hiện phòng → chọn phong cách → trang trí & ước tính chi phí</p>
+          <div class="feature-row">
+            <label>Loại không gian</label>
+            <select id="interior-space-preset" class="feature-select"></select>
+          </div>
+          <div class="feature-row">
+            <label>Phong cách</label>
+            <select id="interior-style-select" class="feature-select"></select>
+          </div>
+          <div class="feature-row">
+            <label>Phòng</label>
+            <select id="interior-room-select" class="feature-select">
+              <option value="">— Tất cả / tự chọn —</option>
+            </select>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-detect-rooms" class="feature-btn">Phát hiện phòng</button>
+            <button type="button" id="btn-apply-interior-style" class="feature-btn">Áp phong cách</button>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-furnish-room" class="feature-btn">Trang trí phòng</button>
+            <button type="button" id="btn-furnish-all" class="feature-btn">Trang trí tất cả</button>
+          </div>
+          <div class="feature-row">
+            <button type="button" id="btn-estimate-interior" class="feature-btn">Ước tính chi phí</button>
+          </div>
+          <pre id="interior-report" class="qa-report"></pre>
+          <div id="interior-asset-tabs" class="template-tabs"></div>
+          <div id="interior-asset-grid" class="template-grid"></div>
           <h4 class="feature-subtitle">Vẽ nhanh kiến trúc</h4>
           <p class="feature-hint">Phòng/sàn/trần tự ghi diện tích (m²) tại tâm vùng</p>
           <div id="arch-draw-grid" class="template-grid arch-draw-grid"></div>
@@ -594,6 +624,13 @@
   <script src="js/collab/CollaborationEngine.js"></script>
   <script src="js/plugins/PluginManager.js"></script>
   <script src="js/features/BlockLibrary.js"></script>
+  <script src="js/features/interior/InteriorMaterialLibrary.js"></script>
+  <script src="js/features/interior/InteriorStyleEngine.js"></script>
+  <script src="js/features/interior/InteriorAssetManager.js"></script>
+  <script src="js/features/interior/InteriorPlacementEngine.js"></script>
+  <script src="js/features/interior/InteriorEngine.js"></script>
+  <script src="js/features/interior/InteriorEstimationEngine.js"></script>
+  <script src="js/features/interior/InteriorSceneGenerator.js"></script>
   <script src="js/features/EntityDimensionOverlay.js"></script>
   <script src="js/features/EntityDimensionEngine.js"></script>
   <script src="js/features/AutoDimensionEngine.js"></script>

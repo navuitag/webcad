@@ -15,10 +15,48 @@ class FeaturesHub {
   }
 
   // Thư viện
-  insertTemplate(id, point) { return BlockLibrary.insert(this.app, id, point); }
+  insertTemplate(id, point, options) { return BlockLibrary.insert(this.app, id, point, options); }
   startInsertTemplate(id) { this.app.startInsertTemplate(id); }
   listTemplates(cat) { return BlockLibrary.list(cat); }
   listTemplateCategories() { return BlockLibrary.categories; }
+
+  // Interior Design Module (SDD Interior_Design_Module)
+  detectRooms() {
+    const rooms = InteriorEngine.detectRooms(this.app);
+    return {
+      success: rooms.length > 0,
+      rooms,
+      count: rooms.length,
+      message: rooms.length
+        ? `Phát hiện ${rooms.length} phòng trên bản vẽ.`
+        : 'Không phát hiện phòng — dùng công cụ Phòng hoặc mẫu kiến trúc.'
+    };
+  }
+
+  listInteriorStyles() { return InteriorStyleEngine.list(); }
+  listInteriorDecorPresets() { return InteriorStyleEngine.listDecorPresets(); }
+  listInteriorMaterials(cat) { return InteriorMaterialLibrary.list(cat); }
+  listInteriorAssets(filter) { return InteriorAssetManager.list(filter); }
+  listInteriorAssetCategories() { return InteriorAssetManager.categories(); }
+
+  applyInteriorStyle(styleId, roomId) {
+    return InteriorSceneGenerator.applyStyle(this.app, styleId, roomId);
+  }
+
+  furnishRoom(roomId, styleId) {
+    return InteriorSceneGenerator.furnishRoom(this.app, roomId, styleId);
+  }
+
+  furnishAllRooms(styleId) {
+    return InteriorSceneGenerator.furnishAll(this.app, styleId);
+  }
+
+  estimateInteriorCost(styleId) {
+    const r = InteriorEstimationEngine.estimate(this.app, styleId);
+    return { ...r, report: InteriorEstimationEngine.formatReport(r) };
+  }
+
+  startInsertInteriorAsset(id) { this.app.startInsertTemplate(id); }
 
   // Tự động
   autoDimension(all = true) {

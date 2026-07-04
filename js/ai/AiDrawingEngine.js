@@ -83,6 +83,28 @@ class AiDrawingEngine {
       return { success: true, message: `Đã vẽ phòng ${w}×${h}.` };
     }
 
+    // Interior Design Module
+    if (s.match(/(?:phat\s*hien|detect)\s*phong/)) {
+      const r = InteriorEngine.detectRooms(app);
+      return { success: r.length > 0, message: r.length ? `Phát hiện ${r.length} phòng.` : 'Không có phòng.' };
+    }
+    if (s.match(/trang\s*tri|decor|noi\s*that/)) {
+      const styleMatch = s.match(/indochine|japandi|scandinavian|minimalist|modern|tropical|wabi|luxury/);
+      const styleId = styleMatch ? styleMatch[0] : (app.drawing.metadata?.interiorStyle || 'modern');
+      const r = InteriorSceneGenerator.furnishAll(app, styleId);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/(?:ap|apply)\s*phong\s*cach|phong\s*cach\s*(indochine|japandi|scandinavian|minimalist|modern|tropical|wabi|luxury)/)) {
+      const styleMatch = s.match(/indochine|japandi|scandinavian|minimalist|modern|tropical|wabi|luxury/);
+      const styleId = styleMatch ? styleMatch[0] : 'modern';
+      const r = InteriorSceneGenerator.applyStyle(app, styleId);
+      return { success: r.success, message: r.message };
+    }
+    if (s.match(/uoc\s*tinh|chi\s*phi|bao\s*gia|boq/)) {
+      const r = InteriorEstimationEngine.estimate(app);
+      return { success: true, message: r.message + '\n' + InteriorEstimationEngine.formatReport(r) };
+    }
+
     return null;
   }
 
@@ -94,6 +116,10 @@ class AiDrawingEngine {
       'Vẽ tường',
       'Vẽ sàn mở',
       'Thêm giường đôi',
+      'Trang trí phòng Japandi',
+      'Áp phong cách Indochine',
+      'Ước tính chi phí nội thất',
+      'Phát hiện phòng',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
       'Kiểm tra lỗi bản vẽ'

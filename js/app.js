@@ -1171,9 +1171,11 @@ class WebCADApp {
   }
 
   _initFeaturesPanel() {
+    this._interiorAssetCategory = 'all';
     this._renderTemplateLibrary();
     this._renderArchTemplateLibrary();
     this._renderArchDrawGrid();
+    this._initInteriorPanel();
     const sketchInput = document.getElementById('sketch-input');
     if (sketchInput) {
       sketchInput.addEventListener('change', async (e) => {
@@ -1305,6 +1307,132 @@ class WebCADApp {
       btn.addEventListener('click', () => {
         this.setTool(t.id);
         this.logCommand(`Công cụ: ${t.name}`);
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  _initInteriorPanel() {
+    if (!this.features || typeof InteriorStyleEngine === 'undefined') return;
+
+    const styleSel = document.getElementById('interior-style-select');
+    const spaceSel = document.getElementById('interior-space-preset');
+    if (styleSel) {
+      styleSel.innerHTML = '';
+      for (const st of this.features.listInteriorStyles()) {
+        const opt = document.createElement('option');
+        opt.value = st.id;
+        opt.textContent = `${st.icon} ${st.name}`;
+        styleSel.appendChild(opt);
+      }
+    }
+    if (spaceSel) {
+      spaceSel.innerHTML = '';
+      for (const p of this.features.listInteriorDecorPresets()) {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.label;
+        spaceSel.appendChild(opt);
+      }
+      spaceSel.addEventListener('change', () => {
+        const preset = InteriorStyleEngine.decorPresets[spaceSel.value];
+        if (preset?.styles?.[0] && styleSel) styleSel.value = preset.styles[0];
+      });
+    }
+
+    document.getElementById('btn-detect-rooms')?.addEventListener('click', () => {
+      const r = this.features.detectRooms();
+      this._updateInteriorRoomSelect(r.rooms);
+      const out = document.getElementById('interior-report');
+      if (out) {
+        out.textContent = r.rooms?.length
+          ? r.rooms.map(room => `${room.name} (${room.type}) — ${room.area.toFixed(1)} đv²`).join('\n')
+          : r.message;
+      }
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-apply-interior-style')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const roomId = document.getElementById('interior-room-select')?.value || null;
+      const r = this.features.applyInteriorStyle(styleId, roomId || undefined);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-furnish-room')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const roomId = document.getElementById('interior-room-select')?.value || null;
+      const r = this.features.furnishRoom(roomId || undefined, styleId);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-furnish-all')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.furnishAllRooms(styleId);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-estimate-interior')?.addEventListener('click', () => {
+      const styleId = styleSel?.value || 'modern';
+      const r = this.features.estimateInteriorCost(styleId);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.report || r.message;
+      this.logCommand(r.message);
+    });
+
+    this._renderInteriorAssetGrid();
+  }
+
+  _updateInteriorRoomSelect(rooms = []) {
+    const sel = document.getElementById('interior-room-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Tất cả / phòng đầu —</option>';
+    for (const room of rooms) {
+      const opt = document.createElement('option');
+      opt.value = room.id;
+      opt.textContent = `${room.name} (${room.type})`;
+      sel.appendChild(opt);
+    }
+  }
+
+  _renderInteriorAssetGrid() {
+    const tabsEl = document.getElementById('interior-asset-tabs');
+    const grid = document.getElementById('interior-asset-grid');
+    if (!grid || !this.features) return;
+
+    if (tabsEl) {
+      tabsEl.innerHTML = '';
+      for (const cat of this.features.listInteriorAssetCategories()) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'template-tab' + (cat.id === this._interiorAssetCategory ? ' active' : '');
+        tab.textContent = `${cat.icon} ${cat.label}`;
+        tab.addEventListener('click', () => {
+          this._interiorAssetCategory = cat.id;
+          this._renderInteriorAssetGrid();
+        });
+        tabsEl.appendChild(tab);
+      }
+    }
+
+    const styleId = document.getElementById('interior-style-select')?.value;
+    grid.innerHTML = '';
+    const filter = { category: this._interiorAssetCategory === 'all' ? null : this._interiorAssetCategory, style: styleId };
+    for (const a of this.features.listInteriorAssets(filter)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'feature-tile';
+      btn.innerHTML = `<span class="feature-tile-icon">${a.icon || '📦'}</span><span class="feature-tile-name">${a.name}</span>`;
+      btn.title = `${a.name} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
+      btn.addEventListener('click', () => {
+        this.features.startInsertInteriorAsset(a.id);
+        this.logCommand(`Chèn nội thất: ${a.name} (R = xoay)`);
       });
       grid.appendChild(btn);
     }
