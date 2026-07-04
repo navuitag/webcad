@@ -1,7 +1,7 @@
 class MaterialManager3D {
   constructor() {
     this.presets = {
-      Standard: { color: '#90caf9', metalness: 0, roughness: 0.72, opacity: 0.92 },
+      Standard: { color: '#8a8f94', metalness: 0, roughness: 0.72, opacity: 0.92 },
       Metal: { color: '#b0bec5', metalness: 0.9, roughness: 0.25, opacity: 1 },
       Plastic: { color: '#81c784', metalness: 0.0, roughness: 0.45, opacity: 1 },
       Glass: { color: '#81d4fa', metalness: 0.0, roughness: 0.05, opacity: 0.55 },
