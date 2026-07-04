@@ -54,10 +54,58 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 16px;
+  margin-right: 8px;
   color: var(--accent);
   font-weight: 600;
   font-size: 14px;
+}
+
+.drawing-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+  min-width: 0;
+  flex: 0 1 220px;
+}
+
+.drawing-name-sep {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  user-select: none;
+}
+
+.drawing-name-input {
+  width: 100%;
+  min-width: 80px;
+  max-width: 280px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 3px 8px;
+  outline: none;
+}
+
+.drawing-name-input:hover {
+  border-color: var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.drawing-name-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-secondary);
+}
+
+.status-bar .status-drawing {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--accent);
+  font-weight: 500;
 }
 
 .menu-items {

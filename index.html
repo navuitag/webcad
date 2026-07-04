@@ -29,6 +29,10 @@
         </svg>
         <span>WebCAD</span>
       </div>
+      <div class="drawing-name-wrap" title="Tên bản vẽ — Enter hoặc click ra ngoài để lưu">
+        <span class="drawing-name-sep" aria-hidden="true">/</span>
+        <input type="text" id="drawing-name-input" class="drawing-name-input" value="Untitled" maxlength="120" spellcheck="false" aria-label="Tên bản vẽ">
+      </div>
       <nav class="menu-items">
         <div class="menu-dropdown">
           <button class="menu-btn" data-menu="file">Tệp</button>
@@ -37,6 +41,7 @@
             <button data-action="open">Mở...</button>
             <button data-action="save">Lưu</button>
             <button data-action="save-as">Lưu thành (.wcad.json)</button>
+            <button data-action="rename-drawing">Đổi tên...</button>
             <hr>
             <button data-action="template-a4">Template A4-Metric</button>
             <button data-action="template-a3">Template A3-Architectural</button>
@@ -562,6 +567,7 @@
     <!-- Status Bar -->
     <footer class="status-bar">
       <span id="status-coords">X: 0.00  Y: 0.00</span>
+      <span id="status-drawing" class="status-drawing" title="Tên bản vẽ">Untitled</span>
       <span id="status-direct-input"></span>
       <span id="status-zoom">Zoom: 100%</span>
       <span id="status-layer">Layer: 0</span>

@@ -6,6 +6,16 @@ class AiDrawingEngine {
     const s = input.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+    if (s.match(/doi\s*ten|rename\s*drawing|ten\s*ban\s*ve/)) {
+      const m = input.match(/(?:doi\s*ten|rename|ten\s*ban\s*ve)\s*[:\s]+(.+)/i);
+      const name = m?.[1]?.trim();
+      if (name && app.setDrawingName?.(name)) {
+        return { success: true, message: `Đã đổi tên bản vẽ: ${name}` };
+      }
+      app.renameDrawing?.();
+      return { success: true, message: 'Chỉnh tên trên thanh menu (WebCAD / tên bản vẽ).' };
+    }
+
     // Mặt bằng: "mat bang dat 5x20", "thua dat 4x15m 2 phong ngu"
     let m = s.match(/(?:mat\s*bang|thua\s*dat|dat)\s*(?:rong\s*)?([\d.]+)\s*[x×]\s*([\d.]+)/);
     if (m) {
@@ -226,7 +236,8 @@ class AiDrawingEngine {
       'Phát hiện phòng',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
-      'Kiểm tra lỗi bản vẽ'
+      'Kiểm tra lỗi bản vẽ',
+      'Đổi tên bản vẽ Nhà An'
     ];
   }
 }

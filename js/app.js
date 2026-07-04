@@ -81,6 +81,7 @@ class WebCADApp {
     this.updateCollabStatus();
     this._updateCanvasViewToggles();
     this.updateStatusBar();
+    this.updateDrawingTitleUI();
     this.requestRender();
 
     window.addEventListener('resize', () => this._resize());
@@ -297,6 +298,8 @@ class WebCADApp {
       this.updatePropertiesPanel();
       this.updateStatusBar();
     });
+
+    this._initDrawingNameInput();
   }
 
   _initResponsive() {
@@ -398,6 +401,7 @@ class WebCADApp {
       'open': () => this.openDrawing(),
       'save': () => this.saveDrawing(),
       'save-as': () => this._exportFormat('wcad'),
+      'rename-drawing': () => this.renameDrawing(),
       'export-wcad': () => this._exportFormat('wcad'),
       'export-png': () => this._exportFormat('png'),
       'export-svg': () => this._exportFormat('svg'),
@@ -893,6 +897,7 @@ class WebCADApp {
       this.renderer3D.syncEntities(this.drawing.entities3D);
     }
     this.updateStatusBar();
+    this.updateDrawingTitleUI();
     this.requestRender();
   }
 
@@ -990,6 +995,7 @@ class WebCADApp {
     this._updateLayoutPanel();
     this._updateStylesPanel();
     this.updateStatusBar();
+    this.updateDrawingTitleUI();
     if (this.renderer3D.initialized) {
       this.renderer3D.syncEntities(this.drawing.entities3D);
     }
@@ -2211,6 +2217,71 @@ class WebCADApp {
     const total = this.drawing.entities.length + this.drawing.entities3D.length;
     document.getElementById('status-entities').textContent =
       selCount > 0 ? `Entities: ${total}  ·  Chọn: ${selCount}` : `Entities: ${total}`;
+  }
+
+  setDrawingName(name) {
+    const trimmed = (name || '').trim();
+    if (!trimmed) return false;
+    this.drawing.name = trimmed.slice(0, 120);
+    this.drawing.metadata.modifiedAt = new Date().toISOString();
+    this.updateDrawingTitleUI();
+    return true;
+  }
+
+  renameDrawing() {
+    const input = document.getElementById('drawing-name-input');
+    if (input) {
+      input.focus();
+      input.select();
+      return;
+    }
+    const name = prompt('Tên bản vẽ:', this.drawing.name || 'Untitled');
+    if (name === null) return;
+    if (this.setDrawingName(name)) {
+      this.logCommand(`Đổi tên bản vẽ: ${this.drawing.name}`);
+    }
+  }
+
+  updateDrawingTitleUI() {
+    const name = this.drawing?.name || 'Untitled';
+    const input = document.getElementById('drawing-name-input');
+    if (input && document.activeElement !== input) {
+      input.value = name;
+    }
+    document.title = name === 'Untitled' ? 'WebCAD' : `WebCAD — ${name}`;
+    const statusEl = document.getElementById('status-drawing');
+    if (statusEl) statusEl.textContent = name;
+  }
+
+  _initDrawingNameInput() {
+    const input = document.getElementById('drawing-name-input');
+    if (!input) return;
+    const commit = () => {
+      const prev = this.drawing.name || 'Untitled';
+      const next = input.value.trim();
+      if (!next) {
+        input.value = prev;
+        return;
+      }
+      if (next !== prev && this.setDrawingName(next)) {
+        this.logCommand(`Đổi tên bản vẽ: ${next}`);
+      } else {
+        input.value = this.drawing.name;
+      }
+    };
+    input.addEventListener('change', commit);
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+      if (e.key === 'Escape') {
+        input.value = this.drawing.name || 'Untitled';
+        input.blur();
+      }
+    });
+    this.updateDrawingTitleUI();
   }
 
   logCommand(text) {
