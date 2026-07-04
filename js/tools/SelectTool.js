@@ -7,17 +7,58 @@ class SelectTool extends Tool {
     this.dragScreenStart = null;
     this.selectionRect = null;
     this.dragOriginalStates = null;
+    this.resizeHandle = null;
+    this.resizeEntity = null;
+    this.resizeAnchor = null;
   }
 
   getPrompt() {
-    return 'Chọn đối tượng. Shift/Ctrl+click thêm/bỏ chọn. Kéo khung: trái→phải = trong vùng, phải→trái = chạm vùng.';
+    return 'Chọn đối tượng. Kéo grip góc/cạnh để đổi kích thước. Shift/Ctrl+click thêm/bỏ chọn.';
   }
 
   _isAdditive(e) {
     return e.shiftKey || e.ctrlKey || e.metaKey;
   }
 
+  _handleTolerance() {
+    return 8 / this.app.drawing.view.zoom;
+  }
+
+  _tryStartResize(worldPos) {
+    const selected = this.app.selectionManager.getSelected();
+    if (selected.length !== 1 || typeof SelectionResizeEngine === 'undefined') return false;
+    const entity = selected[0];
+    if (!SelectionResizeEngine.canResize(entity)) return false;
+
+    const handles = SelectionResizeEngine.getHandles(entity);
+    const hit = SelectionResizeEngine.hitTest(handles, worldPos.x, worldPos.y, this._handleTolerance());
+    if (!hit) return false;
+
+    const bb = entity.getBoundingBox();
+    this.resizeHandle = hit.id;
+    this.resizeEntity = entity;
+    this.resizeAnchor = {
+      minX: bb.minX,
+      minY: bb.minY,
+      maxX: bb.maxX,
+      maxY: bb.maxY,
+      sourceBb: { minX: bb.minX, minY: bb.minY, maxX: bb.maxX, maxY: bb.maxY }
+    };
+    this.isDragging = true;
+    this.dragOriginalStates = [entity.toJSON()];
+    this.dragStart = { ...worldPos };
+    return true;
+  }
+
   onMouseDown(e, worldPos) {
+    if (this._tryStartResize(worldPos)) {
+      this.app.canvasContainer.style.cursor = SelectionResizeEngine.getHandles(this.resizeEntity)
+        .find(h => h.id === this.resizeHandle)?.cursor || 'crosshair';
+      this.app.updatePropertiesPanel();
+      this.app.updateStatusBar();
+      return;
+    }
+
     const tolerance = 5 / this.app.drawing.view.zoom;
     const hit = this.app.cadCore.entities.hitTest(worldPos.x, worldPos.y, tolerance);
     const additive = this._isAdditive(e);
@@ -47,7 +88,18 @@ class SelectTool extends Tool {
   }
 
   onMouseMove(e, worldPos) {
-    if (!this.isDragging || !this.dragStart) return;
+    if (!this.isDragging || !this.dragStart) {
+      this._updateHoverCursor(worldPos);
+      return;
+    }
+
+    if (this.resizeHandle && this.resizeEntity) {
+      SelectionResizeEngine.applyHandle(
+        this.resizeEntity, this.resizeHandle, worldPos.x, worldPos.y, this.resizeAnchor
+      );
+      this.app.requestRender();
+      return;
+    }
 
     if (this.selectionRect) {
       this.selectionRect.x2 = worldPos.x;
@@ -66,7 +118,19 @@ class SelectTool extends Tool {
   }
 
   onMouseUp(e, worldPos) {
-    if (this.selectionRect) {
+    if (this.resizeHandle && this.resizeEntity && this.dragOriginalStates) {
+      const after = this.resizeEntity.toJSON();
+      if (JSON.stringify(this.dragOriginalStates[0]) !== JSON.stringify(after)) {
+        this.app.history.push({
+          type: 'MODIFY_ENTITY',
+          entity: this.resizeEntity,
+          before: this.dragOriginalStates[0],
+          after
+        });
+      }
+      this.app.updatePropertiesPanel();
+      this.app.updateStatusBar();
+    } else if (this.selectionRect) {
       const minX = Math.min(this.selectionRect.x1, this.selectionRect.x2);
       const maxX = Math.max(this.selectionRect.x1, this.selectionRect.x2);
       const minY = Math.min(this.selectionRect.y1, this.selectionRect.y2);
@@ -100,6 +164,28 @@ class SelectTool extends Tool {
     this.isDragging = false;
     this.dragStart = null;
     this.dragScreenStart = null;
+    this.resizeHandle = null;
+    this.resizeEntity = null;
+    this.resizeAnchor = null;
+    this.app.canvasContainer.style.cursor =
+      this.name === 'pan' ? 'grab' : this.name === 'select' ? 'default' : 'crosshair';
     this.app.requestRender();
+  }
+
+  _updateHoverCursor(worldPos) {
+    if (this.app.currentTool !== this) return;
+    const selected = this.app.selectionManager.getSelected();
+    if (selected.length !== 1 || typeof SelectionResizeEngine === 'undefined') {
+      this.app.canvasContainer.style.cursor = 'default';
+      return;
+    }
+    const entity = selected[0];
+    if (!SelectionResizeEngine.canResize(entity)) {
+      this.app.canvasContainer.style.cursor = 'default';
+      return;
+    }
+    const handles = SelectionResizeEngine.getHandles(entity);
+    const hit = SelectionResizeEngine.hitTest(handles, worldPos.x, worldPos.y, this._handleTolerance());
+    this.app.canvasContainer.style.cursor = hit?.cursor || 'default';
   }
 }

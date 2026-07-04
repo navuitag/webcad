@@ -506,6 +506,16 @@ body.mode-planner .canvas-container {
   color: var(--text-secondary);
 }
 
+.properties-content .prop-dim-hint {
+  padding: 0 0 4px;
+}
+
+.properties-content .prop-hint {
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
 .properties-content .prop-section {
   margin-top: 8px;
   padding-top: 6px;

@@ -58,6 +58,10 @@ class CanvasRenderer {
     for (const entity of selected) {
       entity.drawSelection(this.ctx, drawing, layerManager);
     }
+    if (selected.length === 1 && typeof SelectionResizeEngine !== 'undefined'
+      && SelectionResizeEngine.canResize(selected[0])) {
+      SelectionResizeEngine.drawHandles(this.ctx, drawing, selected[0]);
+    }
 
     if (this.liveMeasures.length) {
       this._drawLiveMeasures(drawing);

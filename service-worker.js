@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v53';
+const CACHE_NAME = 'webcad-v54';
 const ASSETS = [
   './',
   './index.html',
@@ -113,6 +113,7 @@ const ASSETS = [
   './js/features/interior/InteriorCollabEngine.js',
   './js/features/EntityDimensionOverlay.js',
   './js/features/EntityDimensionEngine.js',
+  './js/features/SelectionResizeEngine.js',
   './js/features/AutoDimensionEngine.js',
   './js/features/DrawingQaEngine.js',
   './js/features/FloorPlanGenerator.js',

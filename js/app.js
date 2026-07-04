@@ -2043,10 +2043,12 @@ class WebCADApp {
     switch (entity.type) {
       case 'LINE': {
         const len = GeometryEngine.distance(entity.start.x, entity.start.y, entity.end.x, entity.end.y);
+        html += `<div class="prop-row prop-dim-hint"><span class="prop-hint">Kéo grip điểm cuối hoặc nhập chiều dài</span></div>`;
         html += `<div class="prop-row"><label>Chiều dài</label><input type="number" id="prop-length" min="0.01" step="0.01" value="${len.toFixed(3)}"></div>`;
         break;
       }
       case 'CIRCLE':
+        html += `<div class="prop-row prop-dim-hint"><span class="prop-hint">Kéo grip cạnh tròn hoặc nhập đường kính</span></div>`;
         html += `<div class="prop-row"><label>Đường kính</label><input type="number" id="prop-width" min="0.01" step="0.01" value="${(entity.radius * 2).toFixed(3)}"></div>`;
         html += `<div class="prop-row"><label>Bán kính</label><input type="number" id="prop-radius" min="0.01" step="0.01" value="${entity.radius.toFixed(3)}"></div>`;
         break;
@@ -2060,7 +2062,8 @@ class WebCADApp {
         if (bb) {
           const w = bb.maxX - bb.minX;
           const h = bb.maxY - bb.minY;
-          html += `<div class="prop-row"><label>Chiều dài</label><input type="number" id="prop-width" min="0.01" step="0.01" value="${w.toFixed(3)}"></div>`;
+          html += `<div class="prop-row prop-dim-hint"><span class="prop-hint">Kéo grip góc/cạnh trên canvas hoặc nhập số</span></div>`;
+          html += `<div class="prop-row"><label>Chiều rộng</label><input type="number" id="prop-width" min="0.01" step="0.01" value="${w.toFixed(3)}"></div>`;
           html += `<div class="prop-row"><label>Chiều cao</label><input type="number" id="prop-height" min="0.01" step="0.01" value="${h.toFixed(3)}"></div>`;
         }
         break;

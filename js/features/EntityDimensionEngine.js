@@ -93,6 +93,51 @@ class EntityDimensionEngine {
     return false;
   }
 
+  static setBounds(entity, minX, minY, maxX, maxY, sourceBb) {
+    const w = maxX - minX;
+    const h = maxY - minY;
+    if (w <= 0 || h <= 0) return false;
+
+    if (entity.type === 'RECTANGLE') {
+      entity.corner1 = { x: minX, y: minY };
+      entity.corner2 = { x: maxX, y: maxY };
+      return true;
+    }
+
+    const bb = sourceBb || entity.getBoundingBox();
+    if (!bb) return false;
+    const ow = bb.maxX - bb.minX;
+    const oh = bb.maxY - bb.minY;
+    if (ow < 1e-12 || oh < 1e-12) return false;
+
+    if (entity.type === 'HATCH') {
+      entity.boundary = EntityDimensionEngine._mapPointsToBounds(
+        entity.boundary, bb, minX, minY, maxX, maxY
+      );
+      return true;
+    }
+
+    if (entity.type === 'POLYLINE') {
+      entity.points = EntityDimensionEngine._mapPointsToBounds(
+        entity.points, bb, minX, minY, maxX, maxY
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  static _mapPointsToBounds(points, oldBb, minX, minY, maxX, maxY) {
+    const ow = oldBb.maxX - oldBb.minX;
+    const oh = oldBb.maxY - oldBb.minY;
+    const nw = maxX - minX;
+    const nh = maxY - minY;
+    return points.map(p => ({
+      x: minX + ((p.x - oldBb.minX) / ow) * nw,
+      y: minY + ((p.y - oldBb.minY) / oh) * nh
+    }));
+  }
+
   static _setBox(entity, width, height) {
     const bb = entity.getBoundingBox();
     if (!bb) return false;
