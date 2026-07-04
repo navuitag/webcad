@@ -34,7 +34,7 @@ class ThreeRenderer {
     const height = this.container.clientHeight || 600;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x37474f);
+    this.scene.background = new THREE.Color(0xeceff1);
 
     this.materialManager = new MaterialManager3D();
     this.cameraManager = new CameraManager3D(this.container);
@@ -53,8 +53,8 @@ class ThreeRenderer {
     this.section = new SectionEngine3D(this.renderer, this.scene);
     this.viewer = new Viewer3D(this);
 
-    this.gridHelper = new THREE.GridHelper(30, 30, 0x4fc3f7, 0x1a3a5c);
-    this.gridHelper.material.opacity = 0.25;
+    this.gridHelper = new THREE.GridHelper(30, 30, 0x90caf9, 0xcfd8dc);
+    this.gridHelper.material.opacity = 0.45;
     this.gridHelper.material.transparent = true;
     this.scene.add(this.gridHelper);
 
@@ -88,7 +88,7 @@ class ThreeRenderer {
     this.renderer.setSize(width, height);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.28;
     this.backend = 'webgl2';
     console.info('WebCAD 3D: WebGLRenderer active');
   }
