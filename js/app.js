@@ -198,16 +198,29 @@ class WebCADApp {
     });
 
     document.querySelectorAll('.menu-dropdown').forEach(dropdown => {
-      dropdown.querySelector('.menu-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.querySelectorAll('.menu-dropdown').forEach(d => {
-          if (d !== dropdown) d.classList.remove('open');
+      const btn = dropdown.querySelector('.menu-btn');
+      if (!btn) return;
+
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        dropdown.addEventListener('mouseenter', () => {
+          document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('open'));
+          dropdown.classList.add('open');
         });
-        dropdown.classList.toggle('open');
-      });
+        dropdown.addEventListener('mouseleave', () => {
+          dropdown.classList.remove('open');
+        });
+      } else {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = dropdown.classList.contains('open');
+          document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('open'));
+          if (!isOpen) dropdown.classList.add('open');
+        });
+      }
     });
 
-    document.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.menu-dropdown')) return;
       document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('open'));
     });
 
@@ -216,6 +229,9 @@ class WebCADApp {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         this._handleMenuAction(btn.dataset.action);
+        if (btn.closest('.dropdown-content')) {
+          document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('open'));
+        }
       });
     });
 
