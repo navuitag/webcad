@@ -2312,13 +2312,18 @@ class WebCADApp {
 
   _resize() {
     const container = this.canvasContainer;
+    if (!container) return;
     const w = container.clientWidth;
     const h = container.clientHeight;
-    this.renderer2D.resize(w, h);
-    if (this.renderer3D.initialized) {
+    if (this.renderer2D?.resize) {
+      this.renderer2D.resize(w, h);
+    }
+    if (this.renderer3D?.initialized) {
       this.renderer3D.resize(w, h);
     }
-    this.requestRender();
+    if (this._ready) {
+      this.requestRender();
+    }
   }
 }
 
