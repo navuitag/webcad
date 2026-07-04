@@ -47,7 +47,7 @@ class FeaturesHub {
 
   furnishRoom(roomId, styleId) {
     const r = InteriorSceneGenerator.furnishRoom(this.app, roomId, styleId);
-    InteriorCollabEngine.broadcast(this.app, 'furnishAll', { styleId, roomId });
+    InteriorCollabEngine.broadcast(this.app, 'furnishRoom', { styleId, roomId });
     return r;
   }
 

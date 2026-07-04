@@ -36,6 +36,9 @@ class InteriorCollabEngine {
       case 'furnishAll':
         InteriorSceneGenerator.furnishAll(app, payload.styleId);
         break;
+      case 'furnishRoom':
+        InteriorSceneGenerator.furnishRoom(app, payload.roomId, payload.styleId);
+        break;
       case 'applyDecorTemplate':
         InteriorDecorTemplates.apply(app, payload.templateId);
         break;
@@ -46,6 +49,7 @@ class InteriorCollabEngine {
         InteriorBimEngine.scanDrawing(app);
         break;
       case 'saveCloud':
+        app.logCommand?.(`Collab: ${who} đã lưu scene "${payload.name || 'nội thất'}" — tải thủ công từ Cloud Library nếu cần.`);
         break;
       default:
         return;

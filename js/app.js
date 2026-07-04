@@ -159,8 +159,8 @@ class WebCADApp {
     this._archTemplateCategory = 'house';
   }
 
-  startInsertTemplate(id) {
-    this.tools['insert-template'].setTemplate(id);
+  startInsertTemplate(id, commercialId) {
+    this.tools['insert-template'].setTemplate(id, commercialId);
     this.setTool('insert-template');
   }
 
@@ -1536,6 +1536,7 @@ class WebCADApp {
       collabChk.checked = InteriorCollabEngine.isEnabled();
       collabChk.addEventListener('change', () => {
         const r = this.features.setInteriorCollabEnabled(collabChk.checked);
+        this.updateCollabStatus();
         this.logCommand(r.message);
       });
     }
@@ -1569,6 +1570,17 @@ class WebCADApp {
         const out = document.getElementById('interior-report');
         if (out) out.textContent = r.link;
       }
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-delete-interior-cloud')?.addEventListener('click', () => {
+      const id = document.getElementById('interior-cloud-select')?.value;
+      if (!id) { this.logCommand('Chọn scene cần xóa.'); return; }
+      if (!confirm('Xóa scene khỏi Cloud Library?')) return;
+      const r = this.features.deleteInteriorCloud(id);
+      const out = document.getElementById('interior-report');
+      if (out) out.textContent = r.message;
+      this._updateInteriorCloudSelect();
       this.logCommand(r.message);
     });
 
@@ -1643,9 +1655,11 @@ class WebCADApp {
     const styleId = document.getElementById('interior-style-select')?.value;
     grid.innerHTML = '';
     const filter = { category: this._interiorAssetCategory === 'all' ? null : this._interiorAssetCategory, style: styleId };
+    const commercial = this.features.listCommercialAssets(filter);
+    const commercialBlockIds = new Set(commercial.map(a => a.id));
     const assets = [
-      ...this.features.listInteriorAssets(filter),
-      ...this.features.listCommercialAssets(filter)
+      ...this.features.listInteriorAssets(filter).filter(a => !commercialBlockIds.has(a.id)),
+      ...commercial
     ];
     for (const a of assets) {
       const btn = document.createElement('button');
@@ -1655,12 +1669,7 @@ class WebCADApp {
       btn.innerHTML = `<span class="feature-tile-icon">${a.icon || '📦'}</span><span class="feature-tile-name">${a.name}${badge}</span>`;
       btn.title = `${a.name}${a.brand ? ' — ' + a.brand : ''} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
       btn.addEventListener('click', () => {
-        if (a.isCommercial && a.commercialId) {
-          this.features.startInsertTemplate(a.id);
-          this._pendingCommercialId = a.commercialId;
-        } else {
-          this.features.startInsertInteriorAsset(a.id);
-        }
+        this.startInsertTemplate(a.id, a.isCommercial ? a.commercialId : null);
         this.logCommand(`Chèn nội thất: ${a.name} (R = xoay)`);
       });
       grid.appendChild(btn);
@@ -1725,7 +1734,7 @@ class WebCADApp {
       btn.innerHTML = `<span class="feature-tile-icon">${a.icon}</span><span class="feature-tile-name">${a.name}</span>`;
       btn.title = `${a.brand} — ${a.license} — ${InteriorEstimationEngine.formatVnd(a.price)}`;
       btn.addEventListener('click', () => {
-        this.features.startInsertInteriorAsset(a.id);
+        this.startInsertTemplate(a.id, a.commercialId);
         this.logCommand(`Chèn thương mại: ${a.name}`);
       });
       grid.appendChild(btn);
@@ -1862,12 +1871,20 @@ class WebCADApp {
 
   updateCollabStatus() {
     const status = this.collaboration.getStatus();
+    const interior = typeof InteriorCollabEngine !== 'undefined'
+      ? InteriorCollabEngine.getStatus(this) : null;
     const dot = document.getElementById('collab-dot');
     const text = document.getElementById('collab-status-text');
     const bar = document.getElementById('status-collab');
     if (dot) dot.classList.toggle('active', status.connected);
-    if (text) text.textContent = status.wsActive ? 'WebSocket' : (status.connected ? 'Tab sync' : 'Offline');
-    if (bar) bar.textContent = `Collab: ${status.connected ? 'ON' : 'OFF'}`;
+    if (text) {
+      const mode = status.wsActive ? 'WebSocket' : (status.connected ? 'Tab sync' : 'Offline');
+      text.textContent = interior?.interiorCollab ? `${mode} + NT` : mode;
+    }
+    if (bar) {
+      const base = status.connected ? 'ON' : 'OFF';
+      bar.textContent = interior?.interiorCollab ? `Collab: ${base} (NT)` : `Collab: ${base}`;
+    }
   }
 
   updateToolInfo(text) {

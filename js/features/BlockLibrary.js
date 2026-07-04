@@ -790,13 +790,15 @@ class InsertTemplateTool extends Tool {
     this.rotation = 0;
   }
 
-  setTemplate(id) {
+  setTemplate(id, commercialId) {
     this.templateId = id;
+    this.commercialId = commercialId || null;
     this.rotation = 0;
   }
 
   activate() {
     super.activate();
+    if (!this.commercialId) this.commercialId = null;
     this.rotation = 0;
     this.app.updateToolInfo(this.getPrompt());
   }
@@ -831,10 +833,21 @@ class InsertTemplateTool extends Tool {
       return;
     }
     const snap = this._getSnappedPos(worldPos);
-    const r = BlockLibrary.insert(this.app, this.templateId, { x: snap.x, y: snap.y }, {
-      rotation: this.rotation
-    });
-    if (r.success) this.app.logCommand(`Đã chèn: ${r.name}`);
+    const styleId = this.app.drawing.metadata?.interiorStyle;
+    let r;
+    if (this.commercialId && typeof InteriorCommercialAssets !== 'undefined') {
+      r = InteriorCommercialAssets.insert(this.app, this.commercialId, { x: snap.x, y: snap.y }, {
+        rotation: this.rotation,
+        styleId
+      });
+    } else {
+      r = BlockLibrary.insert(this.app, this.templateId, { x: snap.x, y: snap.y }, {
+        rotation: this.rotation,
+        styleId
+      });
+    }
+    if (r.success) this.app.logCommand(r.message || `Đã chèn: ${r.name || this.templateId}`);
+    this.commercialId = null;
     this.app.setTool('select');
   }
 
