@@ -805,8 +805,9 @@ class InsertTemplateTool extends Tool {
 
   getPrompt() {
     const name = BlockLibrary.templates[this.templateId]?.name || 'mẫu';
-    const deg = Math.round((this.rotation * 180) / Math.PI) % 360;
-    return `CHÈN: Click đặt "${name}". R = xoay 90° (${deg}°). Esc = hủy.`;
+    let deg = Math.round((this.rotation * 180) / Math.PI) % 360;
+    if (deg < 0) deg += 360;
+    return `CHÈN: Click đặt "${name}". R = +90°. [ / ] = -/+5° (giữ Shift: 1°). Góc: ${deg}°. Esc = hủy.`;
   }
 
   onMouseMove(e, worldPos) {
@@ -853,10 +854,23 @@ class InsertTemplateTool extends Tool {
 
   onKeyDown(e) {
     if (e.key === 'Escape') this.app.setTool('select');
+
     if (e.key === 'r' || e.key === 'R') {
-      this.rotation = (this.rotation + Math.PI / 2) % (Math.PI * 2);
-      this.app.updateToolInfo(this.getPrompt());
-      this.app.requestRender();
+      this.rotation += Math.PI / 2;
+    } else if (e.key === '[' || e.key === '{') {
+      const step = e.shiftKey ? (Math.PI / 180) : (5 * Math.PI / 180);
+      this.rotation -= step;
+    } else if (e.key === ']' || e.key === '}') {
+      const step = e.shiftKey ? (Math.PI / 180) : (5 * Math.PI / 180);
+      this.rotation += step;
+    } else {
+      return;
     }
+
+    const full = Math.PI * 2;
+    this.rotation = ((this.rotation % full) + full) % full;
+
+    this.app.updateToolInfo(this.getPrompt());
+    this.app.requestRender();
   }
 }
