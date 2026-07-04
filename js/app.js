@@ -771,6 +771,10 @@ class WebCADApp {
         this._selectAll();
         return;
       }
+      if (e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        if (this._quickDuplicateSelection()) return;
+      }
       if (e.key === '/' && this._aiShortcutEnabled !== false) {
         e.preventDefault();
         document.getElementById('ai-input')?.focus();
@@ -1897,6 +1901,28 @@ class WebCADApp {
     if (!this.renderer3D?.initialized) return;
     const ids = this.selectionManager3D.getSelected().map(e => e.id);
     this.renderer3D.setSelection(ids);
+  }
+
+  _quickDuplicateSelection() {
+    if (!this._ready || !this.cadCore || this.mode === '3d') return false;
+    const selected = this.selectionManager.getSelected();
+    if (!selected.length) return false;
+
+    const unit = this.drawing.worldUnit || this.drawing.unit || 'mm';
+    const baseOffset = UnitEngine.fromDisplay(20, 'cm', unit);
+    const dx = Number.isFinite(baseOffset) ? baseOffset : 20;
+    const dy = Number.isFinite(baseOffset) ? baseOffset : 20;
+
+    const result = this.cadCore.run('COPY', { entities: [...selected], dx, dy });
+    if (!result?.success || !result.entities?.length) return false;
+
+    this.selectionManager.clearSelection();
+    for (const e of result.entities) this.selectionManager.select(e, true);
+    this.updatePropertiesPanel();
+    this.updateStatusBar();
+    this.requestRender();
+    this.logCommand(`Đã duplicate nhanh ${result.entities.length} đối tượng (Ctrl/Cmd + D).`);
+    return true;
   }
 
   _deleteSelection() {
