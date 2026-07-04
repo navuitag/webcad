@@ -257,6 +257,10 @@ html, body {
   cursor: crosshair;
 }
 
+body.mode-planner .canvas-container {
+  box-shadow: inset 0 0 0 2px rgba(107, 140, 206, 0.55);
+}
+
 #canvas-2d {
   display: block;
   width: 100%;

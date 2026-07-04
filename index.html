@@ -144,8 +144,9 @@
         <div class="menu-dropdown">
           <button class="menu-btn" data-menu="mode">Chế độ</button>
           <div class="dropdown-content" id="menu-mode">
-            <button data-action="mode-2d" class="active">2D</button>
-            <button data-action="mode-3d">3D</button>
+            <button data-action="mode-2d" class="active">CAD 2D</button>
+            <button data-action="mode-planner">Planner</button>
+            <button data-action="mode-3d">Render 3D</button>
           </div>
         </div>
       </nav>
@@ -323,6 +324,29 @@
         </div>
         <div class="panel-section features-panel">
           <h3>Tính năng nổi bật</h3>
+          <h4 class="feature-subtitle">CAD → Planner</h4>
+          <p class="feature-hint">Chuyển bản vẽ CAD sang không gian thiết kế nội thất (Planner 5D / Homestyler)</p>
+          <div class="feature-row">
+            <label>Loại dự án</label>
+            <select id="planner-space-type" class="feature-select">
+              <option value="apartment">Căn hộ</option>
+              <option value="homestay">Homestay</option>
+              <option value="hotel">Khách sạn</option>
+              <option value="restaurant">Nhà hàng</option>
+              <option value="cafe">Quán cà phê</option>
+              <option value="teahouse">Phòng trà</option>
+              <option value="showroom">Showroom</option>
+            </select>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-convert-planner" class="feature-btn feature-btn-accent">Chuyển sang Planner</button>
+            <button type="button" id="btn-planner-semantic" class="feature-btn">Phân tích Semantic</button>
+          </div>
+          <div class="feature-row feature-row-btns">
+            <button type="button" id="btn-planner-mode" class="feature-btn">Chế độ Planner</button>
+            <button type="button" id="btn-planner-render" class="feature-btn">Render 3D</button>
+          </div>
+          <pre id="planner-report" class="qa-report"></pre>
           <div class="feature-row">
             <label>Rộng × Sâu (m)</label>
             <div class="feature-dims">
@@ -465,8 +489,9 @@
         <div class="crosshair-h" id="crosshair-h"></div>
         <div class="crosshair-v" id="crosshair-v"></div>
         <div class="canvas-mode-toggle" id="canvas-mode-toggle" role="group" aria-label="Chế độ xem">
-          <button type="button" class="mode-toggle-btn active" data-action="mode-2d" title="Chế độ 2D">2D</button>
-          <button type="button" class="mode-toggle-btn" data-action="mode-3d" title="Chế độ 3D">3D</button>
+          <button type="button" class="mode-toggle-btn active" data-action="mode-2d" title="Chế độ CAD 2D">CAD</button>
+          <button type="button" class="mode-toggle-btn" data-action="mode-planner" title="Chế độ Planner">Planner</button>
+          <button type="button" class="mode-toggle-btn" data-action="mode-3d" title="Render 3D">3D</button>
         </div>
         <div class="canvas-view-toolbar" id="canvas-view-toolbar" role="toolbar" aria-label="Xem">
           <button type="button" class="view-toolbar-btn" data-action="zoom-in" title="Phóng to">
@@ -717,6 +742,11 @@
   <script src="js/features/TechnicalPdfEngine.js"></script>
   <script src="js/features/ModeConversionEngine.js"></script>
   <script src="js/features/PlanConversionEngine.js"></script>
+  <script src="js/features/planner/SemanticEngine.js"></script>
+  <script src="js/features/planner/PlannerRoomDetector.js"></script>
+  <script src="js/features/planner/PlannerTemplateEngine.js"></script>
+  <script src="js/features/planner/PlannerConversionEngine.js"></script>
+  <script src="js/features/planner/PlannerEngine.js"></script>
   <script src="js/ai/AiDrawingEngine.js"></script>
   <script src="js/ai/AiVisionEngine.js"></script>
   <script src="js/features/FeaturesHub.js"></script>

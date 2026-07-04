@@ -453,6 +453,7 @@ class WebCADApp {
       'toggle-snap': () => this.toggleSnap(),
       'toggle-dimensions': () => this.toggleDimensions(),
       'mode-2d': () => this.setMode('2d'),
+      'mode-planner': () => this.setMode('planner'),
       'mode-3d': () => this.setMode('3d'),
       'block-create': () => this.setTool('block-create'),
       'block-insert': () => this.setTool('block-insert'),
@@ -509,20 +510,26 @@ class WebCADApp {
       name === 'pan' ? 'grab' : name === 'select' ? 'default' : 'crosshair';
   }
 
+  _is2DView() {
+    return this.mode === '2d' || this.mode === 'planner';
+  }
+
   async setMode(mode) {
     this.mode = mode;
-    const is2D = mode === '2d';
+    const is2DView = this._is2DView();
+    const is3D = mode === '3d';
 
-    this.canvas.style.display = is2D ? 'block' : 'none';
-    this.container3D.style.display = is2D ? 'none' : 'block';
-    document.getElementById('toolbar-3d').style.display = is2D ? 'none' : 'flex';
-    document.getElementById('toolbar-2d-extrude')?.style.setProperty('display', is2D ? 'flex' : 'none');
+    this.canvas.style.display = is2DView ? 'block' : 'none';
+    this.container3D.style.display = is3D ? 'block' : 'none';
+    document.getElementById('toolbar-3d').style.display = is3D ? 'flex' : 'none';
+    document.getElementById('toolbar-2d-extrude')?.style.setProperty('display', is2DView ? 'flex' : 'none');
 
-    document.querySelectorAll('[data-action="mode-2d"], [data-action="mode-3d"]').forEach(btn => {
+    document.querySelectorAll('[data-action="mode-2d"], [data-action="mode-planner"], [data-action="mode-3d"]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.action === `mode-${mode}`);
     });
+    document.body.classList.toggle('mode-planner', mode === 'planner');
 
-    if (!is2D) {
+    if (is3D) {
       const sync = ModeConversionEngine.onEnter3D(this);
       if (sync.created || sync.updated) {
         this.logCommand(`2D→3D: ${sync.created} mới, ${sync.updated} cập nhật.`);
@@ -538,7 +545,7 @@ class WebCADApp {
       this._update3DPanel();
       if (this.drawing.entities3D.length > 0) this.renderer3D.fitView();
       this._update3DSelectionHighlight();
-    } else {
+    } else if (is2DView) {
       this.renderer3D.setLoopActive(false);
       const sync = ModeConversionEngine.onEnter2D(this);
       if (sync.created || sync.updated) {
@@ -548,7 +555,8 @@ class WebCADApp {
       this.requestRender();
     }
 
-    document.getElementById('status-mode').textContent = mode.toUpperCase();
+    const statusLabel = mode === 'planner' ? 'PLANNER' : mode.toUpperCase();
+    document.getElementById('status-mode').textContent = statusLabel;
     const backend = this.renderer3D.initialized ? this.renderer3D.backend.toUpperCase() : '';
     document.getElementById('status-3d-backend').textContent = backend ? `3D: ${backend}` : '';
     this.requestRender();
@@ -656,7 +664,7 @@ class WebCADApp {
   }
 
   _onMouseDown(e) {
-    if (this.mode !== '2d') return;
+    if (!this._is2DView()) return;
     if (e.button === 1) {
       this._panStart = { x: e.clientX, y: e.clientY };
       return;
@@ -689,7 +697,7 @@ class WebCADApp {
       return;
     }
 
-    if (this.mode === '2d' && this.currentTool) {
+    if (this._is2DView() && this.currentTool) {
       this.currentTool.onMouseMove(e, worldPos);
     }
   }
@@ -699,7 +707,7 @@ class WebCADApp {
       this._panStart = null;
       return;
     }
-    if (this.mode !== '2d') return;
+    if (!this._is2DView()) return;
     const worldPos = this._getWorldPos(e);
     if (this.currentTool) {
       this.currentTool.onMouseUp(e, worldPos);
@@ -1184,6 +1192,7 @@ class WebCADApp {
     this._renderArchTemplateLibrary();
     this._renderArchDrawGrid();
     this._initInteriorPanel();
+    this._initPlannerPanel();
     const sketchInput = document.getElementById('sketch-input');
     if (sketchInput) {
       sketchInput.addEventListener('change', async (e) => {
@@ -1625,6 +1634,51 @@ class WebCADApp {
     if (current && decorSel.querySelector(`option[value="${current}"]`)) {
       decorSel.value = current;
     }
+  }
+
+  _initPlannerPanel() {
+    if (!this.features || typeof PlannerEngine === 'undefined') return;
+
+    document.getElementById('btn-convert-planner')?.addEventListener('click', () => {
+      const spaceType = document.getElementById('planner-space-type')?.value || 'apartment';
+      const w = parseFloat(document.getElementById('land-width')?.value) || 8;
+      const d = parseFloat(document.getElementById('land-depth')?.value) || 12;
+      const r = this.features.convertToPlanner({
+        spaceType,
+        width: w,
+        depth: d,
+        createRooms: true,
+        useDecorTemplate: false
+      });
+      const out = document.getElementById('planner-report');
+      if (out) {
+        const body = [r.message, ...(r.reports || []), r.steps?.length ? 'Pipeline: ' + r.steps.join(' → ') : ''].filter(Boolean);
+        out.textContent = body.join('\n\n');
+      }
+      this.logCommand(r.message);
+      if (r.success) {
+        this.features.enterPlannerMode();
+        if (r.rooms?.length) this._updateInteriorRoomSelect(r.rooms);
+      }
+    });
+
+    document.getElementById('btn-planner-semantic')?.addEventListener('click', () => {
+      const r = this.features.analyzePlannerSemantic();
+      const out = document.getElementById('planner-report');
+      if (out) out.textContent = r.report || r.message || '';
+      this.logCommand('Phân tích semantic CAD.');
+    });
+
+    document.getElementById('btn-planner-mode')?.addEventListener('click', () => {
+      const r = this.features.enterPlannerMode();
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-planner-render')?.addEventListener('click', async () => {
+      const styleId = document.getElementById('interior-style-select')?.value;
+      const r = await this.features.enterPlannerRenderMode(styleId);
+      this.logCommand(r.message);
+    });
   }
 
   _updateInteriorRoomSelect(rooms = []) {
@@ -2328,7 +2382,7 @@ class WebCADApp {
     this.renderScheduled = true;
     requestAnimationFrame(() => {
       this.renderScheduled = false;
-      if (this.mode === '2d' && this.renderer2D && this.cadCore) {
+      if (this._is2DView() && this.renderer2D && this.cadCore) {
         this.renderer2D.render(
           this.drawing, this.layerManager,
           this.selectionManager, this.snapEngine,

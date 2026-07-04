@@ -191,6 +191,32 @@ class FeaturesHub {
     return InteriorCollabEngine.getStatus(this.app);
   }
 
+  /** CAD → Planner Engine (CAD_TO_PLANNER_SDD) */
+  convertToPlanner(options) {
+    return PlannerEngine.convertToPlanner(this.app, options);
+  }
+
+  analyzePlannerSemantic() {
+    return PlannerEngine.analyzeSemantic(this.app);
+  }
+
+  detectPlannerRooms(options) {
+    return PlannerEngine.detectRooms(this.app, options);
+  }
+
+  enterPlannerMode() {
+    return PlannerEngine.enterPlannerMode(this.app);
+  }
+
+  async enterPlannerRenderMode(styleId) {
+    return PlannerEngine.enterRenderMode(this.app, styleId);
+  }
+
+  getPlannerWorkflow() {
+    const wf = PlannerEngine.getWorkflow(this.app);
+    return { ...wf, report: PlannerEngine.formatWorkflow(wf) };
+  }
+
   setInteriorCollabEnabled(on) {
     InteriorCollabEngine.setEnabled(on);
     return { success: true, enabled: on, message: on ? 'Đã bật collab nội thất realtime.' : 'Đã tắt collab nội thất.' };

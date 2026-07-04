@@ -179,6 +179,37 @@ class AiDrawingEngine {
       return { success: items.length > 0, message: `Studio All Access: ${items.length} tài sản thương mại.` };
     }
 
+    // CAD → Planner (CAD_TO_PLANNER_SDD)
+    if (typeof PlannerEngine !== 'undefined') {
+      if (s.match(/(?:chuyen|convert)\s*(?:sang\s*)?planner|cad\s*(?:->|→)\s*planner/)) {
+        const spaceMatch = s.match(/homestay|hotel|restaurant|cafe|teahouse|showroom|apartment/);
+        const wEl = document.getElementById('land-width');
+        const dEl = document.getElementById('land-depth');
+        const r = PlannerEngine.convertToPlanner(app, {
+          spaceType: spaceMatch?.[0] || 'apartment',
+          width: parseFloat(wEl?.value) || 8,
+          depth: parseFloat(dEl?.value) || 12
+        });
+        if (r.success) PlannerEngine.enterPlannerMode(app);
+        return {
+          success: r.success,
+          message: r.message + (r.steps?.length ? '\n' + r.steps.join(' → ') : '')
+        };
+      }
+      if (s.match(/che\s*do\s*planner|planner\s*mode|vao\s*planner/)) {
+        const r = PlannerEngine.enterPlannerMode(app);
+        return { success: r.success, message: r.message };
+      }
+      if (s.match(/planner\s*render|render\s*planner|render\s*3d\s*planner/)) {
+        const styleMatch = s.match(/indochine|japandi|scandinavian|minimalist|modern|tropical|wabi|luxury/);
+        return PlannerEngine.enterRenderMode(app, styleMatch?.[0]);
+      }
+      if (s.match(/semantic|phan\s*tich\s*semantic/)) {
+        const r = PlannerEngine.analyzeSemantic(app);
+        return { success: true, message: r.report };
+      }
+    }
+
     // Interior Design Module
     if (s.match(/(?:phat\s*hien|detect)\s*phong/)) {
       const r = InteriorEngine.detectRooms(app);
@@ -241,7 +272,8 @@ class AiDrawingEngine {
       'Cài Furniture Plugin Marketplace',
       'Lưu scene Cloud Library',
       'Bật collab nội thất',
-      'Phát hiện phòng',
+      'Chuyển sang Planner',
+      'Phân tích semantic',
       'Chèn cửa sổ lùa',
       'Tự động ghi kích thước',
       'Kiểm tra lỗi bản vẽ',
