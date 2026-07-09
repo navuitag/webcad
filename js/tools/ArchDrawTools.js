@@ -93,8 +93,8 @@ class WallTool extends Tool {
 
   getPrompt() {
     return this.step === 0
-      ? 'TƯỜNG: Chọn điểm đầu.'
-      : 'TƯỜNG: Chọn điểm cuối hoặc gõ chiều dài + Enter (Enter/Esc kết thúc).';
+      ? 'TƯỜNG 100mm · cao 2.7m: Chọn điểm đầu.'
+      : 'TƯỜNG 100mm · cao 2.7m: Chọn điểm cuối hoặc gõ chiều dài + Enter (Enter/Esc kết thúc).';
   }
 
   _showPreview(end) {
@@ -227,7 +227,7 @@ class RoundColumnTool extends Tool {
   }
 
   getPrompt() {
-    return this.step === 0 ? 'CỘT TRÒN: Chọn tâm.' : 'CỘT TRÒN: Chọn bán kính hoặc gõ R + Enter.';
+    return this.step === 0 ? 'CỘT TRÒN · cao 2.7m: Chọn tâm.' : 'CỘT TRÒN · cao 2.7m: Chọn bán kính hoặc gõ R + Enter.';
   }
 
   _showPreview(radius) {
@@ -272,7 +272,7 @@ class RoundColumnTool extends Tool {
 
 const ArchDrawTools = {
   createRoomTool(app) {
-    return new ArchRectDrawTool(app, 'room', 'PHÒNG', ArchDrawEngine.createRoom, { areaPrefix: 'S' });
+    return new ArchRectDrawTool(app, 'room', 'PHÒNG · tường 100mm · cao 2.7m', ArchDrawEngine.createRoom, { areaPrefix: 'S' });
   },
   createOpenFloorTool(app) {
     return new ArchRectDrawTool(app, 'open-floor', 'SÀN MỞ', ArchDrawEngine.createOpenFloor, { areaPrefix: 'S' });
@@ -281,6 +281,6 @@ const ArchDrawTools = {
     return new ArchRectDrawTool(app, 'open-ceiling', 'TRẦN MỞ', ArchDrawEngine.createOpenCeiling, { areaPrefix: 'T' });
   },
   createColumnTool(app) {
-    return new ArchRectDrawTool(app, 'column', 'CỘT', ArchDrawEngine.createColumn);
+    return new ArchRectDrawTool(app, 'column', 'CỘT · cao 2.7m', ArchDrawEngine.createColumn);
   }
 };

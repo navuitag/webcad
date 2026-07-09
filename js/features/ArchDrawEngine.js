@@ -4,7 +4,8 @@
  */
 class ArchDrawEngine {
   static DEFAULTS = {
-    wallThickness: 0.15,
+    wallThickness: 0.10,
+    apartmentFloorHeight: 2.7,
     columnSize: 0.4,
     columnRadius: 0.2,
     labelColor: '#90caf9'
@@ -79,7 +80,14 @@ class ArchDrawEngine {
       fillOpacity: 0.72
     });
     wall.archType = 'wall';
+    wall.wallThickness = thickness || ArchDrawEngine.DEFAULTS.wallThickness;
+    ArchDrawEngine.applyApartmentHeight(wall);
     return wall;
+  }
+
+  static applyApartmentHeight(entity, height = ArchDrawEngine.DEFAULTS.apartmentFloorHeight) {
+    entity.floorHeight = height;
+    return entity;
   }
 
   static _edgeWalls(layerId, b, thickness) {
@@ -188,6 +196,7 @@ class ArchDrawEngine {
       fillOpacity: 0.58
     });
     floor.archType = 'room-fill';
+    floor.wallThickness = t;
     const label = ArchDrawEngine.createAreaLabel(layerId, b.cx, b.cy, b.area, 'S', ArchDrawEngine._unitOpts(app));
     const entities = [...walls, floor, label];
     if (opts.name) {
@@ -264,6 +273,7 @@ class ArchDrawEngine {
       fillOpacity: 0.82
     });
     col.archType = 'column';
+    ArchDrawEngine.applyApartmentHeight(col);
     const outline = ArchDrawEngine.rectOutline(layerId, b.minX, b.minY, b.maxX, b.maxY, {
       color: ArchPlanStyle.COLORS.column,
       lineWidth: 2,
@@ -288,6 +298,7 @@ class ArchDrawEngine {
       fillOpacity: 0.82
     });
     fill.archType = 'round-column';
+    ArchDrawEngine.applyApartmentHeight(fill);
     const outer = new CircleEntity(layerId, cx, cy, r);
     ArchPlanStyle.mark(outer, 'column', {
       color: ArchPlanStyle.COLORS.column,

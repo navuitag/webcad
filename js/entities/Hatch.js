@@ -116,7 +116,10 @@ class HatchEntity extends Entity {
       planView: this.planView,
       planRole: this.planRole,
       planFillOpacity: this.planFillOpacity,
-      archType: this.archType
+      archType: this.archType,
+      wallThickness: this.wallThickness,
+      floorHeight: this.floorHeight,
+      extrudeHeight: this.extrudeHeight
     };
   }
 
@@ -129,6 +132,9 @@ class HatchEntity extends Entity {
     h.planRole = data.planRole;
     h.planFillOpacity = data.planFillOpacity;
     h.archType = data.archType;
+    h.wallThickness = data.wallThickness;
+    h.floorHeight = data.floorHeight;
+    h.extrudeHeight = data.extrudeHeight;
     return h;
   }
 }

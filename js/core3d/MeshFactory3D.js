@@ -128,7 +128,7 @@ class MeshFactory3D {
   static _lineExtrudeThickness(entity2d, worldUnit = 'm') {
     if (entity2d.extrudeWidth != null && entity2d.extrudeWidth > 0) return entity2d.extrudeWidth;
     if (entity2d.wallThickness != null && entity2d.wallThickness > 0) return entity2d.wallThickness;
-    const meters = entity2d.archType === 'wall' || entity2d.planRole === 'wall' ? 0.15 : 0.08;
+    const meters = entity2d.archType === 'wall' || entity2d.planRole === 'wall' ? 0.10 : 0.08;
     if (worldUnit === 'mm') return meters * 1000;
     if (worldUnit === 'cm') return meters * 100;
     if (worldUnit === 'in') return meters * 39.3701;

@@ -2,24 +2,24 @@
  * ModeConversionEngine — tự động chuyển đổi 2D ↔ 3D khi đổi chế độ xem
  */
 class ModeConversionEngine {
-  static DEFAULT_EXTRUDE_HEIGHT_M = 2.8;
+  static DEFAULT_EXTRUDE_HEIGHT_M = 2.7;
 
   static ARCH_HEIGHTS_M = {
-    wall: 2.8,
-    column: 2.8,
+    wall: 2.7,
+    column: 2.7,
     'room-fill': 0.12,
     floor: 0.15,
     ceiling: 0.1,
     landscape: 0.05,
     site: 0.02,
-    'round-column': 2.8,
+    'round-column': 2.7,
     'open-floor': 0.15,
     'open-ceiling': 0.1
   };
 
   static PLAN_ROLE_HEIGHTS_M = {
-    wall: 2.8,
-    column: 2.8,
+    wall: 2.7,
+    column: 2.7,
     'room-floor': 0.12,
     floor: 0.15,
     ceiling: 0.1,
@@ -129,14 +129,16 @@ class ModeConversionEngine {
   static _getHeight(e2, worldUnit = 'm') {
     let hM = null;
 
-    if (e2.archType != null && ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType] != null) {
+    if (e2.extrudeHeight != null && e2.extrudeHeight > 0) {
+      return e2.extrudeHeight;
+    } else if (e2.floorHeight != null && e2.floorHeight > 0) {
+      hM = e2.floorHeight;
+    } else if (e2.archType != null && ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType] != null) {
       hM = ModeConversionEngine.ARCH_HEIGHTS_M[e2.archType];
     } else if (e2.planRole && ModeConversionEngine.PLAN_ROLE_HEIGHTS_M[e2.planRole] != null) {
       hM = ModeConversionEngine.PLAN_ROLE_HEIGHTS_M[e2.planRole];
     } else if (e2.landscapeKind) {
       hM = ModeConversionEngine.ARCH_HEIGHTS_M.landscape;
-    } else if (e2.extrudeHeight != null && e2.extrudeHeight > 0) {
-      return e2.extrudeHeight;
     } else {
       hM = ModeConversionEngine.DEFAULT_EXTRUDE_HEIGHT_M;
     }
