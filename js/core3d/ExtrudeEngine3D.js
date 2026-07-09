@@ -1,6 +1,8 @@
 class ExtrudeEngine3D {
   static from2DEntity(entity2d, height = 1, options = {}) {
-    const raw = MeshFactory3D.profileFrom2DEntity(entity2d);
+    const raw = MeshFactory3D.profileFrom2DEntity(entity2d, {
+      worldUnit: options.worldUnit || options.app?.drawing?.worldUnit || options.app?.drawing?.unit
+    });
     if (!raw) return null;
 
     const { profile, center } = MeshFactory3D.centerProfile(raw);

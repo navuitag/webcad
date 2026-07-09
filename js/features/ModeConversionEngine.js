@@ -46,7 +46,7 @@ class ModeConversionEngine {
         continue;
       }
 
-      const profile = MeshFactory3D.profileFrom2DEntity(e2);
+      const profile = MeshFactory3D.profileFrom2DEntity(e2, { worldUnit });
       if (!profile) {
         stats.skipped++;
         continue;

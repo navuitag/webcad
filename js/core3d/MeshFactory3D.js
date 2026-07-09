@@ -82,8 +82,14 @@ class MeshFactory3D {
     return geo;
   }
 
-  static profileFrom2DEntity(entity2d) {
+  static profileFrom2DEntity(entity2d, options = {}) {
     const mapPt = (p) => ({ x: p.x, y: -p.y });
+    const lineThickness = MeshFactory3D._lineExtrudeThickness(entity2d, options.worldUnit);
+
+    if (entity2d.type === 'LINE') {
+      const pts = MeshFactory3D._segmentProfile(entity2d.start, entity2d.end, lineThickness);
+      return pts ? { points: pts.map(mapPt) } : null;
+    }
 
     if (entity2d.type === 'HATCH' && entity2d.boundary?.length >= 3) {
       return { points: entity2d.boundary.map(mapPt) };
@@ -100,6 +106,10 @@ class MeshFactory3D {
     if (entity2d.type === 'POLYLINE' && entity2d.closed && entity2d.points.length >= 3) {
       return { points: entity2d.points.map(mapPt) };
     }
+    if (entity2d.type === 'POLYLINE' && !entity2d.closed && entity2d.points.length === 2) {
+      const pts = MeshFactory3D._segmentProfile(entity2d.points[0], entity2d.points[1], lineThickness);
+      return pts ? { points: pts.map(mapPt) } : null;
+    }
     if (entity2d.type === 'CIRCLE') {
       const pts = [];
       const n = 32;
@@ -113,5 +123,31 @@ class MeshFactory3D {
       return { points: pts };
     }
     return null;
+  }
+
+  static _lineExtrudeThickness(entity2d, worldUnit = 'm') {
+    if (entity2d.extrudeWidth != null && entity2d.extrudeWidth > 0) return entity2d.extrudeWidth;
+    if (entity2d.wallThickness != null && entity2d.wallThickness > 0) return entity2d.wallThickness;
+    const meters = entity2d.archType === 'wall' || entity2d.planRole === 'wall' ? 0.15 : 0.08;
+    if (worldUnit === 'mm') return meters * 1000;
+    if (worldUnit === 'cm') return meters * 100;
+    if (worldUnit === 'in') return meters * 39.3701;
+    return meters;
+  }
+
+  static _segmentProfile(p1, p2, thickness) {
+    if (!p1 || !p2) return null;
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-9) return null;
+    const ox = (-dy / len) * (thickness / 2);
+    const oy = (dx / len) * (thickness / 2);
+    return [
+      { x: p1.x + ox, y: p1.y + oy },
+      { x: p2.x + ox, y: p2.y + oy },
+      { x: p2.x - ox, y: p2.y - oy },
+      { x: p1.x - ox, y: p1.y - oy }
+    ];
   }
 }

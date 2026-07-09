@@ -66,13 +66,15 @@ class ThreeRenderer {
   }
 
   async _createRenderer(width, height) {
-    if (navigator.gpu) {
+    const preferWebGPU = localStorage.getItem('webcad_enable_webgpu') === '1';
+    if (preferWebGPU && navigator.gpu) {
       try {
         const { WebGPURenderer } = await import('three/webgpu');
         const wgpu = new WebGPURenderer({ antialias: true, alpha: false });
         await wgpu.init();
         wgpu.setPixelRatio(window.devicePixelRatio);
         wgpu.setSize(width, height);
+        if (!wgpu.domElement) throw new Error('WebGPU renderer did not expose a canvas');
         if (wgpu.outputColorSpace !== undefined) {
           wgpu.outputColorSpace = THREE.SRGBColorSpace;
         }

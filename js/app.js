@@ -556,24 +556,42 @@ class WebCADApp {
     document.body.classList.toggle('mode-planner', mode === 'planner');
 
     if (is3D) {
-      const sync = ModeConversionEngine.onEnter3D(this);
-      if (sync.created || sync.updated) {
-        this.logCommand(`2D→3D: ${sync.created} mới, ${sync.updated} cập nhật.`);
-      } else if (this.drawing.entities.length > 0) {
-        this.logCommand('2D→3D: Không có hình kín để extrude (hatch, rectangle, polyline đóng, circle).');
+      try {
+        const sync = ModeConversionEngine.onEnter3D(this);
+        if (sync.created || sync.updated) {
+          this.logCommand(`2D→3D: ${sync.created} mới, ${sync.updated} cập nhật.`);
+        } else if (this.drawing.entities.length > 0) {
+          this.logCommand('2D→3D: Chưa có đối tượng kín hoặc đường đủ dài để extrude.');
+        }
+        await this.renderer3D.init();
+        this.renderer3D.setMaterialPreset('Standard');
+        this.renderer3D.setLightingPreset('studio');
+        this.renderer3D.setCameraMode('perspective');
+        this.renderer3D.setCameraPreset('iso');
+        this.renderer3D.syncEntities(this.drawing.entities3D);
+        this._bind3DEvents();
+        this.renderer3D.setLoopActive(true);
+        this._resize();
+        this._update3DPanel();
+        if (this.drawing.entities3D.length > 0) this.renderer3D.fitView();
+        this._update3DSelectionHighlight();
+      } catch (err) {
+        console.error('3D mode failed:', err);
+        this.mode = '2d';
+        this.canvas.style.display = 'block';
+        this.container3D.style.display = 'none';
+        document.getElementById('toolbar-3d').style.display = 'none';
+        document.getElementById('toolbar-2d-extrude')?.style.setProperty('display', 'flex');
+        document.querySelectorAll('[data-action="mode-2d"], [data-action="mode-planner"], [data-action="mode-3d"]').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.action === 'mode-2d');
+        });
+        document.getElementById('status-mode').textContent = '2D';
+        document.getElementById('status-3d-backend').textContent = '';
+        document.body.classList.remove('mode-planner');
+        this.logCommand(`Không mở được 3D: ${err.message}`);
+        this.requestRender();
+        return;
       }
-      await this.renderer3D.init();
-      this.renderer3D.setMaterialPreset('Standard');
-      this.renderer3D.setLightingPreset('studio');
-      this.renderer3D.setCameraMode('perspective');
-      this.renderer3D.setCameraPreset('iso');
-      this.renderer3D.syncEntities(this.drawing.entities3D);
-      this._bind3DEvents();
-      this.renderer3D.setLoopActive(true);
-      this._resize();
-      this._update3DPanel();
-      if (this.drawing.entities3D.length > 0) this.renderer3D.fitView();
-      this._update3DSelectionHighlight();
     } else if (is2DView) {
       this.renderer3D.setLoopActive(false);
       if (isPlanner && this.currentTool?.name === 'select') {
