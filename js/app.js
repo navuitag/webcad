@@ -18,6 +18,9 @@ class WebCADApp {
     this.aiAssistant = null;
     this.cadViewer = null;
     this.toolbar = null;
+    this.rightRenderer3D = null;
+    this._right3DRefreshTimer = null;
+    this._right3DInitPromise = null;
 
     this.mode = '2d';
     this.currentTool = null;
@@ -51,6 +54,9 @@ class WebCADApp {
 
     this.renderer2D = new CanvasRenderer(this.canvas);
     this.renderer3D = new ThreeRenderer(this.container3D);
+    if (this.right3DContainer) {
+      this.rightRenderer3D = new ThreeRenderer(this.right3DContainer);
+    }
 
     this.platform = new WebCADPlatform(this);
     await this.platform.boot();
@@ -74,6 +80,7 @@ class WebCADApp {
     this._update3DPanel();
     this._initAiPanel();
     this._initFeaturesPanel();
+    this._initRight3DView();
     this._updateOfflineStatus();
     window.addEventListener('online', () => this._updateOfflineStatus());
     window.addEventListener('offline', () => this._updateOfflineStatus());
@@ -105,6 +112,8 @@ class WebCADApp {
     this.toolbar = document.getElementById('toolbar');
     this.crosshairH = document.getElementById('crosshair-h');
     this.crosshairV = document.getElementById('crosshair-v');
+    this.right3DContainer = document.getElementById('right-3d-view');
+    this.right3DStatus = document.getElementById('right-3d-status');
   }
 
   _initTools() {
@@ -735,6 +744,66 @@ class WebCADApp {
     });
   }
 
+  _initRight3DView() {
+    if (!this.rightRenderer3D || !this.right3DContainer) return;
+    document.getElementById('right-3d-refresh-btn')?.addEventListener('click', () => {
+      this._refreshRight3DView({ convert: true, fit: true, immediate: true });
+    });
+    document.getElementById('right-3d-fit-btn')?.addEventListener('click', () => {
+      this._refreshRight3DView({ convert: true, fit: true, immediate: true });
+    });
+    this._refreshRight3DView({ convert: true, fit: true, immediate: true });
+  }
+
+  _scheduleRight3DRefresh(options = {}) {
+    if (!this.rightRenderer3D || !this._ready) return;
+    clearTimeout(this._right3DRefreshTimer);
+    this._right3DRefreshTimer = setTimeout(() => {
+      this._refreshRight3DView(options);
+    }, options.immediate ? 0 : 260);
+  }
+
+  async _ensureRight3DRenderer() {
+    if (!this.rightRenderer3D) return null;
+    if (!this._right3DInitPromise) {
+      this.right3DContainer.innerHTML = '';
+      this._right3DInitPromise = this.rightRenderer3D.init().then(() => {
+        this.rightRenderer3D.setMaterialPreset('Standard');
+        this.rightRenderer3D.setLightingPreset('studio');
+        this.rightRenderer3D.setCameraMode('perspective');
+        this.rightRenderer3D.setCameraPreset('iso');
+        this.rightRenderer3D.setLoopActive(true);
+        return this.rightRenderer3D;
+      });
+    }
+    return this._right3DInitPromise;
+  }
+
+  async _refreshRight3DView(options = {}) {
+    if (!this.rightRenderer3D || !this.right3DContainer) return;
+    try {
+      const renderer = await this._ensureRight3DRenderer();
+      if (!renderer) return;
+      if (options.convert !== false) ModeConversionEngine.onEnter3D(this);
+      const w = this.right3DContainer.clientWidth || 240;
+      const h = this.right3DContainer.clientHeight || 160;
+      renderer.resize(w, h);
+      renderer.syncEntities(this.drawing.entities3D);
+      if (options.fit || !this._right3DFitted) {
+        if (this.drawing.entities3D.length > 0) renderer.fitView();
+        this._right3DFitted = true;
+      }
+      renderer.render();
+      if (this.right3DStatus) {
+        this.right3DStatus.textContent = this.drawing.entities3D.length
+          ? `${this.drawing.entities3D.length} khối · ${renderer.backend.toUpperCase()}`
+          : 'Chưa có khối 3D';
+      }
+    } catch (err) {
+      if (this.right3DStatus) this.right3DStatus.textContent = `3D lỗi: ${err.message}`;
+    }
+  }
+
   _getWorldPos(e) {
     const rect = this.canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
@@ -988,6 +1057,8 @@ class WebCADApp {
     if (this.renderer3D?.initialized) {
       this.renderer3D.syncEntities(this.drawing.entities3D);
     }
+    this._right3DFitted = false;
+    this._scheduleRight3DRefresh({ convert: true, fit: true });
     this.updateStatusBar();
     this.updateDrawingTitleUI();
     this._refreshProjectPanel();
@@ -1093,6 +1164,8 @@ class WebCADApp {
     if (this.renderer3D.initialized) {
       this.renderer3D.syncEntities(this.drawing.entities3D);
     }
+    this._right3DFitted = false;
+    this._scheduleRight3DRefresh({ convert: true, fit: true });
     this.requestRender();
   }
 
@@ -2514,6 +2587,7 @@ class WebCADApp {
       } else if (this.renderer3D?.initialized) {
         this.renderer3D.render();
       }
+      this._scheduleRight3DRefresh({ convert: true, fit: false });
     });
   }
 
@@ -2527,6 +2601,13 @@ class WebCADApp {
     }
     if (this.renderer3D?.initialized) {
       this.renderer3D.resize(w, h);
+    }
+    if (this.rightRenderer3D?.initialized && this.right3DContainer) {
+      this.rightRenderer3D.resize(
+        this.right3DContainer.clientWidth || 240,
+        this.right3DContainer.clientHeight || 160
+      );
+      this.rightRenderer3D.render();
     }
     if (this._ready) {
       this.requestRender();
