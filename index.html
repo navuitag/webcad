@@ -53,6 +53,7 @@
             <hr>
             <button data-action="export-svg">Xuất SVG (.svg)</button>
             <button data-action="export-png">Xuất PNG (.png)</button>
+            <button data-action="export-image-advanced">Xuất ảnh HD/4K...</button>
             <button data-action="export-pdf">Xuất PDF (.pdf)</button>
             <button data-action="export-dxf">Xuất DXF (.dxf)</button>
             <button data-action="open-viewer">Mở CAD Viewer...</button>
@@ -63,7 +64,9 @@
             <button data-action="export-stl">Xuất STL (.stl)</button>
             <button data-action="export-obj">Xuất OBJ (.obj)</button>
             <button data-action="export-gltf">Xuất GLTF (.gltf)</button>
+            <button data-action="export-walkthrough-video">Xuất video walkthrough (.webm)</button>
             <hr>
+            <button data-action="export-project-json">Xuất dữ liệu dự án (.project.json)</button>
             <button data-action="export-tech-pdf">Xuất hồ sơ PDF kỹ thuật</button>
           </div>
         </div>
@@ -333,11 +336,66 @@
             </select>
           </div>
           <div class="feature-module-tabs" role="tablist" aria-label="Nhóm tính năng">
+            <button type="button" class="feature-module-tab" data-feature-tab="project" role="tab" aria-selected="false">Dự án</button>
             <button type="button" class="feature-module-tab active" data-feature-tab="planner" role="tab" aria-selected="true">Planner</button>
             <button type="button" class="feature-module-tab" data-feature-tab="interior" role="tab" aria-selected="false">Nội thất</button>
             <button type="button" class="feature-module-tab" data-feature-tab="templates" role="tab" aria-selected="false">Mẫu</button>
             <button type="button" class="feature-module-tab" data-feature-tab="bim" role="tab" aria-selected="false">BIM</button>
             <button type="button" class="feature-module-tab" data-feature-tab="cloud" role="tab" aria-selected="false">Cloud</button>
+          </div>
+
+          <div class="feature-tab-panel" data-feature-panel="project" role="tabpanel" hidden>
+            <p class="feature-hint">Quản lý dự án, tầng, thống kê, ảnh và video theo system_design.md</p>
+            <div class="feature-row">
+              <label>Tên dự án</label>
+              <input type="text" id="project-name-input" class="feature-input" placeholder="Thiết kế khách sạn mini">
+            </div>
+            <div class="feature-row">
+              <label>Loại công trình</label>
+              <select id="project-type-select" class="feature-select">
+                <option value="house">Nhà ở</option>
+                <option value="apartment">Chung cư</option>
+                <option value="hotel">Khách sạn</option>
+                <option value="restaurant">Nhà hàng</option>
+                <option value="cafe">Quán cà phê</option>
+                <option value="homestay">Homestay</option>
+                <option value="showroom">Showroom</option>
+              </select>
+            </div>
+            <div class="feature-row feature-row-btns">
+              <button type="button" id="btn-project-create" class="feature-btn feature-btn-accent">Tạo/cập nhật</button>
+              <button type="button" id="btn-project-add-floor" class="feature-btn">Thêm tầng</button>
+            </div>
+            <div class="feature-row feature-row-btns">
+              <button type="button" id="btn-project-sync" class="feature-btn">Đồng bộ phòng</button>
+              <button type="button" id="btn-project-summary" class="feature-btn">Thống kê</button>
+              <button type="button" id="btn-project-json" class="feature-btn">Xuất JSON</button>
+            </div>
+            <div class="feature-row">
+              <label>Xuất ảnh</label>
+              <div class="feature-inline">
+                <select id="project-image-quality" class="feature-select">
+                  <option value="hd">HD</option>
+                  <option value="fhd" selected>Full HD</option>
+                  <option value="2k">2K</option>
+                  <option value="4k">4K</option>
+                </select>
+                <select id="project-image-format" class="feature-select">
+                  <option value="png">PNG</option>
+                  <option value="jpg">JPG</option>
+                  <option value="webp">WEBP</option>
+                </select>
+              </div>
+              <button type="button" id="btn-project-export-image" class="feature-btn">Xuất ảnh</button>
+            </div>
+            <div class="feature-row">
+              <label>Video walkthrough</label>
+              <div class="feature-inline">
+                <input type="number" id="project-video-duration" class="feature-input" value="10" min="3" max="60" step="1">
+                <button type="button" id="btn-project-export-video" class="feature-btn">Xuất WebM</button>
+              </div>
+            </div>
+            <pre id="project-report" class="qa-report"></pre>
           </div>
 
           <div class="feature-tab-panel active" data-feature-panel="planner" role="tabpanel">
@@ -734,6 +792,7 @@
   <script src="js/features/DrawingQaEngine.js"></script>
   <script src="js/features/FloorPlanGenerator.js"></script>
   <script src="js/features/TechnicalPdfEngine.js"></script>
+  <script src="js/features/ProjectDesignEngine.js"></script>
   <script src="js/features/ModeConversionEngine.js"></script>
   <script src="js/features/PlanConversionEngine.js"></script>
   <script src="js/features/planner/SemanticEngine.js"></script>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v55';
+const CACHE_NAME = 'webcad-v56';
 const ASSETS = [
   './',
   './index.html',
@@ -118,6 +118,7 @@ const ASSETS = [
   './js/features/DrawingQaEngine.js',
   './js/features/FloorPlanGenerator.js',
   './js/features/TechnicalPdfEngine.js',
+  './js/features/ProjectDesignEngine.js',
   './js/features/ModeConversionEngine.js',
   './js/features/PlanConversionEngine.js',
   './js/features/planner/SemanticEngine.js',

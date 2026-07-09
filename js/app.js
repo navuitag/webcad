@@ -419,6 +419,7 @@ class WebCADApp {
       'save-as': () => this._exportFormat('wcad'),
       'rename-drawing': () => this.renameDrawing(),
       'export-png': () => this._exportFormat('png'),
+      'export-image-advanced': () => this._exportProjectImageFromPrompt(),
       'export-svg': () => this._exportFormat('svg'),
       'export-pdf': () => this._exportFormat('pdf'),
       'export-dxf': () => this._exportFormat('dxf'),
@@ -439,6 +440,11 @@ class WebCADApp {
       'export-stl': () => this._exportFormat('stl'),
       'export-obj': () => this._exportFormat('obj'),
       'export-gltf': () => this._exportFormat('gltf'),
+      'export-walkthrough-video': () => this._exportProjectVideoFromPrompt(),
+      'export-project-json': () => {
+        const r = this.features.exportProjectJson();
+        this.logCommand(r.message);
+      },
       'export-tech-pdf': () => this._exportTechnicalPdf(),
       'auto-dimension': () => {
         const r = this.features.autoDimension(true);
@@ -646,6 +652,12 @@ class WebCADApp {
         <button type="button" id="3d-reset-view">Reset view</button>
         <button type="button" id="3d-fit-view">Fit view</button>
       </div>
+      <div class="prop-row"><label>Walkthrough</label><span id="3d-camera-path-count">${this.features?.ensureProject?.().cameraPath?.length || 0} điểm</span></div>
+      <div class="prop-actions">
+        <button type="button" id="3d-add-camera-point">Thêm camera</button>
+        <button type="button" id="3d-play-camera-path">Chạy path</button>
+        <button type="button" id="3d-clear-camera-path">Xóa path</button>
+      </div>
       <p class="orbit-hint">Chuột trái: xoay 360° · Giữa: zoom · Phải: pan</p>
     `;
     document.getElementById('3d-material')?.addEventListener('change', (e) => {
@@ -686,6 +698,22 @@ class WebCADApp {
     document.getElementById('3d-fit-view')?.addEventListener('click', () => {
       r.fitView();
       this.requestRender();
+    });
+    document.getElementById('3d-add-camera-point')?.addEventListener('click', () => {
+      const res = this.features.addProjectCameraPoint();
+      const count = document.getElementById('3d-camera-path-count');
+      if (count) count.textContent = `${this.features.ensureProject().cameraPath.length} điểm`;
+      this.logCommand(res.message);
+    });
+    document.getElementById('3d-play-camera-path')?.addEventListener('click', async () => {
+      const res = await this.features.playProjectCameraPath({ duration: 8 });
+      this.logCommand(res.message);
+    });
+    document.getElementById('3d-clear-camera-path')?.addEventListener('click', () => {
+      const res = this.features.clearProjectCameraPath();
+      const count = document.getElementById('3d-camera-path-count');
+      if (count) count.textContent = '0 điểm';
+      this.logCommand(res.message);
     });
   }
 
@@ -944,6 +972,7 @@ class WebCADApp {
     }
     this.updateStatusBar();
     this.updateDrawingTitleUI();
+    this._refreshProjectPanel();
     this.requestRender();
   }
 
@@ -1042,6 +1071,7 @@ class WebCADApp {
     this._updateStylesPanel();
     this.updateStatusBar();
     this.updateDrawingTitleUI();
+    this._refreshProjectPanel();
     if (this.renderer3D.initialized) {
       this.renderer3D.syncEntities(this.drawing.entities3D);
     }
@@ -1217,10 +1247,108 @@ class WebCADApp {
     this.logCommand('Link chia sẻ đã tạo (copied).');
   }
 
+  _exportProjectImageFromPrompt() {
+    const quality = prompt('Chất lượng ảnh: hd, fhd, 2k, 4k', 'fhd');
+    if (quality === null) return;
+    const format = prompt('Định dạng: png, jpg, webp', 'png');
+    if (format === null) return;
+    const r = this.features.exportProjectImage({
+      quality: quality.trim().toLowerCase(),
+      format: format.trim().toLowerCase()
+    });
+    this.logCommand(r.message);
+  }
+
+  async _exportProjectVideoFromPrompt() {
+    if (this.mode !== '3d') await this.setMode('3d');
+    const value = prompt('Thời lượng video walkthrough (giây):', '10');
+    if (value === null) return;
+    const r = await this.features.exportProjectWalkthroughVideo({ duration: parseFloat(value) || 10 });
+    this.logCommand(r.message);
+  }
+
   _exportTechnicalPdf() {
     if (!this.features) return;
     const r = this.features.exportTechnicalPdf();
     this.logCommand(r.success ? `Đã xuất ${r.filename}` : r.message);
+  }
+
+  _initProjectPanel() {
+    if (!this.features || typeof ProjectDesignEngine === 'undefined') return;
+    const project = this.features.ensureProject();
+    const nameInput = document.getElementById('project-name-input');
+    const typeSelect = document.getElementById('project-type-select');
+    const out = document.getElementById('project-report');
+    if (nameInput && !nameInput.value) nameInput.value = project.name || this.drawing.name || '';
+    if (typeSelect) typeSelect.value = project.type || this._getSpaceType();
+
+    const write = (text) => {
+      if (out) out.textContent = text || '';
+    };
+
+    document.getElementById('btn-project-create')?.addEventListener('click', () => {
+      const r = this.features.createProject({
+        name: nameInput?.value || this.drawing.name,
+        type: typeSelect?.value || this._getSpaceType()
+      });
+      write(this.features.summarizeProject().message);
+      this.updateStatusBar();
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-project-add-floor')?.addEventListener('click', () => {
+      const r = this.features.addProjectFloor();
+      write(this.features.summarizeProject().message);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-project-sync')?.addEventListener('click', () => {
+      const r = this.features.syncProjectRooms();
+      write(`${r.message}\n\n${this.features.summarizeProject().message}`);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-project-summary')?.addEventListener('click', () => {
+      const r = this.features.summarizeProject();
+      write(r.message);
+      this.logCommand('Đã cập nhật thống kê dự án.');
+    });
+
+    document.getElementById('btn-project-json')?.addEventListener('click', () => {
+      const r = this.features.exportProjectJson();
+      write(r.message);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-project-export-image')?.addEventListener('click', () => {
+      const r = this.features.exportProjectImage({
+        quality: document.getElementById('project-image-quality')?.value || 'fhd',
+        format: document.getElementById('project-image-format')?.value || 'png'
+      });
+      write(r.message);
+      this.logCommand(r.message);
+    });
+
+    document.getElementById('btn-project-export-video')?.addEventListener('click', async () => {
+      if (this.mode !== '3d') await this.setMode('3d');
+      const duration = parseFloat(document.getElementById('project-video-duration')?.value || '10');
+      const r = await this.features.exportProjectWalkthroughVideo({ duration });
+      write(r.message);
+      this.logCommand(r.message);
+    });
+
+    write(this.features.summarizeProject().message);
+  }
+
+  _refreshProjectPanel() {
+    if (!this.features || typeof ProjectDesignEngine === 'undefined') return;
+    const project = this.features.ensureProject();
+    const nameInput = document.getElementById('project-name-input');
+    const typeSelect = document.getElementById('project-type-select');
+    const out = document.getElementById('project-report');
+    if (nameInput && document.activeElement !== nameInput) nameInput.value = project.name || this.drawing.name || '';
+    if (typeSelect) typeSelect.value = project.type || this._getSpaceType();
+    if (out) out.textContent = this.features.summarizeProject().message;
   }
 
   _initFeaturesPanel() {
@@ -1228,6 +1356,7 @@ class WebCADApp {
     this._initFeatureTabs();
     this._renderTemplateLibrary();
     this._renderArchTemplateLibrary();
+    this._initProjectPanel();
     this._initInteriorPanel();
     this._initPlannerPanel();
     const sketchInput = document.getElementById('sketch-input');

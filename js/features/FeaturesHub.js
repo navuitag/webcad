@@ -228,6 +228,20 @@ class FeaturesHub {
     return PlanConversionEngine.convert(this.app, { selectionOnly });
   }
 
+  // Project/System Design modules (system_design.md)
+  ensureProject() { return ProjectDesignEngine.ensureProject(this.app); }
+  createProject(opts) { return ProjectDesignEngine.createProject(this.app, opts); }
+  addProjectFloor(opts) { return ProjectDesignEngine.addFloor(this.app, opts); }
+  syncProjectRooms() { return ProjectDesignEngine.syncRoomsFromDrawing(this.app); }
+  summarizeProject() { return ProjectDesignEngine.summarize(this.app); }
+  estimateProject() { return ProjectDesignEngine.estimate(this.app); }
+  exportProjectJson() { return ProjectDesignEngine.exportProjectJson(this.app); }
+  exportProjectImage(opts) { return ProjectDesignEngine.exportImage(this.app, opts); }
+  addProjectCameraPoint(name) { return ProjectDesignEngine.addCameraPoint(this.app, name); }
+  clearProjectCameraPath() { return ProjectDesignEngine.clearCameraPath(this.app); }
+  playProjectCameraPath(opts) { return ProjectDesignEngine.playCameraPath(this.app, opts); }
+  exportProjectWalkthroughVideo(opts) { return ProjectDesignEngine.exportWalkthroughVideo(this.app, opts); }
+
   async importSketch(file, opts = {}) {
     await this.vision.loadImage(file);
     if (opts.toInterior) {

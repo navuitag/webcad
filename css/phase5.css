@@ -307,6 +307,22 @@
   font-size: 12px;
 }
 
+.feature-input {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.feature-inline {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
 .feature-row-btns {
   flex-direction: row;
   flex-wrap: wrap;
