@@ -21,6 +21,7 @@ class WebCADApp {
     this.rightRenderer3D = null;
     this._right3DRefreshTimer = null;
     this._right3DInitPromise = null;
+    this._right3DSignature = '';
 
     this.mode = '2d';
     this.currentTool = null;
@@ -784,24 +785,46 @@ class WebCADApp {
     try {
       const renderer = await this._ensureRight3DRenderer();
       if (!renderer) return;
+      const nextSignature = this._right3DDrawingSignature();
+      const changed = nextSignature !== this._right3DSignature;
       if (options.convert !== false) ModeConversionEngine.onEnter3D(this);
       const w = this.right3DContainer.clientWidth || 240;
       const h = this.right3DContainer.clientHeight || 160;
       renderer.resize(w, h);
       renderer.syncEntities(this.drawing.entities3D);
-      if (options.fit || !this._right3DFitted) {
+      if (options.fit || changed || !this._right3DFitted) {
         if (this.drawing.entities3D.length > 0) renderer.fitView();
         this._right3DFitted = true;
       }
+      this._right3DSignature = nextSignature;
       renderer.render();
       if (this.right3DStatus) {
         this.right3DStatus.textContent = this.drawing.entities3D.length
-          ? `${this.drawing.entities3D.length} khối · ${renderer.backend.toUpperCase()}`
+          ? `${this.drawing.entities3D.length} khối · ${renderer.backend.toUpperCase()} · tự cập nhật`
           : 'Chưa có khối 3D';
       }
     } catch (err) {
       if (this.right3DStatus) this.right3DStatus.textContent = `3D lỗi: ${err.message}`;
     }
+  }
+
+  _right3DDrawingSignature() {
+    return this.drawing.entities.map((entity) => {
+      const bb = entity.getBoundingBox?.();
+      const bounds = bb
+        ? [bb.minX, bb.minY, bb.maxX, bb.maxY].map(v => Number.isFinite(v) ? v.toFixed(3) : 'x').join(',')
+        : 'no-bounds';
+      const extra = [
+        entity.closed ? 'closed' : '',
+        entity.radius != null ? entity.radius.toFixed?.(3) : '',
+        entity.archType || '',
+        entity.planRole || '',
+        entity.wallThickness || '',
+        entity.floorHeight || '',
+        entity.extrudeHeight || ''
+      ].join(':');
+      return `${entity.id}|${entity.type}|${bounds}|${extra}`;
+    }).join(';');
   }
 
   _getWorldPos(e) {

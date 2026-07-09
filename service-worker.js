@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webcad-v59';
+const CACHE_NAME = 'webcad-v60';
 const ASSETS = [
   './',
   './index.html',
